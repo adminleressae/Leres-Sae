@@ -368,50 +368,6 @@ body.login-modal-open {
     display: flex;
 }
 
-.news-confirm-modal {
-    z-index: 1260;
-    background: rgba(15, 23, 42, 0.48);
-    backdrop-filter: blur(3px);
-}
-
-.news-confirm-panel {
-    width: min(440px, 94vw);
-    animation: newsConfirmEnter 0.16s ease-out;
-}
-
-.news-confirm-copy {
-    padding: 20px 18px 8px;
-    color: #475569;
-    line-height: 1.6;
-    overflow-wrap: anywhere;
-}
-
-.news-confirm-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    padding: 14px 18px 18px;
-}
-
-.news-confirm-danger {
-    border: 1px solid #b42318;
-    border-radius: 8px;
-    padding: 9px 14px;
-    color: #fff;
-    background: #b42318;
-    font: inherit;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.news-confirm-danger:hover { background: #912018; }
-.news-confirm-danger:disabled { opacity: 0.6; cursor: wait; }
-
-@keyframes newsConfirmEnter {
-    from { opacity: 0; transform: translateY(5px) scale(0.99); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
 .stock-panel {
     width: min(680px, 96vw);
     background: #ffffff;
@@ -623,7 +579,7 @@ body.login-modal-open {
 
 .page-view {
     display: none;
-    animation: fadeIn 0.16s ease-out;
+    animation: fadeIn 0.3s ease-in-out;
 }
 
 .page-view.active {
@@ -640,13 +596,6 @@ body.login-modal-open {
     to {
         opacity: 1;
         transform: translateY(0);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .page-view,
-    .news-confirm-panel {
-        animation: none !important;
     }
 }
 
@@ -8976,7 +8925,7 @@ img, video, iframe { max-width: 100%; }
 .home-media-spotlight .media-spotlight-title{margin:0;color:#102746;font-size:clamp(1.25rem,2vw,1.8rem);font-weight:800;letter-spacing:-.025em}
 .home-media-spotlight .media-spotlight-subtitle{margin:7px 0 0;color:#64748b;font-size:.95rem;line-height:1.6}
 .home-media-stage{position:relative;overflow:hidden;border-radius:22px;background:linear-gradient(135deg,#e8eff6,#dce6f0);isolation:isolate}
-.home-media-track{display:flex;align-items:stretch;gap:16px;transform:translateX(0);transition:transform .8s cubic-bezier(.22,.75,.25,1);will-change:transform}
+.home-media-track{display:flex;align-items:stretch;gap:16px;user-select:none;-webkit-user-select:none;transform:translateX(0);transition:transform .8s cubic-bezier(.22,.75,.25,1);will-change:transform}
 .home-media-slide{position:relative;flex:0 0 calc((100% - 32px)/3);min-width:0;overflow:hidden;aspect-ratio:4/3;border-radius:18px;background:#dce6f0;opacity:1;transform:scale(1);transition:transform .55s ease,box-shadow .55s ease;pointer-events:auto}
 .home-media-slide:hover{transform:translateY(-3px);box-shadow:0 14px 28px rgba(15,35,65,.16)}
 .home-media-slide img{display:block;width:100%;height:100%;min-height:0;object-fit:cover;object-position:center;transition:transform 5s ease}
@@ -9423,7 +9372,9 @@ img, video, iframe { max-width: 100%; }
             DEV_MODE: false,
             FORM_URL: 'https://forms.gle/11gDFYxD5HDBCaU9A',
             TIMEZONE: 'Asia/Jakarta',
-            // Folder root untuk upload MEDIA; berita memakai folder khusus di backend.
+            // Folder root Google Drive LERESSAE.
+            // Backend Apps Script menggunakan ID ini untuk membuat/mengambil
+            // subfolder MEDIA dan BERITA.
             GOOGLE_DRIVE_ROOT_FOLDER_ID: '1FKMEU6a7aukoWoN90cLJQYwpCAqGMwd9',
             // Status operasional LERESSAE hanya memiliki 2 kondisi publik:
             // - Sedang Diproses
@@ -14490,9 +14441,52 @@ function renderReportsPage() {
             const pause = () => { if (homeMediaTimer) clearInterval(homeMediaTimer); homeMediaTimer = null; };
             const start = () => { pause(); if (slides.length > visibleCount() && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) homeMediaTimer = setInterval(() => { const maxIndex = Math.max(0, slides.length - visibleCount()); update(index >= maxIndex ? 0 : index + 1); }, 2500); };
             const onClick = e => { const target = e.target.closest('[data-home-media-step], [data-home-media-go]'); if (!target) return; if (target.hasAttribute('data-home-media-step')) update(index + Number(target.dataset.homeMediaStep)); else update(Number(target.dataset.homeMediaGo)); start(); };
+            // Interaksi geser pada slideshow media: layar sentuh, mouse, dan touchpad.
+            let gestureStartX = 0, gestureStartY = 0, gestureLastX = 0, gesturePointerId = null, gestureMoved = false;
+            const onPointerDown = e => {
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+                if (e.target.closest('button, a, input, textarea, select')) return;
+                gestureStartX = gestureLastX = e.clientX; gestureStartY = e.clientY;
+                gesturePointerId = e.pointerId; gestureMoved = false; pause();
+                if (e.pointerType === 'mouse') track.style.cursor = 'grabbing';
+            };
+            const onPointerMove = e => {
+                if (gesturePointerId !== e.pointerId) return;
+                const dx = e.clientX - gestureStartX, dy = e.clientY - gestureStartY;
+                if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.15) gestureMoved = true;
+                gestureLastX = e.clientX;
+            };
+            const onPointerEnd = e => {
+                if (gesturePointerId !== e.pointerId) return;
+                const dx = gestureLastX - gestureStartX, dy = e.clientY - gestureStartY;
+                if (gestureMoved && Math.abs(dx) >= 35 && Math.abs(dx) > Math.abs(dy)) {
+                    const maxIndex = Math.max(0, slides.length - visibleCount());
+                    update(dx < 0 ? (index >= maxIndex ? 0 : index + 1) : (index <= 0 ? maxIndex : index - 1));
+                }
+                gesturePointerId = null; track.style.cursor = '';
+                if (gestureMoved) { section.dataset.suppressMediaClick = 'true'; setTimeout(() => delete section.dataset.suppressMediaClick, 0); }
+                start();
+            };
+            const onWheel = e => {
+                const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : (e.shiftKey ? e.deltaY : 0);
+                if (Math.abs(delta) < 18) return;
+                e.preventDefault(); const maxIndex = Math.max(0, slides.length - visibleCount());
+                update(delta > 0 ? (index >= maxIndex ? 0 : index + 1) : (index <= 0 ? maxIndex : index - 1)); start();
+            };
+            const onClickGuard = e => { if (section.dataset.suppressMediaClick === 'true') { e.preventDefault(); e.stopPropagation(); delete section.dataset.suppressMediaClick; } };
+            track.style.touchAction = 'pan-y'; track.style.cursor = 'grab';
+            track.addEventListener('pointerdown', onPointerDown); track.addEventListener('pointermove', onPointerMove);
+            track.addEventListener('pointerup', onPointerEnd); track.addEventListener('pointercancel', onPointerEnd);
+            section.addEventListener('wheel', onWheel, {passive:false}); section.addEventListener('click', onClickGuard, true);
             window.addEventListener('resize', () => update(index));
             section.addEventListener('click',onClick); section.addEventListener('mouseenter',pause); section.addEventListener('mouseleave',start); section.addEventListener('focusin',pause); section.addEventListener('focusout',e=>{if(!section.contains(e.relatedTarget))start();});
-            section.__cleanupMedia = () => { pause(); section.removeEventListener('click',onClick); section.removeEventListener('mouseenter',pause); section.removeEventListener('mouseleave',start); section.removeEventListener('focusin',pause); };
+            section.__cleanupMedia = () => {
+                pause(); section.removeEventListener('click',onClick); section.removeEventListener('click',onClickGuard,true);
+                track.removeEventListener('pointerdown',onPointerDown); track.removeEventListener('pointermove',onPointerMove);
+                track.removeEventListener('pointerup',onPointerEnd); track.removeEventListener('pointercancel',onPointerEnd);
+                section.removeEventListener('wheel',onWheel); track.style.touchAction=''; track.style.cursor='';
+                section.removeEventListener('mouseenter',pause); section.removeEventListener('mouseleave',start); section.removeEventListener('focusin',pause);
+            };
             start();
         }
 
@@ -14603,22 +14597,7 @@ function renderReportsPage() {
 
         function renderNewsPage() {
             const records = Array.isArray(window.__NEWS_CACHE__) ? window.__NEWS_CACHE__ : [];
-            const emptyMessage = window.__NEWS_LOADING__
-                ? 'Memuat berita...'
-                : (window.__NEWS_LOAD_ERROR__ ? 'Berita gagal dimuat. Periksa koneksi lalu coba lagi.' : 'Belum ada berita.');
-            const rows = records.length
-                ? records.map(item => `<tr><td>${escapeHtml(item.title)}</td><td>${escapeHtml(item.category || '-')}</td><td><span class="status-badge ${item.status === 'PUBLISHED' ? 'done' : 'pending'}">${escapeHtml(item.status)}</span></td><td>${escapeHtml(formatDate(item.createdAt))}</td><td><button class="btn-secondary small" data-news-edit="${escapeHtml(item.id)}">Edit</button> <button class="save-status-btn" data-news-preview="${escapeHtml(item.id)}">Preview</button></td></tr>`).join('')
-                : `<tr><td colspan="5"><div class="admin-empty-state">${escapeHtml(emptyMessage)}</div></td></tr>`;
-            return `<div class="admin-card"><div class="admin-card-header"><h3>Update Berita</h3><button type="button" class="btn-primary" data-news-edit="new">+ Tambah Berita</button></div><p class="section-sub-text">Gambar menggunakan URL Google Drive yang telah dapat diakses publik. Upload file langsung memerlukan action backend Drive khusus.</p><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Judul</th><th>Kategori</th><th>Status</th><th>Dibuat</th><th>Aksi</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
-        }
-
-        function refreshNewsCacheInBackground() {
-            apiRequest('getNews').then(response => {
-                window.__NEWS_CACHE__ = Array.isArray(response?.data) ? response.data : [];
-                if (window.__ADMIN_CURRENT_PAGE__ === 'news') {
-                    showAdminPage('news', { fromBack: true, skipNewsRefresh: true });
-                }
-            }).catch(error => console.warn('Gagal menyegarkan berita:', error));
+            return `<div class="admin-card"><div class="admin-card-header"><h3>Update Berita</h3><button type="button" class="btn-primary" data-news-edit="new">+ Tambah Berita</button></div><p class="section-sub-text">Gambar menggunakan URL Google Drive yang telah dapat diakses publik. Upload file langsung memerlukan action backend Drive khusus.</p><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Judul</th><th>Kategori</th><th>Status</th><th>Dibuat</th><th>Aksi</th></tr></thead><tbody>${records.length ? records.map(x => `<tr><td>${escapeHtml(x.title)}</td><td>${escapeHtml(x.category || '-')}</td><td><span class="status-badge ${x.status === 'PUBLISHED' ? 'done' : 'pending'}">${escapeHtml(x.status)}</span></td><td>${escapeHtml(formatDate(x.createdAt))}</td><td><button class="btn-secondary small" data-news-edit="${escapeHtml(x.id)}">Edit</button> <button class="save-status-btn" data-news-preview="${escapeHtml(x.id)}">Preview</button></td></tr>`).join('') : '<tr><td colspan="5"><div class="admin-empty-state">Belum ada berita.</div></td></tr>'}</tbody></table></div></div>`;
         }
 
         function deprecatedShowAdminPageOverride(page) {
@@ -14786,6 +14765,44 @@ function renderReportsPage() {
             const pause = () => { if (homeNewsCarouselTimer) clearInterval(homeNewsCarouselTimer); homeNewsCarouselTimer = null; };
             const restart = () => { pause(); start(); };
             const onFocusOut = event => { if (!carousel.contains(event.relatedTarget)) start(); };
+            // Swipe jari, drag mouse, dan gesture horizontal touchpad.
+            let gestureStartX = 0, gestureStartY = 0, gestureLastX = 0, gesturePointerId = null, gestureMoved = false;
+            const gestureSurface = track;
+            const onPointerDown = event => {
+                if (event.pointerType === 'mouse' && event.button !== 0) return;
+                if (event.target.closest('button, a, input, textarea, select')) return;
+                gestureStartX = gestureLastX = event.clientX; gestureStartY = event.clientY;
+                gesturePointerId = event.pointerId; gestureMoved = false;
+                if (event.pointerType === 'mouse') { gestureSurface.style.cursor = 'grabbing'; }
+                pause();
+            };
+            const onPointerMove = event => {
+                if (gesturePointerId !== event.pointerId) return;
+                const dx = event.clientX - gestureStartX, dy = event.clientY - gestureStartY;
+                if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.15) gestureMoved = true;
+                gestureLastX = event.clientX;
+            };
+            const onPointerEnd = event => {
+                if (gesturePointerId !== event.pointerId) return;
+                const dx = gestureLastX - gestureStartX, dy = event.clientY - gestureStartY;
+                if (gestureMoved && Math.abs(dx) >= 35 && Math.abs(dx) > Math.abs(dy)) { go(dx < 0 ? 1 : -1); }
+                gesturePointerId = null; gestureSurface.style.cursor = '';
+                if (gestureMoved) { carousel.dataset.suppressClick = 'true'; setTimeout(() => delete carousel.dataset.suppressClick, 0); }
+                start();
+            };
+            const onWheel = event => {
+                const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : (event.shiftKey ? event.deltaY : 0);
+                if (Math.abs(delta) < 18) return;
+                event.preventDefault(); go(delta > 0 ? 1 : -1); restart();
+            };
+            const onClickGuard = event => { if (carousel.dataset.suppressClick === 'true') { event.preventDefault(); event.stopPropagation(); delete carousel.dataset.suppressClick; } };
+            gestureSurface.style.touchAction = 'pan-y'; gestureSurface.style.cursor = 'grab';
+            gestureSurface.addEventListener('pointerdown', onPointerDown);
+            gestureSurface.addEventListener('pointermove', onPointerMove);
+            gestureSurface.addEventListener('pointerup', onPointerEnd);
+            gestureSurface.addEventListener('pointercancel', onPointerEnd);
+            carousel.addEventListener('wheel', onWheel, {passive:false});
+            carousel.addEventListener('click', onClickGuard, true);
             carousel.addEventListener('click', onClick);
             carousel.addEventListener('mouseenter', pause);
             carousel.addEventListener('mouseleave', start);
@@ -14793,7 +14810,10 @@ function renderReportsPage() {
             carousel.addEventListener('focusout', onFocusOut);
             window.addEventListener('resize', update, {passive:true});
             carousel.__cleanupCarousel = () => {
-                pause(); carousel.removeEventListener('click', onClick);
+                pause(); carousel.removeEventListener('click', onClick); carousel.removeEventListener('click', onClickGuard, true);
+                gestureSurface.removeEventListener('pointerdown', onPointerDown); gestureSurface.removeEventListener('pointermove', onPointerMove);
+                gestureSurface.removeEventListener('pointerup', onPointerEnd); gestureSurface.removeEventListener('pointercancel', onPointerEnd);
+                carousel.removeEventListener('wheel', onWheel); gestureSurface.style.touchAction = ''; gestureSurface.style.cursor = '';
                 carousel.removeEventListener('mouseenter', pause); carousel.removeEventListener('mouseleave', start);
                 carousel.removeEventListener('focusin', pause); carousel.removeEventListener('focusout', onFocusOut);
                 window.removeEventListener('resize', update); delete carousel.__cleanupCarousel;
@@ -14829,101 +14849,12 @@ function renderReportsPage() {
             modal.querySelector('.public-news-close').focus();
         }
 
-        function confirmNewsDelete(title) {
-            return new Promise(resolve => {
-                const dialog = document.createElement('div');
-                dialog.className = 'stock-modal show news-confirm-modal';
-                dialog.innerHTML = `<section class="stock-panel news-confirm-panel" role="alertdialog" aria-modal="true" aria-labelledby="newsConfirmTitle" aria-describedby="newsConfirmCopy"><header class="stock-panel-header"><h3 id="newsConfirmTitle">Hapus berita?</h3></header><p class="news-confirm-copy" id="newsConfirmCopy">Berita “${escapeHtml(title)}” akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.</p><div class="news-confirm-actions"><button class="btn-secondary" type="button" data-news-confirm-cancel>Batal</button><button class="news-confirm-danger" type="button" data-news-confirm-delete>Hapus berita</button></div></section>`;
-                document.body.appendChild(dialog);
-
-                const finish = confirmed => {
-                    document.removeEventListener('keydown', onKeydown);
-                    dialog.remove();
-                    resolve(confirmed);
-                };
-                const onKeydown = event => {
-                    if (event.key === 'Escape') finish(false);
-                };
-
-                dialog.querySelector('[data-news-confirm-cancel]').onclick = () => finish(false);
-                dialog.querySelector('[data-news-confirm-delete]').onclick = () => finish(true);
-                dialog.addEventListener('click', event => {
-                    if (event.target === dialog) finish(false);
-                });
-                document.addEventListener('keydown', onKeydown);
-                dialog.querySelector('[data-news-confirm-cancel]').focus();
-            });
-        }
-
         function openNewsEditor(id) {
             const current = (window.__NEWS_CACHE__ || []).find(x => x.id === id) || { status: 'DRAFT' };
             const modal = document.createElement('div'); modal.className = 'stock-modal show';
-            const deleteButton = id === 'new' ? '' : '<button class="btn-secondary" type="button" data-news-delete style="color:#b42318;border-color:#e5a3a3">Hapus Berita</button>';
-            modal.innerHTML = `<div class="stock-panel"><div class="stock-panel-header"><button class="stock-close" type="button">×</button><h3>${id === 'new' ? 'Tambah Berita' : 'Edit Berita'}</h3></div><form class="stock-body" id="newsEditorForm"><div class="field-row"><label>Judul</label><input name="title" required value="${escapeHtml(current.title || '')}"></div><div class="field-row"><label>Gambar</label><input name="imageFile" type="file" accept="image/*"><input name="imageUrl" type="url" placeholder="atau URL gambar Google Drive" value="${escapeHtml(current.imageUrl || '')}"></div><div class="field-row"><label>Kategori</label><input name="category" value="${escapeHtml(current.category || '')}"></div><div class="field-row"><label>Isi</label><textarea name="content" required>${escapeHtml(current.content || '')}</textarea></div><div class="field-row"><label>Status</label><select name="status"><option ${current.status === 'DRAFT' ? 'selected' : ''}>DRAFT</option><option ${current.status === 'PUBLISHED' ? 'selected' : ''}>PUBLISHED</option></select></div><div class="stock-actions">${deleteButton}<button class="btn-secondary" type="button" data-news-cancel>Batal</button><button class="btn-primary" type="submit">Simpan</button></div></form></div>`;
-            document.body.appendChild(modal);
-            const close = () => modal.remove();
-            modal.querySelector('.stock-close').onclick = close;
-            modal.querySelector('[data-news-cancel]').onclick = close;
-            const deleteControl = modal.querySelector('[data-news-delete]');
-            if (deleteControl) {
-                deleteControl.onclick = async () => {
-                    const confirmed = await confirmNewsDelete(current.title || 'Tanpa judul');
-                    if (!confirmed) return;
-                    deleteControl.disabled = true;
-                    deleteControl.textContent = 'Menghapus...';
-                    try {
-                        await apiRequest('deleteNews', { id: id });
-                        window.__NEWS_CACHE__ = (window.__NEWS_CACHE__ || []).filter(item => String(item.id) !== String(id));
-                        close();
-                        showAdminPage('news', { fromBack: true, skipNewsRefresh: true });
-                        showToast('Berita berhasil dihapus.', 'success');
-                        refreshNewsCacheInBackground();
-                    } catch (err) {
-                        deleteControl.disabled = false;
-                        deleteControl.textContent = 'Hapus Berita';
-                        showToast(err.message || 'Gagal menghapus berita.', 'error');
-                    }
-                };
-            }
-            modal.querySelector('form').onsubmit = async e => {
-                e.preventDefault();
-                const form = new FormData(e.target);
-                const payload = Object.fromEntries(form.entries());
-                const file = form.get('imageFile');
-                const saveButton = e.submitter || e.target.querySelector('[type="submit"]');
-                delete payload.imageFile;
-                if (id !== 'new') payload.id = id;
-                if (saveButton) {
-                    saveButton.disabled = true;
-                    saveButton.textContent = file && file.size ? 'Mengunggah...' : 'Menyimpan...';
-                }
-                try {
-                    if (file && file.size) {
-                        const uploaded = await uploadLeressaeFileToDrive(file, 'BERITA', 'FOTO');
-                        payload.imageUrl = uploaded.fileUrl;
-                        payload.imageFileId = uploaded.fileId;
-                    }
-                    const response = await apiRequest(id === 'new' ? 'addNews' : 'updateNews', payload);
-                    const savedNews = response && response.data;
-                    if (savedNews && savedNews.id) {
-                        const cachedNews = window.__NEWS_CACHE__ || [];
-                        const existingIndex = cachedNews.findIndex(item => String(item.id) === String(savedNews.id));
-                        if (existingIndex >= 0) cachedNews.splice(existingIndex, 1, savedNews);
-                        else cachedNews.unshift(savedNews);
-                        window.__NEWS_CACHE__ = cachedNews;
-                    }
-                    close();
-                    showAdminPage('news', { fromBack: true, skipNewsRefresh: true });
-                    showToast('Berita tersimpan di Spreadsheet.', 'success');
-                    refreshNewsCacheInBackground();
-                } catch (err) {
-                    if (saveButton) {
-                        saveButton.disabled = false;
-                        saveButton.textContent = 'Simpan';
-                    }
-                    showToast(err.message || 'Gagal menyimpan berita.', 'error');
-                }
-            };
+            modal.innerHTML = `<div class="stock-panel"><div class="stock-panel-header"><button class="stock-close" type="button">×</button><h3>${id === 'new' ? 'Tambah Berita' : 'Edit Berita'}</h3></div><form class="stock-body" id="newsEditorForm"><div class="field-row"><label>Judul</label><input name="title" required value="${escapeHtml(current.title || '')}"></div><div class="field-row"><label>Gambar</label><input name="imageFile" type="file" accept="image/*"><input name="imageUrl" type="url" placeholder="atau URL gambar Google Drive" value="${escapeHtml(current.imageUrl || '')}"></div><div class="field-row"><label>Kategori</label><input name="category" value="${escapeHtml(current.category || '')}"></div><div class="field-row"><label>Isi</label><textarea name="content" required>${escapeHtml(current.content || '')}</textarea></div><div class="field-row"><label>Status</label><select name="status"><option ${current.status === 'DRAFT' ? 'selected' : ''}>DRAFT</option><option ${current.status === 'PUBLISHED' ? 'selected' : ''}>PUBLISHED</option></select></div><div class="stock-actions"><button class="btn-secondary" type="button">Batal</button><button class="btn-primary" type="submit">Simpan</button></div></form></div>`;
+            document.body.appendChild(modal); const close = () => modal.remove(); modal.querySelectorAll('button[type="button"]').forEach(b => b.onclick = close);
+            modal.querySelector('form').onsubmit = async e => { e.preventDefault(); const form = new FormData(e.target); const payload = Object.fromEntries(form.entries()); const file = form.get('imageFile'); delete payload.imageFile; if (id !== 'new') payload.id = id; try { if (file && file.size) { const dataUrl = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(file); }); const uploaded = await uploadLeressaeFileToDrive(file, 'BERITA', 'FOTO'); payload.imageUrl = uploaded.fileUrl; payload.imageFileId = uploaded.fileId; } await apiRequest(id === 'new' ? 'addNews' : 'updateNews', payload); await refreshExtendedData(); showAdminPage('news'); close(); showToast('Berita tersimpan di Spreadsheet.', 'success'); } catch (err) { showToast(err.message || 'Gagal menyimpan berita.', 'error'); } };
         }
 
         function setupNewsViews() {
