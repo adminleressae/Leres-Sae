@@ -9681,6 +9681,1330 @@ img, video, iframe { max-width: 100%; }
     }
 }
 </style>
+<style id="admin-layout-consolidated-fix">
+/* Final, scoped Admin/Technician layout.  This is deliberately last so older
+   experimental overrides cannot make the operational tables fight each other. */
+#page-admin, #page-technician, .admin-shell, .technician-shell { min-width:0; max-width:100%; }
+.admin-content, .technician-content, #adminDashboardContent, #technicianPanelContent { min-width:0; max-width:100%; }
+.admin-card { min-width:0; max-width:100%; box-sizing:border-box; overflow:hidden; }
+.admin-card-header { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.admin-card-header > * { min-width:0; }
+
+/* A single scrolling boundary: the page never becomes wider than its shell. */
+.admin-table-wrap, .admin-customers-table-wrap, .admin-tech-management-wrap,
+.tech-table-wrap, .tech-client-table-wrap {
+  display:block !important; width:100% !important; min-width:0 !important; max-width:100% !important;
+  overflow-x:auto !important; overflow-y:hidden !important; box-sizing:border-box !important;
+  -webkit-overflow-scrolling:touch; overscroll-behavior-inline:contain;
+}
+.admin-table, .tech-table, .tech-client-table {
+  width:100% !important; min-width:1000px !important; max-width:none !important;
+  table-layout:fixed !important; border-collapse:separate !important; border-spacing:0 !important;
+}
+.admin-table th, .admin-table td, .tech-table th, .tech-table td, .tech-client-table th, .tech-client-table td {
+  height:auto !important; min-height:58px; padding:12px 14px !important; box-sizing:border-box;
+  vertical-align:middle !important; overflow:hidden; text-overflow:ellipsis;
+}
+.admin-table th, .tech-table th, .tech-client-table th { white-space:normal !important; line-height:1.3; }
+.admin-table td, .tech-table td, .tech-client-table td { white-space:nowrap; line-height:1.4; }
+.admin-table td :is(button, a), .tech-table td :is(button, a), .tech-client-table td :is(button, a) { max-width:100%; }
+
+/* Service data: names remain compact; descriptive fields wrap instead of growing the table. */
+.admin-services-table, .admin-running-services-table, .admin-completed-services-table, .admin-activity-table {
+  min-width:1360px !important;
+}
+.admin-services-table th:nth-child(1), .admin-services-table td:nth-child(1),
+.admin-running-services-table th:nth-child(1), .admin-running-services-table td:nth-child(1),
+.admin-completed-services-table th:nth-child(1), .admin-completed-services-table td:nth-child(1) { width:120px !important; }
+.admin-services-table th:nth-child(2), .admin-services-table td:nth-child(2),
+.admin-running-services-table th:nth-child(2), .admin-running-services-table td:nth-child(2) { width:125px !important; }
+.admin-services-table th:nth-child(3), .admin-services-table td:nth-child(3),
+.admin-running-services-table th:nth-child(3), .admin-running-services-table td:nth-child(3) { width:170px !important; }
+.admin-services-table th:nth-child(4), .admin-services-table td:nth-child(4),
+.admin-running-services-table th:nth-child(4), .admin-running-services-table td:nth-child(4) { width:145px !important; }
+.admin-services-table th:nth-child(5), .admin-services-table td:nth-child(5),
+.admin-running-services-table th:nth-child(5), .admin-running-services-table td:nth-child(5),
+.admin-completed-services-table th:nth-child(5), .admin-completed-services-table td:nth-child(5),
+.admin-activity-table th:nth-child(5), .admin-activity-table td:nth-child(5) {
+  width:220px !important; white-space:normal !important; overflow-wrap:anywhere !important; vertical-align:top !important;
+}
+.admin-services-table th:nth-child(8), .admin-services-table td:nth-child(8),
+.admin-services-table th:nth-child(9), .admin-services-table td:nth-child(9),
+.admin-running-services-table th:nth-child(8), .admin-running-services-table td:nth-child(8),
+.admin-running-services-table th:nth-child(9), .admin-running-services-table td:nth-child(9) { width:180px !important; white-space:normal !important; overflow-wrap:anywhere !important; }
+
+/* The Map/Media controls share an equal, predictable cell and cannot spill into neighbours. */
+.admin-table td:has(> .admin-gmaps-link), .admin-table td:has(> .admin-gmaps-link) + td { width:154px !important; min-width:154px !important; padding:10px !important; text-align:center; }
+.admin-table td:has(> .admin-gmaps-link) > .admin-gmaps-link,
+.admin-table td:has(> .admin-gmaps-link) + td > .btn-secondary.small {
+  display:inline-flex !important; align-items:center; justify-content:center; width:126px !important; min-width:126px !important;
+  min-height:40px !important; height:auto !important; margin:0 auto !important; padding:8px 10px !important;
+  white-space:normal !important; line-height:1.2 !important; box-sizing:border-box;
+}
+
+/* Customer and technician-management columns are deliberately stable and readable. */
+.admin-customers-table { min-width:1040px !important; }
+.admin-customers-table th:nth-child(1), .admin-customers-table td:nth-child(1) { width:180px !important; white-space:normal !important; }
+.admin-customers-table th:nth-child(2), .admin-customers-table td:nth-child(2) { width:145px !important; }
+.admin-customers-table th:nth-child(n+3):nth-child(-n+6), .admin-customers-table td:nth-child(n+3):nth-child(-n+6) { width:115px !important; text-align:center; }
+.admin-customers-table th:nth-child(7), .admin-customers-table td:nth-child(7) { width:145px !important; }
+.admin-customers-table th:nth-child(8), .admin-customers-table td:nth-child(8) { width:110px !important; text-align:center; }
+.admin-tech-management-table { min-width:960px !important; }
+.admin-tech-management-table th:nth-child(1), .admin-tech-management-table td:nth-child(1) { width:190px !important; white-space:normal !important; }
+.admin-tech-management-table th:nth-child(2), .admin-tech-management-table td:nth-child(2) { width:145px !important; }
+.admin-tech-management-table th:nth-child(3), .admin-tech-management-table td:nth-child(3) { width:110px !important; text-align:center; }
+.admin-tech-management-table th:nth-child(n+4):nth-child(-n+6), .admin-tech-management-table td:nth-child(n+4):nth-child(-n+6) { width:110px !important; text-align:center; }
+.admin-tech-management-table th:nth-child(7), .admin-tech-management-table td:nth-child(7) { width:190px !important; text-align:center; }
+.admin-action-stack, .admin-tech-actions { display:flex !important; flex-wrap:wrap; justify-content:center; align-items:center; gap:7px; min-width:0; }
+.admin-action-stack button, .admin-tech-actions button { min-height:34px; padding:6px 10px !important; white-space:nowrap; }
+
+/* Filters are a tidy grid on desktop and stack only when there is not room. */
+.filter-grid, .admin-filter-row { display:grid !important; grid-template-columns:minmax(170px, .7fr) minmax(260px, 1.3fr); align-items:end; gap:12px; min-width:0; }
+.filter-grid input, .filter-grid select, .admin-filter-row input, .admin-filter-row select { width:100% !important; min-width:0; min-height:42px; box-sizing:border-box; }
+
+/* Technician tables/statuses follow the same compact rhythm. */
+.technician-shell .tech-table, #page-technician .tech-table { min-width:900px !important; }
+.technician-shell .tech-table th:last-child, .technician-shell .tech-table td:last-child, #page-technician .tech-table th:last-child, #page-technician .tech-table td:last-child { width:150px !important; text-align:center; }
+.status-badge { display:inline-flex; align-items:center; justify-content:center; min-height:28px; padding:4px 10px; white-space:nowrap; box-sizing:border-box; }
+
+@media (max-width:720px) {
+  #page-admin, #page-technician { padding-left:12px; padding-right:12px; }
+  .admin-card { border-radius:14px; }
+  .admin-card-header { align-items:flex-start; }
+  .admin-card-header .btn-primary, .admin-card-header .btn-secondary { width:auto; min-height:40px; }
+  .filter-grid, .admin-filter-row { grid-template-columns:1fr; gap:9px; }
+  .admin-table th, .admin-table td, .tech-table th, .tech-table td { padding:10px 12px !important; font-size:.84rem; }
+  .admin-services-table, .admin-running-services-table, .admin-completed-services-table, .admin-activity-table { min-width:1280px !important; }
+  .admin-customers-table { min-width:970px !important; }
+  .admin-tech-management-table { min-width:900px !important; }
+}
+</style>
+
+<style id="admin-final-desktop-neat-fix">
+/* =========================================================
+   LERESSAE ADMIN — FINAL DESKTOP TABLE LAYOUT
+   Tujuan: seluruh tabel Admin terlihat utuh di area konten,
+   tanpa membuat halaman melebar. Mobile tetap memakai scroll tabel.
+   ========================================================= */
+body.admin-mode{overflow-x:hidden!important}
+body.admin-mode>.wrapper{width:100%!important;max-width:1380px!important;min-width:0!important}
+#page-admin{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;overflow:visible!important}
+.admin-shell{width:100%!important;max-width:100%!important;min-width:0!important;grid-template-columns:260px minmax(0,1fr)!important;gap:18px!important}
+.admin-content{width:100%!important;max-width:100%!important;min-width:0!important;overflow:visible!important}
+.admin-panels{width:100%!important;max-width:100%!important;min-width:0!important}
+.admin-card{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;overflow:hidden!important}
+.admin-card-header{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+
+/* Table container is the only permitted horizontal scroll boundary. */
+.admin-table-wrap,
+.admin-customers-table-wrap,
+.admin-tech-management-wrap{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  box-sizing:border-box!important;
+  margin-left:0!important;
+  margin-right:0!important;
+  scrollbar-width:thin;
+}
+
+/* ---------- DATA SERVIS / SERVIS BERJALAN / SERVIS SELESAI ---------- */
+.admin-services-table,
+.admin-running-services-table,
+.admin-completed-services-table,
+.admin-activity-table{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  table-layout:fixed!important;
+  border-collapse:collapse!important;
+  border-spacing:0!important;
+}
+.admin-running-services-table th,
+.admin-running-services-table td,
+.admin-completed-services-table th,
+.admin-completed-services-table td,
+.admin-services-table th,
+.admin-services-table td,
+.admin-activity-table th,
+.admin-activity-table td{
+  box-sizing:border-box!important;
+  padding:11px 10px!important;
+  vertical-align:middle!important;
+  line-height:1.35!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.admin-running-services-table th,
+.admin-completed-services-table th,
+.admin-services-table th,
+.admin-activity-table th{
+  white-space:normal!important;
+  text-align:center!important;
+  font-size:.78rem!important;
+  line-height:1.25!important;
+}
+.admin-running-services-table td,
+.admin-completed-services-table td,
+.admin-services-table td,
+.admin-activity-table td{
+  font-size:.80rem!important;
+}
+/* 11-column service table. Percentages sum to 100%. */
+.admin-running-services-table th:nth-child(1),.admin-running-services-table td:nth-child(1),
+.admin-completed-services-table th:nth-child(1),.admin-completed-services-table td:nth-child(1),
+.admin-services-table th:nth-child(1),.admin-services-table td:nth-child(1){width:9%!important;text-align:left!important}
+.admin-running-services-table th:nth-child(2),.admin-running-services-table td:nth-child(2),
+.admin-completed-services-table th:nth-child(2),.admin-completed-services-table td:nth-child(2),
+.admin-services-table th:nth-child(2),.admin-services-table td:nth-child(2){width:8%!important;text-align:center!important}
+.admin-running-services-table th:nth-child(3),.admin-running-services-table td:nth-child(3),
+.admin-completed-services-table th:nth-child(3),.admin-completed-services-table td:nth-child(3),
+.admin-services-table th:nth-child(3),.admin-services-table td:nth-child(3){width:12%!important;text-align:left!important}
+.admin-running-services-table th:nth-child(4),.admin-running-services-table td:nth-child(4),
+.admin-completed-services-table th:nth-child(4),.admin-completed-services-table td:nth-child(4),
+.admin-services-table th:nth-child(4),.admin-services-table td:nth-child(4){width:10%!important;text-align:center!important}
+.admin-running-services-table th:nth-child(5),.admin-running-services-table td:nth-child(5),
+.admin-completed-services-table th:nth-child(5),.admin-completed-services-table td:nth-child(5),
+.admin-services-table th:nth-child(5),.admin-services-table td:nth-child(5){width:15%!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important}
+.admin-running-services-table th:nth-child(6),.admin-running-services-table td:nth-child(6),
+.admin-completed-services-table th:nth-child(6),.admin-completed-services-table td:nth-child(6),
+.admin-services-table th:nth-child(6),.admin-services-table td:nth-child(6){width:9%!important;text-align:center!important}
+.admin-running-services-table th:nth-child(7),.admin-running-services-table td:nth-child(7),
+.admin-completed-services-table th:nth-child(7),.admin-completed-services-table td:nth-child(7),
+.admin-services-table th:nth-child(7),.admin-services-table td:nth-child(7){width:9%!important;text-align:center!important}
+.admin-running-services-table th:nth-child(8),.admin-running-services-table td:nth-child(8),
+.admin-completed-services-table th:nth-child(8),.admin-completed-services-table td:nth-child(8),
+.admin-services-table th:nth-child(8),.admin-services-table td:nth-child(8){width:8%!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important}
+.admin-running-services-table th:nth-child(9),.admin-running-services-table td:nth-child(9),
+.admin-completed-services-table th:nth-child(9),.admin-completed-services-table td:nth-child(9),
+.admin-services-table th:nth-child(9),.admin-services-table td:nth-child(9){width:8%!important;text-align:center!important;white-space:normal!important}
+.admin-running-services-table th:nth-child(10),.admin-running-services-table td:nth-child(10),
+.admin-completed-services-table th:nth-child(10),.admin-completed-services-table td:nth-child(10),
+.admin-services-table th:nth-child(10),.admin-services-table td:nth-child(10){width:6%!important;text-align:center!important;white-space:normal!important}
+.admin-running-services-table th:nth-child(11),.admin-running-services-table td:nth-child(11),
+.admin-completed-services-table th:nth-child(11),.admin-completed-services-table td:nth-child(11),
+.admin-services-table th:nth-child(11),.admin-services-table td:nth-child(11){width:6%!important;text-align:center!important}
+
+/* Service action buttons never escape their cell. */
+.admin-running-services-table .admin-action-stack,
+.admin-completed-services-table .admin-action-stack,
+.admin-services-table .admin-action-stack{
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:center!important;gap:5px!important;width:100%!important;min-width:0!important
+}
+.admin-running-services-table .admin-action-stack button,
+.admin-completed-services-table .admin-action-stack button,
+.admin-services-table .admin-action-stack button{
+  width:100%!important;min-width:0!important;max-width:100%!important;min-height:34px!important;height:auto!important;padding:6px 5px!important;font-size:.70rem!important;line-height:1.15!important;white-space:normal!important;box-sizing:border-box!important
+}
+.admin-running-services-table .admin-gmaps-link,
+.admin-completed-services-table .admin-gmaps-link,
+.admin-services-table .admin-gmaps-link,
+.admin-running-services-table td .btn-secondary.small,
+.admin-completed-services-table td .btn-secondary.small,
+.admin-services-table td .btn-secondary.small{
+  max-width:100%!important;min-width:0!important;width:100%!important;height:auto!important;min-height:34px!important;padding:6px 5px!important;font-size:.70rem!important;box-sizing:border-box!important;white-space:normal!important
+}
+
+/* ---------- PELANGGAN ---------- */
+.admin-customers-table{
+  width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important;border-collapse:collapse!important
+}
+.admin-customers-table th,.admin-customers-table td{
+  box-sizing:border-box!important;padding:12px 10px!important;vertical-align:middle!important;overflow:hidden!important;text-overflow:ellipsis!important;line-height:1.35!important
+}
+.admin-customers-table th{white-space:normal!important;text-align:center!important;font-size:.78rem!important}
+.admin-customers-table td{font-size:.82rem!important}
+.admin-customers-table th:nth-child(1),.admin-customers-table td:nth-child(1){width:18%!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important}
+.admin-customers-table th:nth-child(2),.admin-customers-table td:nth-child(2){width:15%!important;text-align:left!important}
+.admin-customers-table th:nth-child(3),.admin-customers-table td:nth-child(3){width:10%!important;text-align:center!important}
+.admin-customers-table th:nth-child(4),.admin-customers-table td:nth-child(4){width:11%!important;text-align:center!important}
+.admin-customers-table th:nth-child(5),.admin-customers-table td:nth-child(5){width:12%!important;text-align:center!important}
+.admin-customers-table th:nth-child(6),.admin-customers-table td:nth-child(6){width:15%!important;text-align:center!important}
+.admin-customers-table th:nth-child(7),.admin-customers-table td:nth-child(7){width:11%!important;text-align:center!important}
+.admin-customers-table th:nth-child(8),.admin-customers-table td:nth-child(8){width:8%!important;text-align:center!important}
+
+/* ---------- TEKNISI ---------- */
+.admin-tech-management-table{
+  width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important;border-collapse:collapse!important
+}
+.admin-tech-management-table th,.admin-tech-management-table td{
+  box-sizing:border-box!important;padding:12px 10px!important;vertical-align:middle!important;overflow:hidden!important;text-overflow:ellipsis!important;line-height:1.35!important
+}
+.admin-tech-management-table th{white-space:normal!important;text-align:center!important;font-size:.80rem!important}
+.admin-tech-management-table td{font-size:.82rem!important}
+.admin-tech-management-table th:nth-child(1),.admin-tech-management-table td:nth-child(1){width:22%!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important}
+.admin-tech-management-table th:nth-child(2),.admin-tech-management-table td:nth-child(2){width:14%!important;text-align:left!important}
+.admin-tech-management-table th:nth-child(3),.admin-tech-management-table td:nth-child(3){width:13%!important;text-align:center!important}
+.admin-tech-management-table th:nth-child(4),.admin-tech-management-table td:nth-child(4){width:11%!important;text-align:center!important}
+.admin-tech-management-table th:nth-child(5),.admin-tech-management-table td:nth-child(5){width:12%!important;text-align:center!important}
+.admin-tech-management-table th:nth-child(6),.admin-tech-management-table td:nth-child(6){width:12%!important;text-align:center!important}
+.admin-tech-management-table th:nth-child(7),.admin-tech-management-table td:nth-child(7){width:16%!important;text-align:center!important}
+.admin-tech-management-table .admin-tech-actions{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:5px!important;width:100%!important;min-width:0!important}
+.admin-tech-management-table .admin-tech-actions button{width:100%!important;min-width:0!important;max-width:100%!important;min-height:34px!important;padding:6px 5px!important;font-size:.70rem!important;box-sizing:border-box!important;white-space:normal!important}
+
+/* Filter rows stay inside the card. */
+.admin-service-filter-bar,.filter-grid,.admin-filter-row{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+.admin-service-filter-bar{display:flex!important;align-items:center!important;gap:10px!important;flex-wrap:wrap!important}
+.admin-service-search-input,.admin-service-period-select,.filter-grid input,.filter-grid select,.admin-filter-row input,.admin-filter-row select{min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
+
+@media(max-width:1100px) and (min-width:768px){
+  .admin-shell{grid-template-columns:230px minmax(0,1fr)!important;gap:14px!important}
+  .admin-card{padding:14px!important}
+  .admin-running-services-table th,.admin-running-services-table td,.admin-completed-services-table th,.admin-completed-services-table td,.admin-services-table th,.admin-services-table td{padding:9px 7px!important;font-size:.72rem!important}
+  .admin-customers-table th,.admin-customers-table td,.admin-tech-management-table th,.admin-tech-management-table td{padding:9px 7px!important;font-size:.74rem!important}
+}
+
+@media(max-width:767px){
+  .admin-table-wrap,.admin-customers-table-wrap,.admin-tech-management-wrap{overflow-x:auto!important}
+  .admin-running-services-table,.admin-completed-services-table,.admin-services-table,.admin-activity-table{width:max-content!important;min-width:1280px!important;max-width:none!important;table-layout:fixed!important}
+  .admin-customers-table{width:max-content!important;min-width:950px!important;max-width:none!important}
+  .admin-tech-management-table{width:max-content!important;min-width:900px!important;max-width:none!important}
+  .admin-running-services-table th,.admin-running-services-table td,.admin-completed-services-table th,.admin-completed-services-table td,.admin-services-table th,.admin-services-table td{font-size:.78rem!important}
+  .admin-customers-table th,.admin-customers-table td,.admin-tech-management-table th,.admin-tech-management-table td{font-size:.78rem!important}
+}
+</style>
+
+<style id="admin-number-alignment-final">
+/* =========================================================
+   ADMIN — FINAL NUMBER / CELL ALIGNMENT
+   Tujuan: semua angka, status, tanggal, dan nominal berada
+   pada garis tengah yang sama. Tidak mengubah data/logic.
+   ========================================================= */
+#page-admin .admin-table-wrap,
+#page-admin .admin-customers-table-wrap,
+#page-admin .admin-tech-management-wrap{
+  position:relative!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  box-sizing:border-box!important;
+}
+
+#page-admin .admin-table,
+#page-admin .admin-customers-table,
+#page-admin .admin-tech-management-table{
+  border-collapse:collapse!important;
+  border-spacing:0!important;
+}
+
+/* Semua cell memakai box model dan vertical rhythm yang sama. */
+#page-admin .admin-table th,
+#page-admin .admin-table td,
+#page-admin .admin-customers-table th,
+#page-admin .admin-customers-table td,
+#page-admin .admin-tech-management-table th,
+#page-admin .admin-tech-management-table td{
+  box-sizing:border-box!important;
+  vertical-align:middle!important;
+  line-height:1.35!important;
+  padding-top:12px!important;
+  padding-bottom:12px!important;
+}
+
+/* Header selalu benar-benar berada di tengah cell. */
+#page-admin .admin-table th,
+#page-admin .admin-customers-table th,
+#page-admin .admin-tech-management-table th{
+  vertical-align:middle!important;
+  line-height:1.25!important;
+}
+
+/* ---------- TEKNISI ---------- */
+#page-admin .admin-tech-management-table{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  table-layout:fixed!important;
+}
+#page-admin .admin-tech-management-table th,
+#page-admin .admin-tech-management-table td{
+  vertical-align:middle!important;
+  text-align:center!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+#page-admin .admin-tech-management-table th:nth-child(1),
+#page-admin .admin-tech-management-table td:nth-child(1){
+  width:22%!important;
+  text-align:left!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+#page-admin .admin-tech-management-table th:nth-child(2),
+#page-admin .admin-tech-management-table td:nth-child(2){
+  width:14%!important;
+  text-align:left!important;
+  white-space:nowrap!important;
+}
+#page-admin .admin-tech-management-table th:nth-child(3),
+#page-admin .admin-tech-management-table td:nth-child(3){width:13%!important;text-align:center!important;}
+#page-admin .admin-tech-management-table th:nth-child(4),
+#page-admin .admin-tech-management-table td:nth-child(4),
+#page-admin .admin-tech-management-table th:nth-child(5),
+#page-admin .admin-tech-management-table td:nth-child(5),
+#page-admin .admin-tech-management-table th:nth-child(6),
+#page-admin .admin-tech-management-table td:nth-child(6){
+  width:11%!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+  font-variant-numeric:tabular-nums!important;
+}
+#page-admin .admin-tech-management-table th:nth-child(7),
+#page-admin .admin-tech-management-table td:nth-child(7){
+  width:18%!important;
+  text-align:center!important;
+}
+
+#page-admin .admin-tech-management-table tbody tr{
+  height:132px!important;
+}
+#page-admin .admin-tech-management-table tbody td:nth-child(4),
+#page-admin .admin-tech-management-table tbody td:nth-child(5),
+#page-admin .admin-tech-management-table tbody td:nth-child(6){
+  vertical-align:middle!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+}
+#page-admin .admin-tech-management-table .admin-tech-actions,
+#page-admin .admin-tech-management-table .admin-action-stack{
+  width:100%!important;
+  min-width:0!important;
+  height:auto!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  justify-content:center!important;
+  gap:6px!important;
+  margin:0!important;
+}
+#page-admin .admin-tech-management-table .admin-tech-actions button,
+#page-admin .admin-tech-management-table .admin-action-stack button{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  height:38px!important;
+  min-height:38px!important;
+  margin:0!important;
+  padding:6px 8px!important;
+  line-height:1.15!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  box-sizing:border-box!important;
+}
+#page-admin .admin-tech-management-table .status-badge{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  vertical-align:middle!important;
+  line-height:1!important;
+  min-height:30px!important;
+}
+
+/* ---------- PELANGGAN ---------- */
+#page-admin .admin-customers-table{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  table-layout:fixed!important;
+}
+#page-admin .admin-customers-table th,
+#page-admin .admin-customers-table td{
+  vertical-align:middle!important;
+}
+#page-admin .admin-customers-table th:nth-child(1),
+#page-admin .admin-customers-table td:nth-child(1){width:18%!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important;}
+#page-admin .admin-customers-table th:nth-child(2),
+#page-admin .admin-customers-table td:nth-child(2){width:15%!important;text-align:left!important;white-space:nowrap!important;}
+#page-admin .admin-customers-table th:nth-child(3),
+#page-admin .admin-customers-table td:nth-child(3){width:10%!important;text-align:center!important;}
+#page-admin .admin-customers-table th:nth-child(4),
+#page-admin .admin-customers-table td:nth-child(4){width:11%!important;text-align:center!important;}
+#page-admin .admin-customers-table th:nth-child(5),
+#page-admin .admin-customers-table td:nth-child(5){width:12%!important;text-align:center!important;}
+#page-admin .admin-customers-table th:nth-child(6),
+#page-admin .admin-customers-table td:nth-child(6){width:15%!important;text-align:center!important;}
+#page-admin .admin-customers-table th:nth-child(7),
+#page-admin .admin-customers-table td:nth-child(7){width:11%!important;text-align:center!important;}
+#page-admin .admin-customers-table th:nth-child(8),
+#page-admin .admin-customers-table td:nth-child(8){width:8%!important;text-align:center!important;}
+#page-admin .admin-customers-table tbody td:nth-child(n+3){
+  font-variant-numeric:tabular-nums!important;
+  white-space:nowrap!important;
+}
+
+/* ---------- DATA SERVIS / BERJALAN / SELESAI ---------- */
+#page-admin .admin-services-table,
+#page-admin .admin-running-services-table,
+#page-admin .admin-completed-services-table,
+#page-admin .admin-activity-table{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  table-layout:fixed!important;
+}
+#page-admin .admin-services-table th,
+#page-admin .admin-services-table td,
+#page-admin .admin-running-services-table th,
+#page-admin .admin-running-services-table td,
+#page-admin .admin-completed-services-table th,
+#page-admin .admin-completed-services-table td,
+#page-admin .admin-activity-table th,
+#page-admin .admin-activity-table td{
+  vertical-align:middle!important;
+}
+/* Angka/statistik: selalu center + tabular numbers. */
+#page-admin .admin-services-table td:nth-child(2),
+#page-admin .admin-services-table td:nth-child(4),
+#page-admin .admin-services-table td:nth-child(6),
+#page-admin .admin-services-table td:nth-child(7),
+#page-admin .admin-services-table td:nth-child(9),
+#page-admin .admin-services-table td:nth-child(10),
+#page-admin .admin-services-table td:nth-child(11),
+#page-admin .admin-running-services-table td:nth-child(2),
+#page-admin .admin-running-services-table td:nth-child(4),
+#page-admin .admin-running-services-table td:nth-child(6),
+#page-admin .admin-running-services-table td:nth-child(7),
+#page-admin .admin-running-services-table td:nth-child(9),
+#page-admin .admin-running-services-table td:nth-child(10),
+#page-admin .admin-running-services-table td:nth-child(11),
+#page-admin .admin-completed-services-table td:nth-child(2),
+#page-admin .admin-completed-services-table td:nth-child(4),
+#page-admin .admin-completed-services-table td:nth-child(6),
+#page-admin .admin-completed-services-table td:nth-child(7),
+#page-admin .admin-completed-services-table td:nth-child(9),
+#page-admin .admin-completed-services-table td:nth-child(10),
+#page-admin .admin-completed-services-table td:nth-child(11){
+  text-align:center!important;
+  vertical-align:middle!important;
+  white-space:nowrap!important;
+  font-variant-numeric:tabular-nums!important;
+}
+/* ID/tanggal/customer tetap stabil. */
+#page-admin .admin-services-table td:nth-child(1),
+#page-admin .admin-running-services-table td:nth-child(1),
+#page-admin .admin-completed-services-table td:nth-child(1){text-align:left!important;vertical-align:middle!important;}
+#page-admin .admin-services-table td:nth-child(3),
+#page-admin .admin-running-services-table td:nth-child(3),
+#page-admin .admin-completed-services-table td:nth-child(3){text-align:left!important;vertical-align:middle!important;white-space:nowrap!important;}
+#page-admin .admin-services-table td:nth-child(5),
+#page-admin .admin-running-services-table td:nth-child(5),
+#page-admin .admin-completed-services-table td:nth-child(5){
+  text-align:left!important;
+  vertical-align:middle!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+#page-admin .admin-services-table td:nth-child(8),
+#page-admin .admin-running-services-table td:nth-child(8),
+#page-admin .admin-completed-services-table td:nth-child(8){
+  text-align:left!important;
+  vertical-align:middle!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+
+/* Nominal dan tanggal tidak boleh baseline-nya berbeda. */
+#page-admin .admin-services-table td,
+#page-admin .admin-running-services-table td,
+#page-admin .admin-completed-services-table td{
+  font-variant-numeric:tabular-nums;
+}
+
+/* Aksi: seluruh tombol berada di tengah secara vertikal. */
+#page-admin .admin-services-table .admin-action-stack,
+#page-admin .admin-running-services-table .admin-action-stack,
+#page-admin .admin-completed-services-table .admin-action-stack{
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  align-items:stretch!important;
+  gap:5px!important;
+  width:100%!important;
+  margin:0!important;
+}
+#page-admin .admin-services-table .admin-action-stack button,
+#page-admin .admin-running-services-table .admin-action-stack button,
+#page-admin .admin-completed-services-table .admin-action-stack button{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:100%!important;
+  height:34px!important;
+  min-height:34px!important;
+  margin:0!important;
+  line-height:1.1!important;
+}
+
+/* Tidak ada cell yang menggunakan top/bottom offset. */
+#page-admin .admin-table td *,
+#page-admin .admin-customers-table td *,
+#page-admin .admin-tech-management-table td *{
+  top:auto!important;
+  bottom:auto!important;
+}
+
+@media (max-width:1100px) and (min-width:768px){
+  #page-admin .admin-tech-management-table tbody tr{height:122px!important;}
+  #page-admin .admin-table th,#page-admin .admin-table td,
+  #page-admin .admin-customers-table th,#page-admin .admin-customers-table td,
+  #page-admin .admin-tech-management-table th,#page-admin .admin-tech-management-table td{
+    padding-top:10px!important;padding-bottom:10px!important;
+  }
+}
+
+@media (max-width:767px){
+  #page-admin .admin-tech-management-table,
+  #page-admin .admin-customers-table,
+  #page-admin .admin-services-table,
+  #page-admin .admin-running-services-table,
+  #page-admin .admin-completed-services-table,
+  #page-admin .admin-activity-table{
+    width:max-content!important;
+    min-width:900px!important;
+    max-width:none!important;
+  }
+  #page-admin .admin-tech-management-table tbody tr{height:118px!important;}
+}
+</style>
+
+
+<style id="admin-full-audit-final-fix">
+/* =========================================================
+   ADMIN FULL AUDIT — FINAL OPERATIONAL TABLE FIX
+   - 11/12 kolom benar-benar mengikuti lebar card
+   - Tidak ada header/angka yang terpotong karena ellipsis
+   - Semua cell middle aligned
+   - Action/Maps/Media tetap berada di dalam cell
+   - Horizontal scroll hanya menjadi fallback untuk layar sempit
+   ========================================================= */
+#page-admin .admin-table-wrap,
+#page-admin .admin-customers-table-wrap,
+#page-admin .admin-tech-management-wrap{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  box-sizing:border-box!important;
+  scrollbar-width:thin;
+}
+
+#page-admin .admin-services-table,
+#page-admin .admin-running-services-table,
+#page-admin .admin-completed-services-table{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  table-layout:fixed!important;
+  border-collapse:collapse!important;
+  border-spacing:0!important;
+}
+
+#page-admin .admin-services-table th,
+#page-admin .admin-services-table td,
+#page-admin .admin-running-services-table th,
+#page-admin .admin-running-services-table td,
+#page-admin .admin-completed-services-table th,
+#page-admin .admin-completed-services-table td{
+  box-sizing:border-box!important;
+  min-width:0!important;
+  vertical-align:middle!important;
+  overflow:hidden!important;
+  text-overflow:clip!important;
+  line-height:1.25!important;
+  padding:9px 7px!important;
+  height:72px!important;
+  min-height:72px!important;
+}
+
+#page-admin .admin-services-table th,
+#page-admin .admin-running-services-table th,
+#page-admin .admin-completed-services-table th{
+  height:56px!important;
+  min-height:56px!important;
+  padding:8px 6px!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+  word-break:normal!important;
+  text-align:center!important;
+  font-size:.72rem!important;
+  line-height:1.18!important;
+}
+
+#page-admin .admin-services-table td,
+#page-admin .admin-running-services-table td,
+#page-admin .admin-completed-services-table td{
+  font-size:.76rem!important;
+  font-variant-numeric:tabular-nums!important;
+}
+
+/* DATA SERVIS — 12 kolom */
+#page-admin .admin-services-table th:nth-child(1),#page-admin .admin-services-table td:nth-child(1){width:8%!important;text-align:left!important;}
+#page-admin .admin-services-table th:nth-child(2),#page-admin .admin-services-table td:nth-child(2){width:7%!important;text-align:center!important;white-space:nowrap!important;}
+#page-admin .admin-services-table th:nth-child(3),#page-admin .admin-services-table td:nth-child(3){width:11%!important;text-align:left!important;}
+#page-admin .admin-services-table th:nth-child(4),#page-admin .admin-services-table td:nth-child(4){width:9%!important;text-align:center!important;white-space:nowrap!important;}
+#page-admin .admin-services-table th:nth-child(5),#page-admin .admin-services-table td:nth-child(5){width:12%!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important;}
+#page-admin .admin-services-table th:nth-child(6),#page-admin .admin-services-table td:nth-child(6){width:8%!important;text-align:center!important;}
+#page-admin .admin-services-table th:nth-child(7),#page-admin .admin-services-table td:nth-child(7){width:8%!important;text-align:center!important;}
+#page-admin .admin-services-table th:nth-child(8),#page-admin .admin-services-table td:nth-child(8){width:8%!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important;}
+#page-admin .admin-services-table th:nth-child(9),#page-admin .admin-services-table td:nth-child(9){width:8%!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important;}
+#page-admin .admin-services-table th:nth-child(10),#page-admin .admin-services-table td:nth-child(10){width:7%!important;text-align:center!important;}
+#page-admin .admin-services-table th:nth-child(11),#page-admin .admin-services-table td:nth-child(11){width:6%!important;text-align:center!important;white-space:normal!important;overflow-wrap:anywhere!important;}
+#page-admin .admin-services-table th:nth-child(12),#page-admin .admin-services-table td:nth-child(12){width:8%!important;text-align:center!important;white-space:normal!important;}
+
+/* SERVIS BERJALAN — 11 kolom */
+#page-admin .admin-running-services-table th:nth-child(1),#page-admin .admin-running-services-table td:nth-child(1){width:9%!important;text-align:left!important;}
+#page-admin .admin-running-services-table th:nth-child(2),#page-admin .admin-running-services-table td:nth-child(2){width:7%!important;text-align:center!important;white-space:nowrap!important;}
+#page-admin .admin-running-services-table th:nth-child(3),#page-admin .admin-running-services-table td:nth-child(3){width:11%!important;text-align:left!important;}
+#page-admin .admin-running-services-table th:nth-child(4),#page-admin .admin-running-services-table td:nth-child(4){width:9%!important;text-align:center!important;white-space:nowrap!important;}
+#page-admin .admin-running-services-table th:nth-child(5),#page-admin .admin-running-services-table td:nth-child(5){width:12%!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important;}
+#page-admin .admin-running-services-table th:nth-child(6),#page-admin .admin-running-services-table td:nth-child(6){width:8%!important;text-align:center!important;}
+#page-admin .admin-running-services-table th:nth-child(7),#page-admin .admin-running-services-table td:nth-child(7){width:8%!important;text-align:center!important;}
+#page-admin .admin-running-services-table th:nth-child(8),#page-admin .admin-running-services-table td:nth-child(8){width:8%!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important;}
+#page-admin .admin-running-services-table th:nth-child(9),#page-admin .admin-running-services-table td:nth-child(9){width:8%!important;text-align:center!important;}
+#page-admin .admin-running-services-table th:nth-child(10),#page-admin .admin-running-services-table td:nth-child(10){width:7%!important;text-align:center!important;white-space:normal!important;overflow-wrap:anywhere!important;}
+#page-admin .admin-running-services-table th:nth-child(11),#page-admin .admin-running-services-table td:nth-child(11){width:13%!important;text-align:center!important;}
+
+/* SERVIS SELESAI — 12 kolom */
+#page-admin .admin-completed-services-table th:nth-child(1),#page-admin .admin-completed-services-table td:nth-child(1){width:8%!important;text-align:left!important;}
+#page-admin .admin-completed-services-table th:nth-child(2),#page-admin .admin-completed-services-table td:nth-child(2){width:7%!important;text-align:center!important;white-space:nowrap!important;}
+#page-admin .admin-completed-services-table th:nth-child(3),#page-admin .admin-completed-services-table td:nth-child(3){width:7%!important;text-align:center!important;white-space:nowrap!important;}
+#page-admin .admin-completed-services-table th:nth-child(4),#page-admin .admin-completed-services-table td:nth-child(4){width:11%!important;text-align:left!important;}
+#page-admin .admin-completed-services-table th:nth-child(5),#page-admin .admin-completed-services-table td:nth-child(5){width:12%!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important;}
+#page-admin .admin-completed-services-table th:nth-child(6),#page-admin .admin-completed-services-table td:nth-child(6){width:8%!important;text-align:center!important;}
+#page-admin .admin-completed-services-table th:nth-child(7),#page-admin .admin-completed-services-table td:nth-child(7){width:8%!important;text-align:center!important;}
+#page-admin .admin-completed-services-table th:nth-child(8),#page-admin .admin-completed-services-table td:nth-child(8){width:8%!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important;}
+#page-admin .admin-completed-services-table th:nth-child(9),#page-admin .admin-completed-services-table td:nth-child(9){width:6%!important;text-align:center!important;white-space:normal!important;overflow-wrap:anywhere!important;}
+#page-admin .admin-completed-services-table th:nth-child(10),#page-admin .admin-completed-services-table td:nth-child(10){width:7%!important;text-align:center!important;white-space:normal!important;}
+#page-admin .admin-completed-services-table th:nth-child(11),#page-admin .admin-completed-services-table td:nth-child(11){width:7%!important;text-align:center!important;}
+#page-admin .admin-completed-services-table th:nth-child(12),#page-admin .admin-completed-services-table td:nth-child(12){width:11%!important;text-align:center!important;}
+
+/* Tombol internal selalu mengikuti cell, tidak pernah keluar tabel. */
+#page-admin .admin-services-table .admin-gmaps-link,
+#page-admin .admin-running-services-table .admin-gmaps-link,
+#page-admin .admin-completed-services-table .admin-gmaps-link,
+#page-admin .admin-services-table td .btn-secondary.small,
+#page-admin .admin-running-services-table td .btn-secondary.small,
+#page-admin .admin-completed-services-table td .btn-secondary.small{
+  display:flex!important;
+  flex:1 1 auto!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  height:38px!important;
+  min-height:38px!important;
+  margin:0 auto!important;
+  padding:4px 5px!important;
+  box-sizing:border-box!important;
+  font-size:.67rem!important;
+  line-height:1.1!important;
+  white-space:normal!important;
+  overflow:hidden!important;
+  text-overflow:clip!important;
+  word-break:normal!important;
+}
+#page-admin .admin-running-services-table .admin-action-stack{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  justify-content:center!important;
+  gap:4px!important;
+  width:100%!important;
+  min-width:0!important;
+}
+#page-admin .admin-running-services-table .admin-action-stack button{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  min-height:30px!important;
+  height:30px!important;
+  padding:4px!important;
+  font-size:.66rem!important;
+  line-height:1!important;
+}
+#page-admin .admin-completed-services-table td:nth-child(12) .btn-secondary.small{
+  width:100%!important;
+}
+
+/* Status badge tidak boleh keluar cell. */
+#page-admin .admin-services-table .status-badge,
+#page-admin .admin-running-services-table .status-badge,
+#page-admin .admin-completed-services-table .status-badge{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  max-width:100%!important;
+  min-width:0!important;
+  padding:5px 6px!important;
+  font-size:.62rem!important;
+  line-height:1.05!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+  text-align:center!important;
+}
+
+/* PELANGGAN */
+#page-admin .admin-customers-table{
+  width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important;border-collapse:collapse!important;
+}
+#page-admin .admin-customers-table th,#page-admin .admin-customers-table td{
+  box-sizing:border-box!important;vertical-align:middle!important;line-height:1.3!important;padding:10px 8px!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;
+}
+#page-admin .admin-customers-table th{font-size:.72rem!important;white-space:normal!important;text-align:center!important;}
+#page-admin .admin-customers-table td{font-size:.76rem!important;}
+#page-admin .admin-customers-table th:nth-child(1),#page-admin .admin-customers-table td:nth-child(1){width:18%!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important;}
+#page-admin .admin-customers-table th:nth-child(2),#page-admin .admin-customers-table td:nth-child(2){width:15%!important;text-align:left!important;white-space:nowrap!important;}
+#page-admin .admin-customers-table th:nth-child(3),#page-admin .admin-customers-table td:nth-child(3){width:10%!important;text-align:center!important;}
+#page-admin .admin-customers-table th:nth-child(4),#page-admin .admin-customers-table td:nth-child(4){width:11%!important;text-align:center!important;}
+#page-admin .admin-customers-table th:nth-child(5),#page-admin .admin-customers-table td:nth-child(5){width:12%!important;text-align:center!important;}
+#page-admin .admin-customers-table th:nth-child(6),#page-admin .admin-customers-table td:nth-child(6){width:15%!important;text-align:center!important;}
+#page-admin .admin-customers-table th:nth-child(7),#page-admin .admin-customers-table td:nth-child(7){width:11%!important;text-align:center!important;}
+#page-admin .admin-customers-table th:nth-child(8),#page-admin .admin-customers-table td:nth-child(8){width:8%!important;text-align:center!important;}
+
+/* TEKNISI */
+#page-admin .admin-tech-management-table{
+  width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important;border-collapse:collapse!important;
+}
+#page-admin .admin-tech-management-table th,#page-admin .admin-tech-management-table td{
+  box-sizing:border-box!important;vertical-align:middle!important;line-height:1.3!important;padding:10px 8px!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+#page-admin .admin-tech-management-table th{font-size:.72rem!important;white-space:normal!important;text-align:center!important;}
+#page-admin .admin-tech-management-table td{font-size:.76rem!important;}
+#page-admin .admin-tech-management-table th:nth-child(1),#page-admin .admin-tech-management-table td:nth-child(1){width:22%!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important;}
+#page-admin .admin-tech-management-table th:nth-child(2),#page-admin .admin-tech-management-table td:nth-child(2){width:13%!important;text-align:left!important;}
+#page-admin .admin-tech-management-table th:nth-child(3),#page-admin .admin-tech-management-table td:nth-child(3){width:13%!important;text-align:center!important;}
+#page-admin .admin-tech-management-table th:nth-child(4),#page-admin .admin-tech-management-table td:nth-child(4){width:11%!important;text-align:center!important;}
+#page-admin .admin-tech-management-table th:nth-child(5),#page-admin .admin-tech-management-table td:nth-child(5){width:12%!important;text-align:center!important;}
+#page-admin .admin-tech-management-table th:nth-child(6),#page-admin .admin-tech-management-table td:nth-child(6){width:12%!important;text-align:center!important;}
+#page-admin .admin-tech-management-table th:nth-child(7),#page-admin .admin-tech-management-table td:nth-child(7){width:17%!important;text-align:center!important;}
+#page-admin .admin-tech-management-table .admin-tech-actions{display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:center!important;gap:4px!important;width:100%!important;min-width:0!important;}
+#page-admin .admin-tech-management-table .admin-tech-actions button{width:100%!important;min-width:0!important;max-width:100%!important;height:30px!important;min-height:30px!important;padding:4px!important;font-size:.66rem!important;line-height:1!important;white-space:normal!important;}
+
+/* Angka, tanggal, nominal: posisi tengah benar-benar konsisten. */
+#page-admin .admin-services-table td:nth-child(2),#page-admin .admin-services-table td:nth-child(4),#page-admin .admin-services-table td:nth-child(6),#page-admin .admin-services-table td:nth-child(7),#page-admin .admin-services-table td:nth-child(10),#page-admin .admin-services-table td:nth-child(11),#page-admin .admin-services-table td:nth-child(12),
+#page-admin .admin-running-services-table td:nth-child(2),#page-admin .admin-running-services-table td:nth-child(4),#page-admin .admin-running-services-table td:nth-child(6),#page-admin .admin-running-services-table td:nth-child(7),#page-admin .admin-running-services-table td:nth-child(9),#page-admin .admin-running-services-table td:nth-child(10),#page-admin .admin-running-services-table td:nth-child(11),
+#page-admin .admin-completed-services-table td:nth-child(2),#page-admin .admin-completed-services-table td:nth-child(3),#page-admin .admin-completed-services-table td:nth-child(6),#page-admin .admin-completed-services-table td:nth-child(7),#page-admin .admin-completed-services-table td:nth-child(9),#page-admin .admin-completed-services-table td:nth-child(10),#page-admin .admin-completed-services-table td:nth-child(11),#page-admin .admin-completed-services-table td:nth-child(12){
+  text-align:center!important;vertical-align:middle!important;font-variant-numeric:tabular-nums!important;
+}
+
+/* Desktop sedikit lebih lega */
+@media(min-width:1101px){
+  #page-admin .admin-services-table th,#page-admin .admin-services-table td,
+  #page-admin .admin-running-services-table th,#page-admin .admin-running-services-table td,
+  #page-admin .admin-completed-services-table th,#page-admin .admin-completed-services-table td{
+    padding-left:8px!important;padding-right:8px!important;font-size:.78rem!important;
+  }
+}
+
+/* Tablet/mobile: tabel boleh scroll, tetapi tidak merusak tinggi/vertical alignment. */
+@media(max-width:900px){
+  #page-admin .admin-services-table,#page-admin .admin-running-services-table,#page-admin .admin-completed-services-table{
+    width:1120px!important;min-width:1120px!important;max-width:none!important;
+  }
+  #page-admin .admin-services-table th,#page-admin .admin-services-table td,
+  #page-admin .admin-running-services-table th,#page-admin .admin-running-services-table td,
+  #page-admin .admin-completed-services-table th,#page-admin .admin-completed-services-table td{
+    height:66px!important;min-height:66px!important;font-size:.70rem!important;padding:8px 6px!important;
+  }
+  #page-admin .admin-customers-table,#page-admin .admin-tech-management-table{
+    width:900px!important;min-width:900px!important;max-width:none!important;
+  }
+}
+</style>
+
+<style id="admin-final-layout-v4">
+/* =========================================================
+   ADMIN FINAL LAYOUT V4
+   Prinsip: setiap tabel punya wrapper horizontal sendiri.
+   Tidak ada kolom yang dipaksa mengecil sampai teks/tombol bertabrakan.
+   ========================================================= */
+body.admin-mode { overflow-x:hidden !important; }
+.admin-content, .admin-main, .admin-page, .admin-card { min-width:0 !important; max-width:100% !important; }
+.admin-card { overflow:visible !important; }
+
+/* Wrapper tabel: horizontal scroll hanya di tabel */
+.admin-table-wrap,
+.admin-activity-table-wrap,
+.admin-customers-table-wrap,
+.admin-tech-management-wrap {
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+  -webkit-overflow-scrolling:touch !important;
+  overscroll-behavior-inline:contain !important;
+  scrollbar-width:thin !important;
+}
+
+/* Semua tabel Admin: jangan pakai fixed layout karena lebar kolom berbeda-beda. */
+.admin-services-table,
+.admin-running-services-table,
+.admin-completed-services-table,
+.admin-activity-table,
+.admin-customers-table,
+.admin-tech-management-table {
+  table-layout:auto !important;
+  border-collapse:separate !important;
+  border-spacing:0 !important;
+  width:max-content !important;
+  max-width:none !important;
+  margin:0 !important;
+}
+
+/* Lebar minimum sesuai jumlah kolom masing-masing. */
+.admin-services-table,
+.admin-completed-services-table,
+.admin-activity-table { min-width:1810px !important; }
+.admin-running-services-table { min-width:1690px !important; }
+.admin-customers-table { min-width:1120px !important; }
+.admin-tech-management-table { min-width:980px !important; }
+
+/* Semua cell selalu berada di tengah secara vertikal. */
+.admin-services-table th, .admin-services-table td,
+.admin-running-services-table th, .admin-running-services-table td,
+.admin-completed-services-table th, .admin-completed-services-table td,
+.admin-activity-table th, .admin-activity-table td,
+.admin-customers-table th, .admin-customers-table td,
+.admin-tech-management-table th, .admin-tech-management-table td {
+  box-sizing:border-box !important;
+  vertical-align:middle !important;
+  line-height:1.35 !important;
+}
+
+/* Header */
+.admin-services-table th, .admin-running-services-table th,
+.admin-completed-services-table th, .admin-activity-table th,
+.admin-customers-table th, .admin-tech-management-table th {
+  height:64px !important;
+  padding:14px 12px !important;
+  white-space:normal !important;
+  word-break:normal !important;
+  overflow-wrap:normal !important;
+  text-align:center !important;
+}
+
+/* Body */
+.admin-services-table td, .admin-running-services-table td,
+.admin-completed-services-table td, .admin-activity-table td,
+.admin-customers-table td, .admin-tech-management-table td {
+  min-height:72px !important;
+  padding:16px 12px !important;
+  white-space:nowrap !important;
+  word-break:normal !important;
+  overflow-wrap:normal !important;
+}
+
+/* Kolom teks yang memang boleh membungkus. */
+.admin-services-table td:nth-child(3), .admin-running-services-table td:nth-child(3),
+.admin-completed-services-table td:nth-child(3), .admin-activity-table td:nth-child(3),
+.admin-services-table td:nth-child(5), .admin-running-services-table td:nth-child(5),
+.admin-completed-services-table td:nth-child(5), .admin-activity-table td:nth-child(5),
+.admin-services-table td:nth-child(8), .admin-running-services-table td:nth-child(8),
+.admin-services-table td:nth-child(9), .admin-activity-table td:nth-child(8),
+.admin-activity-table td:nth-child(9) {
+  white-space:normal !important;
+  overflow-wrap:anywhere !important;
+  word-break:normal !important;
+}
+
+/* Data Services / Activity: 12 kolom */
+.admin-services-table th:nth-child(1), .admin-services-table td:nth-child(1),
+.admin-activity-table th:nth-child(1), .admin-activity-table td:nth-child(1),
+.admin-completed-services-table th:nth-child(1), .admin-completed-services-table td:nth-child(1) { width:150px !important; min-width:150px !important; }
+.admin-services-table th:nth-child(2), .admin-services-table td:nth-child(2),
+.admin-activity-table th:nth-child(2), .admin-activity-table td:nth-child(2),
+.admin-completed-services-table th:nth-child(2), .admin-completed-services-table td:nth-child(2) { width:120px !important; min-width:120px !important; }
+.admin-services-table th:nth-child(3), .admin-services-table td:nth-child(3),
+.admin-activity-table th:nth-child(3), .admin-activity-table td:nth-child(3),
+.admin-completed-services-table th:nth-child(3), .admin-completed-services-table td:nth-child(3) { width:180px !important; min-width:180px !important; max-width:180px !important; }
+.admin-services-table th:nth-child(4), .admin-services-table td:nth-child(4),
+.admin-activity-table th:nth-child(4), .admin-activity-table td:nth-child(4),
+.admin-completed-services-table th:nth-child(4), .admin-completed-services-table td:nth-child(4) { width:150px !important; min-width:150px !important; }
+.admin-services-table th:nth-child(5), .admin-services-table td:nth-child(5),
+.admin-activity-table th:nth-child(5), .admin-activity-table td:nth-child(5),
+.admin-completed-services-table th:nth-child(5), .admin-completed-services-table td:nth-child(5) { width:230px !important; min-width:230px !important; max-width:230px !important; }
+.admin-services-table th:nth-child(6), .admin-services-table td:nth-child(6),
+.admin-activity-table th:nth-child(6), .admin-activity-table td:nth-child(6),
+.admin-completed-services-table th:nth-child(6), .admin-completed-services-table td:nth-child(6) { width:145px !important; min-width:145px !important; text-align:center !important; }
+.admin-services-table th:nth-child(7), .admin-services-table td:nth-child(7),
+.admin-activity-table th:nth-child(7), .admin-activity-table td:nth-child(7),
+.admin-completed-services-table th:nth-child(7), .admin-completed-services-table td:nth-child(7) { width:145px !important; min-width:145px !important; text-align:center !important; }
+.admin-services-table th:nth-child(8), .admin-services-table td:nth-child(8),
+.admin-activity-table th:nth-child(8), .admin-activity-table td:nth-child(8),
+.admin-completed-services-table th:nth-child(8), .admin-completed-services-table td:nth-child(8) { width:150px !important; min-width:150px !important; }
+.admin-services-table th:nth-child(9), .admin-services-table td:nth-child(9),
+.admin-activity-table th:nth-child(9), .admin-activity-table td:nth-child(9),
+.admin-completed-services-table th:nth-child(9), .admin-completed-services-table td:nth-child(9) { width:180px !important; min-width:180px !important; }
+.admin-services-table th:nth-child(10), .admin-services-table td:nth-child(10),
+.admin-activity-table th:nth-child(10), .admin-activity-table td:nth-child(10),
+.admin-completed-services-table th:nth-child(10), .admin-completed-services-table td:nth-child(10) { width:125px !important; min-width:125px !important; text-align:center !important; }
+.admin-services-table th:nth-child(11), .admin-services-table td:nth-child(11),
+.admin-activity-table th:nth-child(11), .admin-activity-table td:nth-child(11),
+.admin-completed-services-table th:nth-child(11), .admin-completed-services-table td:nth-child(11) { width:140px !important; min-width:140px !important; }
+.admin-services-table th:nth-child(12), .admin-services-table td:nth-child(12),
+.admin-activity-table th:nth-child(12), .admin-activity-table td:nth-child(12),
+.admin-completed-services-table th:nth-child(12), .admin-completed-services-table td:nth-child(12) { width:120px !important; min-width:120px !important; text-align:center !important; }
+
+/* Running: 11 kolom */
+.admin-running-services-table th:nth-child(1), .admin-running-services-table td:nth-child(1) { width:150px !important; min-width:150px !important; }
+.admin-running-services-table th:nth-child(2), .admin-running-services-table td:nth-child(2) { width:120px !important; min-width:120px !important; }
+.admin-running-services-table th:nth-child(3), .admin-running-services-table td:nth-child(3) { width:180px !important; min-width:180px !important; max-width:180px !important; }
+.admin-running-services-table th:nth-child(4), .admin-running-services-table td:nth-child(4) { width:150px !important; min-width:150px !important; }
+.admin-running-services-table th:nth-child(5), .admin-running-services-table td:nth-child(5) { width:230px !important; min-width:230px !important; max-width:230px !important; }
+.admin-running-services-table th:nth-child(6), .admin-running-services-table td:nth-child(6),
+.admin-running-services-table th:nth-child(7), .admin-running-services-table td:nth-child(7) { width:145px !important; min-width:145px !important; text-align:center !important; }
+.admin-running-services-table th:nth-child(8), .admin-running-services-table td:nth-child(8) { width:150px !important; min-width:150px !important; white-space:normal !important; }
+.admin-running-services-table th:nth-child(9), .admin-running-services-table td:nth-child(9) { width:125px !important; min-width:125px !important; text-align:center !important; }
+.admin-running-services-table th:nth-child(10), .admin-running-services-table td:nth-child(10) { width:140px !important; min-width:140px !important; }
+.admin-running-services-table th:nth-child(11), .admin-running-services-table td:nth-child(11) { width:155px !important; min-width:155px !important; text-align:center !important; }
+
+/* Maps & Media: tidak boleh tumpang tindih */
+.admin-gmaps-link,
+.admin-table td .btn-secondary.small[data-tech-customer-media] {
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  position:static !important;
+  transform:none !important;
+  width:120px !important;
+  min-width:120px !important;
+  max-width:120px !important;
+  height:46px !important;
+  min-height:46px !important;
+  max-height:46px !important;
+  margin:0 auto !important;
+  padding:7px 10px !important;
+  box-sizing:border-box !important;
+  border-radius:12px !important;
+  line-height:1.15 !important;
+  text-align:center !important;
+  white-space:normal !important;
+  overflow:hidden !important;
+  word-break:normal !important;
+}
+.admin-table td:has(> .admin-gmaps-link),
+.admin-table td:has(> .admin-gmaps-link) + td { text-align:center !important; vertical-align:middle !important; }
+
+/* Status badge tidak boleh pecah menjadi huruf per baris. */
+.admin-services-table .status-badge,
+.admin-running-services-table .status-badge,
+.admin-completed-services-table .status-badge,
+.admin-activity-table .status-badge { display:inline-flex !important; align-items:center !important; justify-content:center !important; white-space:nowrap !important; width:auto !important; min-width:92px !important; max-width:none !important; height:38px !important; padding:0 12px !important; line-height:1 !important; }
+
+/* Tombol aksi selalu berada di tengah cell dan tidak menempel ke tombol lain. */
+.admin-table td:last-child .admin-action-stack,
+.admin-tech-actions,
+.admin-action-stack { display:flex !important; flex-direction:column !important; align-items:stretch !important; justify-content:center !important; gap:8px !important; width:100% !important; margin:0 !important; }
+.admin-table td:last-child .admin-action-stack > button,
+.admin-tech-actions > button,
+.admin-action-stack > button { width:100% !important; min-width:0 !important; min-height:40px !important; margin:0 !important; position:static !important; transform:none !important; }
+
+/* Customer management */
+.admin-customers-table th:nth-child(1), .admin-customers-table td:nth-child(1) { width:190px !important; min-width:190px !important; text-align:left !important; }
+.admin-customers-table th:nth-child(2), .admin-customers-table td:nth-child(2) { width:160px !important; min-width:160px !important; }
+.admin-customers-table th:nth-child(3), .admin-customers-table td:nth-child(3),
+.admin-customers-table th:nth-child(4), .admin-customers-table td:nth-child(4),
+.admin-customers-table th:nth-child(5), .admin-customers-table td:nth-child(5) { width:130px !important; min-width:130px !important; text-align:center !important; font-variant-numeric:tabular-nums !important; }
+.admin-customers-table th:nth-child(6), .admin-customers-table td:nth-child(6) { width:170px !important; min-width:170px !important; text-align:right !important; font-variant-numeric:tabular-nums !important; }
+.admin-customers-table th:nth-child(7), .admin-customers-table td:nth-child(7) { width:145px !important; min-width:145px !important; text-align:center !important; }
+.admin-customers-table th:nth-child(8), .admin-customers-table td:nth-child(8) { width:110px !important; min-width:110px !important; text-align:center !important; }
+.admin-customers-table td:nth-child(1) { white-space:normal !important; overflow-wrap:anywhere !important; font-weight:600 !important; }
+.admin-customers-table td:nth-child(n+2) { vertical-align:middle !important; }
+.admin-customers-table td:last-child .btn-secondary.small { width:88px !important; min-width:88px !important; min-height:42px !important; margin:0 auto !important; }
+
+/* Dashboard activity: card tidak boleh membesar; tabel boleh digeser horizontal. */
+.admin-activity-card { min-width:0 !important; overflow:hidden !important; }
+.admin-activity-card .admin-card-header { display:flex !important; align-items:center !important; justify-content:space-between !important; gap:16px !important; flex-wrap:wrap !important; }
+.admin-activity-card .admin-card-header h3 { margin:0 !important; }
+.admin-activity-table-wrap { margin-top:4px !important; border-radius:12px !important; }
+.admin-activity-table { min-width:1810px !important; }
+
+/* Filter area */
+.admin-card .filter-grid { width:100% !important; min-width:0 !important; box-sizing:border-box !important; }
+.admin-service-filter-bar { min-width:0 !important; }
+.admin-service-search-input { min-width:0 !important; max-width:100% !important; box-sizing:border-box !important; }
+
+@media (max-width:900px){
+  .admin-services-table, .admin-completed-services-table, .admin-activity-table { min-width:1810px !important; }
+  .admin-running-services-table { min-width:1690px !important; }
+  .admin-customers-table { min-width:1120px !important; }
+  .admin-table th { font-size:.78rem !important; }
+  .admin-table td { font-size:.82rem !important; }
+}
+</style>
+
+
+<!-- LERESSAE SETTINGS DARK FIX START -->
+<style id="leressae-settings-dark-fix">
+/* =========================================================
+   SETTINGS PAGE — COMPLETE DARK MODE OVERRIDE
+   The original Settings CSS contains hard-coded light colors.
+   These rules deliberately override only Settings components.
+   ========================================================= */
+
+html[data-leressae-theme="dark"] .settings-card,
+html[data-theme="dark"] .settings-card,
+body.dark-mode .settings-card{
+    background:#0d1b2a !important;
+    color:#e8eef7 !important;
+    border-color:#29425e !important;
+    box-shadow:0 12px 30px rgba(0,0,0,.28) !important;
+}
+
+html[data-leressae-theme="dark"] .settings-card-header,
+html[data-theme="dark"] .settings-card-header,
+body.dark-mode .settings-card-header{
+    background:#0d1b2a !important;
+    color:#f1f5f9 !important;
+    border-color:#29425e !important;
+}
+
+html[data-leressae-theme="dark"] .settings-card-title,
+html[data-theme="dark"] .settings-card-title,
+body.dark-mode .settings-card-title{
+    color:#f4f7fb !important;
+}
+
+html[data-leressae-theme="dark"] .settings-card-title-wrap,
+html[data-theme="dark"] .settings-card-title-wrap,
+body.dark-mode .settings-card-title-wrap{
+    color:#f4f7fb !important;
+}
+
+html[data-leressae-theme="dark"] .settings-card-icon,
+html[data-theme="dark"] .settings-card-icon,
+body.dark-mode .settings-card-icon{
+    background:#17314d !important;
+    color:#dcecff !important;
+    border-color:#2f506f !important;
+}
+
+html[data-leressae-theme="dark"] .settings-card-icon svg,
+html[data-theme="dark"] .settings-card-icon svg,
+body.dark-mode .settings-card-icon svg{
+    stroke:#e8f3ff !important;
+}
+
+html[data-leressae-theme="dark"] .settings-card-subtitle,
+html[data-theme="dark"] .settings-card-subtitle,
+body.dark-mode .settings-card-subtitle{
+    color:#9fb2c9 !important;
+}
+
+html[data-leressae-theme="dark"] .settings-card-body,
+html[data-theme="dark"] .settings-card-body,
+body.dark-mode .settings-card-body{
+    background:#0d1b2a !important;
+    color:#dce7f3 !important;
+}
+
+html[data-leressae-theme="dark"] .settings-field label,
+html[data-theme="dark"] .settings-field label,
+body.dark-mode .settings-field label{
+    color:#b9c8da !important;
+}
+
+html[data-leressae-theme="dark"] .settings-field input,
+html[data-leressae-theme="dark"] .settings-field select,
+html[data-leressae-theme="dark"] .settings-api-input,
+html[data-theme="dark"] .settings-field input,
+html[data-theme="dark"] .settings-field select,
+html[data-theme="dark"] .settings-api-input,
+body.dark-mode .settings-field input,
+body.dark-mode .settings-field select,
+body.dark-mode .settings-api-input{
+    background:#0a1726 !important;
+    color:#f1f5f9 !important;
+    border-color:#36516d !important;
+    -webkit-text-fill-color:#f1f5f9 !important;
+}
+
+html[data-leressae-theme="dark"] .settings-field input::placeholder,
+html[data-leressae-theme="dark"] .settings-api-input::placeholder,
+html[data-theme="dark"] .settings-field input::placeholder,
+html[data-theme="dark"] .settings-api-input::placeholder,
+body.dark-mode .settings-field input::placeholder,
+body.dark-mode .settings-api-input::placeholder{
+    color:#7188a2 !important;
+    -webkit-text-fill-color:#7188a2 !important;
+}
+
+html[data-leressae-theme="dark"] .settings-field select option,
+html[data-theme="dark"] .settings-field select option,
+body.dark-mode .settings-field select option{
+    background:#0a1726 !important;
+    color:#f1f5f9 !important;
+}
+
+html[data-leressae-theme="dark"] .settings-api-row,
+html[data-theme="dark"] .settings-api-row,
+body.dark-mode .settings-api-row{
+    color:#e8eef7 !important;
+}
+
+html[data-leressae-theme="dark"] .settings-copy-btn,
+html[data-leressae-theme="dark"] .settings-primary-btn,
+html[data-theme="dark"] .settings-copy-btn,
+html[data-theme="dark"] .settings-primary-btn,
+body.dark-mode .settings-copy-btn,
+body.dark-mode .settings-primary-btn{
+    background:#19324d !important;
+    color:#e8f3ff !important;
+    border-color:#3a5b7c !important;
+}
+
+html[data-leressae-theme="dark"] .settings-test-btn,
+html[data-theme="dark"] .settings-test-btn,
+body.dark-mode .settings-test-btn{
+    color:#ffffff !important;
+}
+
+html[data-leressae-theme="dark"] .settings-test-btn:disabled,
+html[data-theme="dark"] .settings-test-btn:disabled,
+body.dark-mode .settings-test-btn:disabled{
+    background:#24384e !important;
+    color:#8ea3ba !important;
+    border-color:#3a4f66 !important;
+    opacity:1 !important;
+}
+
+html[data-leressae-theme="dark"] .settings-status-row,
+html[data-theme="dark"] .settings-status-row,
+body.dark-mode .settings-status-row{
+    color:#dce7f3 !important;
+}
+
+html[data-leressae-theme="dark"] .settings-status-note,
+html[data-theme="dark"] .settings-status-note,
+body.dark-mode .settings-status-note{
+    color:#9fb2c9 !important;
+}
+
+html[data-leressae-theme="dark"] .settings-integration-list,
+html[data-theme="dark"] .settings-integration-list,
+body.dark-mode .settings-integration-list{
+    border-top-color:#29425e !important;
+}
+
+html[data-leressae-theme="dark"] .settings-integration-item,
+html[data-theme="dark"] .settings-integration-item,
+body.dark-mode .settings-integration-item{
+    border-bottom-color:#263d55 !important;
+    color:#e8eef7 !important;
+}
+
+html[data-leressae-theme="dark"] .settings-google-icon,
+html[data-theme="dark"] .settings-google-icon,
+body.dark-mode .settings-google-icon{
+    background:#172a40 !important;
+    border-color:#35516d !important;
+    color:#e8eef7 !important;
+}
+
+/* Preserve Google brand identity while keeping contrast. */
+html[data-leressae-theme="dark"] .settings-google-icon.form,
+html[data-theme="dark"] .settings-google-icon.form,
+body.dark-mode .settings-google-icon.form{
+    background:linear-gradient(135deg,#342052 0%,#292044 100%) !important;
+    color:#d8b4fe !important;
+    border-color:#62478a !important;
+}
+html[data-leressae-theme="dark"] .settings-google-icon.sheet,
+html[data-theme="dark"] .settings-google-icon.sheet,
+body.dark-mode .settings-google-icon.sheet{
+    background:linear-gradient(135deg,#123c2b 0%,#164d35 100%) !important;
+    color:#86efac !important;
+    border-color:#327254 !important;
+}
+
+html[data-leressae-theme="dark"] .settings-google-name,
+html[data-theme="dark"] .settings-google-name,
+body.dark-mode .settings-google-name{
+    color:#f0f5fb !important;
+}
+
+html[data-leressae-theme="dark"] .settings-google-sub,
+html[data-theme="dark"] .settings-google-sub,
+body.dark-mode .settings-google-sub{
+    color:#9fb2c9 !important;
+}
+
+html[data-leressae-theme="dark"] .settings-google-sub a,
+html[data-theme="dark"] .settings-google-sub a,
+body.dark-mode .settings-google-sub a{
+    color:#7dd3fc !important;
+}
+
+html[data-leressae-theme="dark"] .settings-google-state.success,
+html[data-theme="dark"] .settings-google-state.success,
+body.dark-mode .settings-google-state.success{
+    background:#0d3025 !important;
+    color:#86efac !important;
+    border-color:#287553 !important;
+}
+html[data-leressae-theme="dark"] .settings-google-state.warning,
+html[data-theme="dark"] .settings-google-state.warning,
+body.dark-mode .settings-google-state.warning{
+    background:#3a2613 !important;
+    color:#fdba74 !important;
+    border-color:#8a5a25 !important;
+}
+html[data-leressae-theme="dark"] .settings-google-state.danger,
+html[data-theme="dark"] .settings-google-state.danger,
+body.dark-mode .settings-google-state.danger{
+    background:#3b171c !important;
+    color:#fca5a5 !important;
+    border-color:#8c3943 !important;
+}
+html[data-leressae-theme="dark"] .settings-google-state.neutral,
+html[data-theme="dark"] .settings-google-state.neutral,
+body.dark-mode .settings-google-state.neutral{
+    background:#172a40 !important;
+    color:#b9c8da !important;
+    border-color:#3a526d !important;
+}
+
+/* Catch hard-coded inline text colors inside Settings. */
+html[data-leressae-theme="dark"] .settings-card [style*="#0f172a"],
+html[data-leressae-theme="dark"] .settings-card [style*="#334155"],
+html[data-leressae-theme="dark"] .settings-card [style*="#475569"],
+html[data-leressae-theme="dark"] .settings-card [style*="#64748b"],
+html[data-theme="dark"] .settings-card [style*="#0f172a"],
+html[data-theme="dark"] .settings-card [style*="#334155"],
+html[data-theme="dark"] .settings-card [style*="#475569"],
+html[data-theme="dark"] .settings-card [style*="#64748b"],
+body.dark-mode .settings-card [style*="#0f172a"],
+body.dark-mode .settings-card [style*="#334155"],
+body.dark-mode .settings-card [style*="#475569"],
+body.dark-mode .settings-card [style*="#64748b"]{
+    color:#dce7f3 !important;
+    -webkit-text-fill-color:#dce7f3 !important;
+}
+
+/* Prevent the Settings page from inheriting white backgrounds from generic cards. */
+html[data-leressae-theme="dark"] #admin-settings,
+html[data-theme="dark"] #admin-settings,
+body.dark-mode #admin-settings{
+    color:#e8eef7 !important;
+}
+
+html[data-leressae-theme="dark"] #admin-settings .settings-card *,
+html[data-theme="dark"] #admin-settings .settings-card *,
+body.dark-mode #admin-settings .settings-card *{
+    text-shadow:none;
+}
+</style>
+<!-- LERESSAE SETTINGS DARK FIX END -->
+
 </head>
     <div class="wrapper">
         <!-- Section Navbar -->
@@ -11662,8 +12986,17 @@ function openServiceDetail(serviceId) {
                         </div>
                         <div class="admin-service-filter-bar">
                             <div class="admin-service-filter-group">
-                                <label style="font-weight:700; white-space:nowrap;">Periode:</label>
-</div>
+                                <label for="runningPeriodFilter" style="font-weight:700; white-space:nowrap;">Periode:</label>
+                                <select id="runningPeriodFilter" class="admin-service-period-select" aria-label="Filter periode servis berjalan">
+                                    <option value="all" ${period === 'all' ? 'selected' : ''}>Semua</option>
+                                    <option value="today" ${period === 'today' ? 'selected' : ''}>Hari Ini</option>
+                                    <option value="this_week" ${period === 'this_week' ? 'selected' : ''}>1 Minggu</option>
+                                    <option value="1_month" ${period === '1_month' ? 'selected' : ''}>1 Bulan</option>
+                                    <option value="6_month" ${period === '6_month' ? 'selected' : ''}>6 Bulan</option>
+                                    <option value="1_year" ${period === '1_year' ? 'selected' : ''}>1 Tahun</option>
+                                    <option value="custom" ${period === 'custom' ? 'selected' : ''}>Custom</option>
+                                </select>
+                            </div>
                             <input id="runningSearchInput" class="admin-service-search-input" type="text" placeholder="Cari nama, WhatsApp, ID Servis" value="${escapeHtml(keyword || '')}" />
                             <span class="admin-user-chip admin-service-total">Total: ${filtered.length}</span>
                         </div>
@@ -11888,31 +13221,9 @@ function openServiceDetail(serviceId) {
                     <td><button class="btn-secondary small" type="button" data-customer-detail="${escapeHtml(customer.key)}">Detail</button></td>
                 </tr>
             `).join('');
-            const cards = customers.map(customer => `
-                <article class="admin-customer-mobile-card">
-                    <div class="admin-customer-mobile-heading">
-                        <div>
-                            <h4>${escapeHtml(customer.name)}</h4>
-                            <p>${escapeHtml(customer.phone)}</p>
-                        </div>
-                        <span class="admin-customer-mobile-count">${customer.total} servis</span>
-                    </div>
-                    <div class="admin-customer-mobile-stats">
-                        <div><span>Jumlah Servis</span><strong>${customer.total}</strong></div>
-                        <div><span>Servis Aktif</span><strong>${customer.active}</strong></div>
-                        <div><span>Servis Selesai</span><strong>${customer.completed}</strong></div>
-                    </div>
-                    <div class="admin-customer-mobile-meta">
-                        <div><span>Total Transaksi</span><strong>${escapeHtml(formatRupiah(customer.totalRevenue))}</strong></div>
-                        <div><span>Servis Terakhir</span><strong>${escapeHtml(formatDate(customer.lastDate))}</strong></div>
-                    </div>
-                    <button class="btn-secondary small" type="button" data-customer-detail="${escapeHtml(customer.key)}">Lihat Riwayat Servis</button>
-                </article>
-            `).join('');
             return `
                 <div class="admin-card admin-customers-card">
                     <div class="admin-card-header"><div><h3>Manajemen Pelanggan</h3><p class="section-sub-text">Ringkasan servis dan transaksi setiap pelanggan.</p></div><span class="admin-user-chip">${customers.length} pelanggan</span></div>
-                    <div class="admin-customers-mobile-list">${cards || '<div class="admin-empty-state">Belum ada data pelanggan.</div>'}</div>
                     <div class="admin-table-wrap admin-customers-table-wrap">
                         <table class="admin-table admin-customers-table">
                             <thead><tr><th>Customer</th><th>No. WhatsApp</th><th>Jumlah Servis</th><th>Servis Aktif</th><th>Servis Selesai</th><th>Total Transaksi</th><th>Servis Terakhir</th><th>Aksi</th></tr></thead>
@@ -13361,7 +14672,7 @@ function renderReportsPage() {
                     if (navTarget.dataset.adminPage === 'locations') {
                         showAdminPage('locations');
                         refreshLocationsInBackground();
-                        if (window.innerWidth <= 900) closeAdminMenu();
+                        if (window.innerWidth <= 767) closeAdminMenu();
                         return;
                     }
                     if (navTarget.dataset.adminPage === 'completed') {
@@ -13371,11 +14682,11 @@ function renderReportsPage() {
                         refreshServiceCacheFromApi().then(() => {
                             if (window.__ADMIN_CURRENT_PAGE__ === 'completed') showAdminPage('completed');
                         }).catch(error => console.warn('Gagal menyegarkan servis selesai:', error));
-                        if (window.innerWidth <= 900) closeAdminMenu();
+                        if (window.innerWidth <= 767) closeAdminMenu();
                         return;
                     }
                     showAdminPage(navTarget.dataset.adminPage);
-                    if (window.innerWidth <= 900) closeAdminMenu();
+                    if (window.innerWidth <= 767) closeAdminMenu();
                     return;
                 }
                 const genericPageButton = target.closest('[data-admin-page]');
@@ -13489,7 +14800,7 @@ function renderReportsPage() {
                             const oldStatus = records[index].status;
                             const can = canTechnicianUpdateStatus(oldStatus, newStatus);
                             if (!can) { showToast('Perubahan status tidak valid untuk alur teknisi.', 'error'); return; }
-                            records[index] = { ...records[index], status: newStatus, notes, technician: records[index].technician || localStorage.getItem('leressae_technician_session') ? JSON.parse(localStorage.getItem('leressae_technician_session') || '{}').name || 'Teknisi' : 'Teknisi', timestamp_update: new Date().toISOString(), admin_update: 'TEKNISI' };
+                            records[index] = { ...records[index], status: newStatus, notes, technician: records[index].technician || (JSON.parse(localStorage.getItem('leressae_technician_session') || '{}').name || 'Teknisi'), timestamp_update: new Date().toISOString(), admin_update: 'TEKNISI' };
                             if (newStatus === 'Selesai') {
                                 records[index].tanggal_selesai = new Date().toISOString().slice(0, 10);
                             }
@@ -13943,7 +15254,7 @@ function renderReportsPage() {
             const adminSidebar = document.querySelector('.admin-sidebar');
             const adminMenuButton = document.querySelector('.admin-menu-toggle');
             if (
-                window.innerWidth <= 900 &&
+                window.innerWidth <= 767 &&
                 adminShell &&
                 adminShell.classList.contains('admin-menu-open') &&
                 adminSidebar &&
@@ -17191,392 +18502,1636 @@ function techSession(){
   }
 }
 </style>
-<style id="admin-technician-layout-audit">
-  .admin-shell {
-    grid-template-columns: 250px minmax(0, 1fr);
-    align-items: start;
-    gap: 18px;
-  }
 
-  .admin-content,
-  .admin-shell .admin-card,
-  .technician-shell,
-  .technician-content,
-  .technician-shell #technicianView {
-    min-width: 0;
-  }
+<style id="admin-clean-final-v5">
+/* =========================================================
+   LERESSAE ADMIN — CLEAN TABLE LAYOUT V5
+   Tujuan: tabel tidak dipaksa mengecil. Jika tidak muat,
+   wrapper tabel yang bergeser horizontal.
+   ========================================================= */
+#page-admin { min-width:0 !important; width:100% !important; }
+#page-admin .admin-content { min-width:0 !important; overflow:visible !important; }
+#page-admin .admin-card { min-width:0 !important; overflow:visible !important; }
 
-  .admin-sidebar,
-  .technician-sidebar,
-  .admin-nav-list button,
-  .technician-nav button,
-  .admin-shell button,
-  .technician-shell button {
-    -webkit-tap-highlight-color: transparent;
-  }
+#page-admin .admin-table-wrap,
+#page-admin .admin-activity-table-wrap,
+#page-admin .admin-customers-table-wrap,
+#page-admin .admin-tech-management-wrap {
+  display:block !important;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+  box-sizing:border-box !important;
+  -webkit-overflow-scrolling:touch !important;
+  scrollbar-width:thin !important;
+}
 
-  .admin-nav-list button:focus-visible,
-  .technician-nav button:focus-visible,
-  .admin-shell button:focus-visible,
-  .technician-shell button:focus-visible,
-  .admin-shell a:focus-visible,
-  .technician-shell a:focus-visible,
-  .admin-shell input:focus-visible,
-  .admin-shell select:focus-visible,
-  .technician-shell input:focus-visible,
-  .technician-shell select:focus-visible,
-  .technician-shell textarea:focus-visible {
-    outline: 3px solid #38bdf8;
-    outline-offset: 2px;
-  }
+#page-admin .admin-services-table,
+#page-admin .admin-running-services-table,
+#page-admin .admin-completed-services-table,
+#page-admin .admin-activity-table,
+#page-admin .admin-customers-table,
+#page-admin .admin-tech-management-table {
+  table-layout:fixed !important;
+  width:max-content !important;
+  max-width:none !important;
+  border-collapse:collapse !important;
+  border-spacing:0 !important;
+  margin:0 !important;
+}
 
-  .admin-table-wrap,
-  .tech-table-wrap {
-    overscroll-behavior-inline: contain;
-    scrollbar-width: thin;
-    scrollbar-color: #94a3b8 #f1f5f9;
-  }
+/* --- Ukuran dasar tiap tabel --- */
+#page-admin .admin-activity-table,
+#page-admin .admin-services-table,
+#page-admin .admin-completed-services-table { min-width:1750px !important; }
+#page-admin .admin-running-services-table { min-width:1600px !important; }
+#page-admin .admin-customers-table { min-width:1120px !important; }
+#page-admin .admin-tech-management-table { min-width:980px !important; }
 
-  .admin-customers-card .admin-card-header,
-  .admin-report-header {
-    align-items: flex-start;
-  }
+/* --- Semua cell: satu sistem alignment --- */
+#page-admin .admin-activity-table th,
+#page-admin .admin-activity-table td,
+#page-admin .admin-services-table th,
+#page-admin .admin-services-table td,
+#page-admin .admin-running-services-table th,
+#page-admin .admin-running-services-table td,
+#page-admin .admin-completed-services-table th,
+#page-admin .admin-completed-services-table td,
+#page-admin .admin-customers-table th,
+#page-admin .admin-customers-table td,
+#page-admin .admin-tech-management-table th,
+#page-admin .admin-tech-management-table td {
+  box-sizing:border-box !important;
+  vertical-align:middle !important;
+  line-height:1.35 !important;
+  border-bottom:1px solid #e2e8f0 !important;
+}
 
-  .admin-card-header > div,
-  .admin-topbar .admin-title-row,
-  .admin-topbar .admin-title-row > div {
-    min-width: 0;
-  }
+#page-admin .admin-activity-table th,
+#page-admin .admin-services-table th,
+#page-admin .admin-running-services-table th,
+#page-admin .admin-completed-services-table th,
+#page-admin .admin-customers-table th,
+#page-admin .admin-tech-management-table th {
+  height:64px !important;
+  padding:12px 10px !important;
+  text-align:center !important;
+  white-space:normal !important;
+  word-break:normal !important;
+  overflow-wrap:normal !important;
+  font-size:.78rem !important;
+  line-height:1.2 !important;
+}
 
-  .tech-dashboard-page,
-  .tech-dashboard-grid,
-  .tech-dashboard-page > *,
-  .tech-proof-card {
-    min-width: 0;
-  }
+#page-admin .admin-activity-table td,
+#page-admin .admin-services-table td,
+#page-admin .admin-running-services-table td,
+#page-admin .admin-completed-services-table td,
+#page-admin .admin-customers-table td,
+#page-admin .admin-tech-management-table td {
+  padding:13px 10px !important;
+  min-height:68px !important;
+  height:68px !important;
+  font-size:.82rem !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+}
 
-  .admin-customers-mobile-list {
-    display: none;
-  }
+/* Kolom teks panjang boleh turun baris; angka/tanggal tidak. */
+#page-admin .admin-activity-table td:nth-child(3),
+#page-admin .admin-activity-table td:nth-child(5),
+#page-admin .admin-activity-table td:nth-child(8),
+#page-admin .admin-activity-table td:nth-child(9),
+#page-admin .admin-services-table td:nth-child(3),
+#page-admin .admin-services-table td:nth-child(5),
+#page-admin .admin-services-table td:nth-child(8),
+#page-admin .admin-services-table td:nth-child(9),
+#page-admin .admin-running-services-table td:nth-child(3),
+#page-admin .admin-running-services-table td:nth-child(5),
+#page-admin .admin-running-services-table td:nth-child(8),
+#page-admin .admin-running-services-table td:nth-child(10),
+#page-admin .admin-completed-services-table td:nth-child(4),
+#page-admin .admin-completed-services-table td:nth-child(5),
+#page-admin .admin-completed-services-table td:nth-child(8) {
+  white-space:normal !important;
+  overflow-wrap:anywhere !important;
+  text-overflow:clip !important;
+}
 
-  .admin-customer-mobile-card {
-    min-width: 0;
-    padding: 16px;
-    border: 1px solid #dbe5ef;
-    border-radius: 14px;
-    background: #fff;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, .04);
-  }
+/* ID, tanggal, WA, status, teknisi, update */
+#page-admin .admin-activity-table td:nth-child(1),
+#page-admin .admin-activity-table td:nth-child(2),
+#page-admin .admin-activity-table td:nth-child(4),
+#page-admin .admin-activity-table td:nth-child(10),
+#page-admin .admin-activity-table td:nth-child(11),
+#page-admin .admin-activity-table td:nth-child(12),
+#page-admin .admin-services-table td:nth-child(1),
+#page-admin .admin-services-table td:nth-child(2),
+#page-admin .admin-services-table td:nth-child(4),
+#page-admin .admin-services-table td:nth-child(10),
+#page-admin .admin-services-table td:nth-child(11),
+#page-admin .admin-services-table td:nth-child(12),
+#page-admin .admin-running-services-table td:nth-child(1),
+#page-admin .admin-running-services-table td:nth-child(2),
+#page-admin .admin-running-services-table td:nth-child(4),
+#page-admin .admin-running-services-table td:nth-child(9),
+#page-admin .admin-running-services-table td:nth-child(10),
+#page-admin .admin-running-services-table td:nth-child(11),
+#page-admin .admin-completed-services-table td:nth-child(1),
+#page-admin .admin-completed-services-table td:nth-child(2),
+#page-admin .admin-completed-services-table td:nth-child(3),
+#page-admin .admin-completed-services-table td:nth-child(6),
+#page-admin .admin-completed-services-table td:nth-child(7),
+#page-admin .admin-completed-services-table td:nth-child(9),
+#page-admin .admin-completed-services-table td:nth-child(10),
+#page-admin .admin-completed-services-table td:nth-child(11),
+#page-admin .admin-completed-services-table td:nth-child(12) {
+  text-align:center !important;
+  white-space:nowrap !important;
+  font-variant-numeric:tabular-nums !important;
+}
 
-  .admin-customer-mobile-heading {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #e8eef4;
-  }
+/* ID tetap biru dan terbaca */
+#page-admin .admin-activity-table .id-cell,
+#page-admin .admin-services-table .id-cell,
+#page-admin .admin-running-services-table .id-cell,
+#page-admin .admin-completed-services-table .id-cell {
+  text-align:left !important;
+  color:#0369a1 !important;
+  font-weight:800 !important;
+}
 
-  .admin-customer-mobile-heading > div,
-  .admin-customer-mobile-meta > div,
-  .admin-customer-mobile-stats > div {
-    min-width: 0;
-  }
+/* Tombol GMaps / Media */
+#page-admin .admin-activity-table td:nth-child(6),
+#page-admin .admin-activity-table td:nth-child(7),
+#page-admin .admin-services-table td:nth-child(6),
+#page-admin .admin-services-table td:nth-child(7),
+#page-admin .admin-running-services-table td:nth-child(6),
+#page-admin .admin-running-services-table td:nth-child(7),
+#page-admin .admin-completed-services-table td:nth-child(6),
+#page-admin .admin-completed-services-table td:nth-child(7) {
+  text-align:center !important;
+}
+#page-admin .admin-activity-table td:nth-child(6) .btn-secondary,
+#page-admin .admin-activity-table td:nth-child(7) .btn-secondary,
+#page-admin .admin-services-table td:nth-child(6) .btn-secondary,
+#page-admin .admin-services-table td:nth-child(7) .btn-secondary,
+#page-admin .admin-running-services-table td:nth-child(6) .btn-secondary,
+#page-admin .admin-running-services-table td:nth-child(7) .btn-secondary,
+#page-admin .admin-completed-services-table td:nth-child(6) .btn-secondary,
+#page-admin .admin-completed-services-table td:nth-child(7) .btn-secondary {
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:112px !important;
+  min-width:112px !important;
+  max-width:112px !important;
+  min-height:42px !important;
+  height:42px !important;
+  margin:0 auto !important;
+  padding:6px 8px !important;
+  white-space:normal !important;
+  line-height:1.05 !important;
+  text-align:center !important;
+  box-sizing:border-box !important;
+}
 
-  .admin-customer-mobile-heading h4 {
-    margin: 0;
-    color: #172b45;
-    font-size: 1rem;
-    line-height: 1.35;
-    overflow-wrap: anywhere;
-  }
+/* Status tidak boleh pecah menjadi satu huruf per baris. */
+#page-admin .admin-activity-table .status-badge,
+#page-admin .admin-services-table .status-badge,
+#page-admin .admin-running-services-table .status-badge,
+#page-admin .admin-completed-services-table .status-badge {
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  min-width:82px !important;
+  max-width:none !important;
+  min-height:38px !important;
+  padding:7px 12px !important;
+  white-space:nowrap !important;
+  overflow:visible !important;
+  word-break:normal !important;
+  overflow-wrap:normal !important;
+  line-height:1 !important;
+  text-align:center !important;
+}
 
-  .admin-customer-mobile-heading p {
-    margin: 4px 0 0;
-    color: #607289;
-    font-size: .82rem;
-    overflow-wrap: anywhere;
-  }
+/* Servis Berjalan: Aksi */
+#page-admin .admin-running-services-table td:last-child {
+  text-align:center !important;
+}
+#page-admin .admin-running-services-table .admin-action-stack {
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:stretch !important;
+  justify-content:center !important;
+  gap:7px !important;
+  width:130px !important;
+  min-width:130px !important;
+  margin:0 auto !important;
+}
+#page-admin .admin-running-services-table .admin-action-stack > button,
+#page-admin .admin-running-services-table .admin-action-stack > .btn-secondary {
+  width:130px !important;
+  min-width:130px !important;
+  max-width:130px !important;
+  min-height:40px !important;
+  height:40px !important;
+  margin:0 !important;
+  box-sizing:border-box !important;
+}
 
-  .admin-customer-mobile-count {
-    flex: 0 0 auto;
-    padding: 6px 9px;
-    border: 1px solid #cfe3f4;
-    border-radius: 999px;
-    background: #f0f8fe;
-    color: #17638e;
-    font-size: .76rem;
-    font-weight: 750;
-    white-space: nowrap;
-  }
+/* Data Servis/Activity: lebar kolom eksplisit, total 12 kolom */
+#page-admin .admin-activity-table th:nth-child(1),#page-admin .admin-activity-table td:nth-child(1),
+#page-admin .admin-services-table th:nth-child(1),#page-admin .admin-services-table td:nth-child(1){width:150px!important;min-width:150px!important}
+#page-admin .admin-activity-table th:nth-child(2),#page-admin .admin-activity-table td:nth-child(2),
+#page-admin .admin-services-table th:nth-child(2),#page-admin .admin-services-table td:nth-child(2){width:120px!important;min-width:120px!important}
+#page-admin .admin-activity-table th:nth-child(3),#page-admin .admin-activity-table td:nth-child(3),
+#page-admin .admin-services-table th:nth-child(3),#page-admin .admin-services-table td:nth-child(3){width:180px!important;min-width:180px!important}
+#page-admin .admin-activity-table th:nth-child(4),#page-admin .admin-activity-table td:nth-child(4),
+#page-admin .admin-services-table th:nth-child(4),#page-admin .admin-services-table td:nth-child(4){width:150px!important;min-width:150px!important}
+#page-admin .admin-activity-table th:nth-child(5),#page-admin .admin-activity-table td:nth-child(5),
+#page-admin .admin-services-table th:nth-child(5),#page-admin .admin-services-table td:nth-child(5){width:220px!important;min-width:220px!important}
+#page-admin .admin-activity-table th:nth-child(6),#page-admin .admin-activity-table td:nth-child(6),
+#page-admin .admin-services-table th:nth-child(6),#page-admin .admin-services-table td:nth-child(6){width:130px!important;min-width:130px!important}
+#page-admin .admin-activity-table th:nth-child(7),#page-admin .admin-activity-table td:nth-child(7),
+#page-admin .admin-services-table th:nth-child(7),#page-admin .admin-services-table td:nth-child(7){width:145px!important;min-width:145px!important}
+#page-admin .admin-activity-table th:nth-child(8),#page-admin .admin-activity-table td:nth-child(8),
+#page-admin .admin-services-table th:nth-child(8),#page-admin .admin-services-table td:nth-child(8){width:150px!important;min-width:150px!important}
+#page-admin .admin-activity-table th:nth-child(9),#page-admin .admin-activity-table td:nth-child(9),
+#page-admin .admin-services-table th:nth-child(9),#page-admin .admin-services-table td:nth-child(9){width:180px!important;min-width:180px!important}
+#page-admin .admin-activity-table th:nth-child(10),#page-admin .admin-activity-table td:nth-child(10),
+#page-admin .admin-services-table th:nth-child(10),#page-admin .admin-services-table td:nth-child(10){width:120px!important;min-width:120px!important}
+#page-admin .admin-activity-table th:nth-child(11),#page-admin .admin-activity-table td:nth-child(11),
+#page-admin .admin-services-table th:nth-child(11),#page-admin .admin-services-table td:nth-child(11){width:130px!important;min-width:130px!important}
+#page-admin .admin-activity-table th:nth-child(12),#page-admin .admin-activity-table td:nth-child(12),
+#page-admin .admin-services-table th:nth-child(12),#page-admin .admin-services-table td:nth-child(12){width:135px!important;min-width:135px!important}
 
-  .admin-customer-mobile-stats {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+/* Running: 11 kolom */
+#page-admin .admin-running-services-table th:nth-child(1),#page-admin .admin-running-services-table td:nth-child(1){width:150px!important;min-width:150px!important}
+#page-admin .admin-running-services-table th:nth-child(2),#page-admin .admin-running-services-table td:nth-child(2){width:120px!important;min-width:120px!important}
+#page-admin .admin-running-services-table th:nth-child(3),#page-admin .admin-running-services-table td:nth-child(3){width:180px!important;min-width:180px!important}
+#page-admin .admin-running-services-table th:nth-child(4),#page-admin .admin-running-services-table td:nth-child(4){width:150px!important;min-width:150px!important}
+#page-admin .admin-running-services-table th:nth-child(5),#page-admin .admin-running-services-table td:nth-child(5){width:220px!important;min-width:220px!important}
+#page-admin .admin-running-services-table th:nth-child(6),#page-admin .admin-running-services-table td:nth-child(6){width:130px!important;min-width:130px!important}
+#page-admin .admin-running-services-table th:nth-child(7),#page-admin .admin-running-services-table td:nth-child(7){width:145px!important;min-width:145px!important}
+#page-admin .admin-running-services-table th:nth-child(8),#page-admin .admin-running-services-table td:nth-child(8){width:150px!important;min-width:150px!important}
+#page-admin .admin-running-services-table th:nth-child(9),#page-admin .admin-running-services-table td:nth-child(9){width:120px!important;min-width:120px!important}
+#page-admin .admin-running-services-table th:nth-child(10),#page-admin .admin-running-services-table td:nth-child(10){width:130px!important;min-width:130px!important}
+#page-admin .admin-running-services-table th:nth-child(11),#page-admin .admin-running-services-table td:nth-child(11){width:150px!important;min-width:150px!important}
+
+/* Pelanggan: 8 kolom */
+#page-admin .admin-customers-table th:nth-child(1),#page-admin .admin-customers-table td:nth-child(1){width:230px!important;min-width:230px!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important}
+#page-admin .admin-customers-table th:nth-child(2),#page-admin .admin-customers-table td:nth-child(2){width:170px!important;min-width:170px!important;text-align:center!important;white-space:nowrap!important}
+#page-admin .admin-customers-table th:nth-child(3),#page-admin .admin-customers-table td:nth-child(3){width:125px!important;min-width:125px!important;text-align:center!important}
+#page-admin .admin-customers-table th:nth-child(4),#page-admin .admin-customers-table td:nth-child(4){width:125px!important;min-width:125px!important;text-align:center!important}
+#page-admin .admin-customers-table th:nth-child(5),#page-admin .admin-customers-table td:nth-child(5){width:140px!important;min-width:140px!important;text-align:center!important}
+#page-admin .admin-customers-table th:nth-child(6),#page-admin .admin-customers-table td:nth-child(6){width:180px!important;min-width:180px!important;text-align:right!important;white-space:nowrap!important}
+#page-admin .admin-customers-table th:nth-child(7),#page-admin .admin-customers-table td:nth-child(7){width:150px!important;min-width:150px!important;text-align:center!important;white-space:nowrap!important}
+#page-admin .admin-customers-table th:nth-child(8),#page-admin .admin-customers-table td:nth-child(8){width:110px!important;min-width:110px!important;text-align:center!important}
+#page-admin .admin-customers-table td:last-child .btn-secondary{width:90px!important;min-width:90px!important;height:42px!important;margin:0 auto!important}
+
+/* Mobile: tabel tetap tabel dan wrapper yang scroll */
+@media(max-width:767px){
+  #page-admin .admin-table-wrap,
+  #page-admin .admin-activity-table-wrap,
+  #page-admin .admin-customers-table-wrap,
+  #page-admin .admin-tech-management-wrap{overflow-x:auto!important}
+  #page-admin .admin-activity-table,
+  #page-admin .admin-services-table,
+  #page-admin .admin-completed-services-table{min-width:1750px!important}
+  #page-admin .admin-running-services-table{min-width:1600px!important}
+  #page-admin .admin-customers-table{min-width:1120px!important}
+}
+
+
+/* =========================================================
+   LERESSAE — DEVICE-AWARE DARK MODE
+   Added as a final scoped layer so it does not alter the
+   existing table widths, sidebar layout, or navigation logic.
+   ========================================================= */
+html {
+    color-scheme: light;
+}
+html[data-leressae-theme="dark"] {
+    color-scheme: dark;
+}
+
+/* The page background keeps the existing decorative image, but is
+   darkened in dark mode rather than replacing the design. */
+html[data-leressae-theme="dark"] body {
+    background-color: #07111f !important;
+    background-image:
+        linear-gradient(rgba(3, 10, 20, 0.82), rgba(3, 10, 20, 0.88)),
+        url("https://cdn.corenexis.com/f/mpSA4Cnf1Nj.jpeg") !important;
+    color: #e5edf7 !important;
+}
+
+html[data-leressae-theme="dark"] body,
+html[data-leressae-theme="dark"] body * {
+    scrollbar-color: #475569 #0f172a;
+}
+html[data-leressae-theme="dark"] ::selection {
+    background: rgba(56, 189, 248, 0.35);
+    color: #fff;
+}
+
+/* Public navbar / navigation */
+html[data-leressae-theme="dark"] .navbar {
+    background: rgba(10, 20, 34, 0.90) !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+    box-shadow: 0 10px 26px rgba(0,0,0,.30) !important;
+}
+html[data-leressae-theme="dark"] .brand-title,
+html[data-leressae-theme="dark"] .nav-links li a {
+    color: #e8eef7 !important;
+}
+html[data-leressae-theme="dark"] .brand-sub {
+    color: #7dd3fc !important;
+}
+html[data-leressae-theme="dark"] .nav-links li a:hover,
+html[data-leressae-theme="dark"] .nav-links li a.active {
+    color: #fda4af !important;
+}
+html[data-leressae-theme="dark"] .nav-links li a.active::after {
+    background: linear-gradient(135deg,#38bdf8 0%,#0ea5e9 100%) !important;
+}
+html[data-leressae-theme="dark"] .dropdown-content,
+html[data-leressae-theme="dark"] .login-dropdown-content {
+    background: #111c2c !important;
+    border-color: #334155 !important;
+    box-shadow: 0 18px 42px rgba(0,0,0,.42) !important;
+}
+html[data-leressae-theme="dark"] .dropdown-content li a,
+html[data-leressae-theme="dark"] .login-dropdown-content a {
+    color: #dbe7f5 !important;
+}
+html[data-leressae-theme="dark"] .dropdown-content li a:hover,
+html[data-leressae-theme="dark"] .login-dropdown-content a:hover,
+html[data-leressae-theme="dark"] .login-dropdown-content a:focus {
+    background: #17263a !important;
+    color: #7dd3fc !important;
+}
+
+/* Public cards / sections */
+html[data-leressae-theme="dark"] .card-container,
+html[data-leressae-theme="dark"] .dashboard-section,
+html[data-leressae-theme="dark"] .pillar-card,
+html[data-leressae-theme="dark"] .media-item,
+html[data-leressae-theme="dark"] .service-item-card,
+html[data-leressae-theme="dark"] .status-lookup-wrap {
+    background: rgba(15, 27, 43, 0.94) !important;
+    border-color: #26384d !important;
+    box-shadow: 0 12px 30px rgba(0,0,0,.20) !important;
+}
+html[data-leressae-theme="dark"] .section-title-text,
+html[data-leressae-theme="dark"] .page-header-title,
+html[data-leressae-theme="dark"] .pillar-title,
+html[data-leressae-theme="dark"] .media-item .title,
+html[data-leressae-theme="dark"] .service-item-title {
+    color: #f1f5f9 !important;
+}
+html[data-leressae-theme="dark"] .section-sub-text,
+html[data-leressae-theme="dark"] .page-header-desc,
+html[data-leressae-theme="dark"] .pillar-desc,
+html[data-leressae-theme="dark"] .media-item figcaption,
+html[data-leressae-theme="dark"] .media-item .desc,
+html[data-leressae-theme="dark"] .service-item-desc,
+html[data-leressae-theme="dark"] p {
+    color: #aebed0 !important;
+}
+html[data-leressae-theme="dark"] .pillar-icon {
+    background: #102b43 !important;
+    color: #7dd3fc !important;
+}
+html[data-leressae-theme="dark"] .tutorial-card {
+    background: linear-gradient(180deg,#132235 0%,#0f1b2b 100%) !important;
+    border-color: #28435e !important;
+    color: #e2e8f0 !important;
+}
+html[data-leressae-theme="dark"] .tutorial-card h3 {
+    color: #f1f5f9 !important;
+}
+html[data-leressae-theme="dark"] .tutorial-card p {
+    color: #aebed0 !important;
+}
+html[data-leressae-theme="dark"] .tutorial-meta {
+    border-top-color: #26384d !important;
+    color: #7dd3fc !important;
+}
+html[data-leressae-theme="dark"] .tutorial-tag {
+    background: rgba(56,189,248,.14) !important;
+    color: #7dd3fc !important;
+}
+html[data-leressae-theme="dark"] .service-item-icon {
+    background: #142337 !important;
+    border-color: #334155 !important;
+}
+
+/* Public forms / controls */
+html[data-leressae-theme="dark"] input,
+html[data-leressae-theme="dark"] select,
+html[data-leressae-theme="dark"] textarea,
+html[data-leressae-theme="dark"] .status-form input,
+html[data-leressae-theme="dark"] .status-form select,
+html[data-leressae-theme="dark"] .admin-filter-row input,
+html[data-leressae-theme="dark"] .admin-filter-row select,
+html[data-leressae-theme="dark"] .admin-table select {
+    background: #0f1b2b !important;
+    color: #e5edf7 !important;
+    border-color: #3a4b60 !important;
+}
+html[data-leressae-theme="dark"] input::placeholder,
+html[data-leressae-theme="dark"] textarea::placeholder {
+    color: #718096 !important;
+}
+html[data-leressae-theme="dark"] .btn-secondary,
+html[data-leressae-theme="dark"] .login-btn-secondary {
+    background: #172437 !important;
+    color: #e5edf7 !important;
+    border-color: #3a4b60 !important;
+}
+html[data-leressae-theme="dark"] .btn-secondary:hover,
+html[data-leressae-theme="dark"] .login-btn-secondary:hover {
+    background: #20334b !important;
+    color: #fff !important;
+}
+
+/* Modals / lightbox */
+html[data-leressae-theme="dark"] .login-panel,
+html[data-leressae-theme="dark"] .stock-panel,
+html[data-leressae-theme="dark"] .lightbox-content {
+    background: #101c2c !important;
+    border-color: #334155 !important;
+    color: #e5edf7 !important;
+}
+html[data-leressae-theme="dark"] .login-body,
+html[data-leressae-theme="dark"] .stock-body {
+    color: #dbe7f5 !important;
+}
+html[data-leressae-theme="dark"] .login-field label,
+html[data-leressae-theme="dark"] .stock-body .field-row label {
+    color: #dbe7f5 !important;
+}
+html[data-leressae-theme="dark"] .login-role-btn {
+    background: #142337 !important;
+    border-color: #3a4b60 !important;
+    color: #e5edf7 !important;
+}
+html[data-leressae-theme="dark"] .login-role-btn.active {
+    background: #12314b !important;
+    border-color: #38bdf8 !important;
+    color: #bae6fd !important;
+}
+html[data-leressae-theme="dark"] .video-controls {
+    background: #101c2c !important;
+    border-color: #334155 !important;
+}
+html[data-leressae-theme="dark"] .video-controls button.secondary {
+    background: #172437 !important;
+    color: #e5edf7 !important;
+}
+html[data-leressae-theme="dark"] .lightbox-caption {
+    background: rgba(15,23,42,.96) !important;
+    color: #e5edf7 !important;
+}
+html[data-leressae-theme="dark"] .lightbox-caption strong,
+html[data-leressae-theme="dark"] .lightbox-caption p {
+    color: #e5edf7 !important;
+}
+html[data-leressae-theme="dark"] .lightbox-close,
+html[data-leressae-theme="dark"] .lightbox-nav {
+    background: rgba(15,23,42,.90) !important;
+    color: #fff !important;
+}
+
+/* Admin panel */
+html[data-leressae-theme="dark"] .admin-shell {
+    background: #0b1625 !important;
+    border-color: #26384d !important;
+    box-shadow: 0 18px 45px rgba(0,0,0,.28) !important;
+}
+html[data-leressae-theme="dark"] .admin-content {
+    background: #0b1625 !important;
+    color: #e5edf7 !important;
+}
+html[data-leressae-theme="dark"] .admin-topbar,
+html[data-leressae-theme="dark"] .admin-card,
+html[data-leressae-theme="dark"] .admin-stat,
+html[data-leressae-theme="dark"] .admin-empty-state,
+html[data-leressae-theme="dark"] .admin-notice,
+html[data-leressae-theme="dark"] .admin-filter-card,
+html[data-leressae-theme="dark"] .admin-section,
+html[data-leressae-theme="dark"] .admin-dashboard-card {
+    background: #101c2c !important;
+    border-color: #2b3d52 !important;
+    color: #e5edf7 !important;
+}
+html[data-leressae-theme="dark"] .admin-topbar h2,
+html[data-leressae-theme="dark"] .admin-card h3,
+html[data-leressae-theme="dark"] .admin-card h4,
+html[data-leressae-theme="dark"] .admin-stat .value,
+html[data-leressae-theme="dark"] .admin-breadcrumb,
+html[data-leressae-theme="dark"] .admin-card-header,
+html[data-leressae-theme="dark"] .admin-empty-state strong {
+    color: #f1f5f9 !important;
+}
+html[data-leressae-theme="dark"] .admin-card p,
+html[data-leressae-theme="dark"] .admin-stat .label,
+html[data-leressae-theme="dark"] .admin-empty-state,
+html[data-leressae-theme="dark"] .admin-notice {
+    color: #aebed0 !important;
+}
+
+/* Admin tables: keep the existing fixed widths and horizontal scrolling. */
+html[data-leressae-theme="dark"] .admin-table-wrap,
+html[data-leressae-theme="dark"] .admin-activity-table-wrap,
+html[data-leressae-theme="dark"] .admin-customers-table-wrap,
+html[data-leressae-theme="dark"] .admin-tech-management-wrap {
+    scrollbar-color: #475569 #0f172a;
+}
+html[data-leressae-theme="dark"] .admin-table,
+html[data-leressae-theme="dark"] .admin-table tbody,
+html[data-leressae-theme="dark"] .admin-activity-table,
+html[data-leressae-theme="dark"] .admin-services-table,
+html[data-leressae-theme="dark"] .admin-running-services-table,
+html[data-leressae-theme="dark"] .admin-completed-services-table,
+html[data-leressae-theme="dark"] .admin-customers-table,
+html[data-leressae-theme="dark"] .admin-tech-management-table {
+    color: #dbe7f5 !important;
+}
+html[data-leressae-theme="dark"] .admin-table thead th,
+html[data-leressae-theme="dark"] .admin-table th,
+html[data-leressae-theme="dark"] .admin-activity-table th,
+html[data-leressae-theme="dark"] .admin-services-table th,
+html[data-leressae-theme="dark"] .admin-running-services-table th,
+html[data-leressae-theme="dark"] .admin-completed-services-table th,
+html[data-leressae-theme="dark"] .admin-customers-table th,
+html[data-leressae-theme="dark"] .admin-tech-management-table th {
+    background: #162437 !important;
+    color: #f1f5f9 !important;
+    border-color: #2d4056 !important;
+}
+html[data-leressae-theme="dark"] .admin-table td,
+html[data-leressae-theme="dark"] .admin-activity-table td,
+html[data-leressae-theme="dark"] .admin-services-table td,
+html[data-leressae-theme="dark"] .admin-running-services-table td,
+html[data-leressae-theme="dark"] .admin-completed-services-table td,
+html[data-leressae-theme="dark"] .admin-customers-table td,
+html[data-leressae-theme="dark"] .admin-tech-management-table td {
+    background: #101c2c !important;
+    color: #dbe7f5 !important;
+    border-color: #26384d !important;
+}
+html[data-leressae-theme="dark"] .admin-table tbody tr:hover td,
+html[data-leressae-theme="dark"] .admin-activity-table tbody tr:hover td,
+html[data-leressae-theme="dark"] .admin-services-table tbody tr:hover td,
+html[data-leressae-theme="dark"] .admin-running-services-table tbody tr:hover td,
+html[data-leressae-theme="dark"] .admin-completed-services-table tbody tr:hover td,
+html[data-leressae-theme="dark"] .admin-customers-table tbody tr:hover td {
+    background: #15253a !important;
+}
+html[data-leressae-theme="dark"] .admin-table td a,
+html[data-leressae-theme="dark"] .admin-customers-table td a {
+    color: #7dd3fc !important;
+}
+
+/* Admin sidebar stays intentionally dark, only its surrounding/content area changes. */
+html[data-leressae-theme="dark"] .admin-sidebar {
+    box-shadow: inset -1px 0 rgba(148,163,184,.08);
+}
+html[data-leressae-theme="dark"] .admin-sidebar .admin-nav-item {
+    color: #dbe7f5 !important;
+}
+html[data-leressae-theme="dark"] .admin-sidebar .admin-nav-item:hover {
+    background: rgba(125,211,252,.10) !important;
+}
+
+/* Technician panel */
+html[data-leressae-theme="dark"] .technician-shell {
+    background: #0b1625 !important;
+    border-color: #26384d !important;
+    box-shadow: 0 18px 45px rgba(0,0,0,.30) !important;
+}
+html[data-leressae-theme="dark"] .technician-content,
+html[data-leressae-theme="dark"] .tech-section,
+html[data-leressae-theme="dark"] .tech-stat,
+html[data-leressae-theme="dark"] .tech-proof-card,
+html[data-leressae-theme="dark"] .tech-update-proof-box,
+html[data-leressae-theme="dark"] .technician-content .card-container {
+    background: #101c2c !important;
+    border-color: #2b3d52 !important;
+    color: #e5edf7 !important;
+}
+html[data-leressae-theme="dark"] .technician-topbar h2,
+html[data-leressae-theme="dark"] .tech-section h3,
+html[data-leressae-theme="dark"] .tech-section-header h3,
+html[data-leressae-theme="dark"] .tech-stat .value,
+html[data-leressae-theme="dark"] .tech-update-proof-head strong {
+    color: #f1f5f9 !important;
+}
+html[data-leressae-theme="dark"] .technician-topbar p,
+html[data-leressae-theme="dark"] .tech-section p,
+html[data-leressae-theme="dark"] .tech-stat .label,
+html[data-leressae-theme="dark"] .tech-update-proof-head small {
+    color: #aebed0 !important;
+}
+html[data-leressae-theme="dark"] .technician-content .tech-table,
+html[data-leressae-theme="dark"] .technician-content .tech-client-table {
+    color: #dbe7f5 !important;
+}
+html[data-leressae-theme="dark"] .technician-content .tech-table th,
+html[data-leressae-theme="dark"] .technician-content .tech-client-table th {
+    background: #162437 !important;
+    color: #f1f5f9 !important;
+    border-color: #2d4056 !important;
+}
+html[data-leressae-theme="dark"] .technician-content .tech-table td,
+html[data-leressae-theme="dark"] .technician-content .tech-client-table td {
+    background: #101c2c !important;
+    color: #dbe7f5 !important;
+    border-color: #26384d !important;
+}
+html[data-leressae-theme="dark"] .technician-content .tech-table tbody tr:hover td,
+html[data-leressae-theme="dark"] .technician-content .tech-client-table tbody tr:hover td {
+    background: #15253a !important;
+}
+html[data-leressae-theme="dark"] .technician-content .tech-btn.secondary,
+html[data-leressae-theme="dark"] .technician-content .btn-secondary {
+    background: #172437 !important;
+    color: #e5edf7 !important;
+    border-color: #3a4b60 !important;
+}
+html[data-leressae-theme="dark"] .technician-content .stock-source-tab {
+    background: #172437 !important;
+    color: #dbe7f5 !important;
+    border-color: #3a4b60 !important;
+}
+html[data-leressae-theme="dark"] .technician-content .stock-source-tab:hover {
+    background: #20334b !important;
+}
+html[data-leressae-theme="dark"] .technician-content .stock-body,
+html[data-leressae-theme="dark"] .technician-content .stock-body .field-row input,
+html[data-leressae-theme="dark"] .technician-content .stock-body .field-row select,
+html[data-leressae-theme="dark"] .technician-content .stock-body .field-row textarea {
+    color: #e5edf7 !important;
+}
+
+/* Status badges remain semantically colored and readable in dark mode. */
+html[data-leressae-theme="dark"] .status-badge,
+html[data-leressae-theme="dark"] .tech-proof-state.uploaded {
+    filter: brightness(.94) saturate(1.08);
+}
+html[data-leressae-theme="dark"] .tech-proof-state.missing {
+    background: #3b2d0b !important;
+    color: #fde68a !important;
+    border-color: #785b16 !important;
+}
+
+/* Theme toggle — fixed so it never changes table/sidebar dimensions. */
+#leressaeThemeToggle {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 2147482000;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     gap: 8px;
-    padding: 12px 0;
-    border-bottom: 1px solid #e8eef4;
-  }
-
-  .admin-customer-mobile-stats > div,
-  .admin-customer-mobile-meta > div {
+    min-width: 116px;
+    height: 42px;
+    padding: 0 14px;
+    border: 1px solid rgba(148,163,184,.45);
+    border-radius: 999px;
+    background: rgba(255,255,255,.94);
+    color: #0f172a;
+    box-shadow: 0 10px 26px rgba(15,23,42,.20);
+    backdrop-filter: blur(12px) saturate(130%);
+    -webkit-backdrop-filter: blur(12px) saturate(130%);
+    cursor: pointer;
+    font: 700 13px/1 'Segoe UI', Tahoma, sans-serif;
+    transition: background-color .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+#leressaeThemeToggle:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 13px 30px rgba(15,23,42,.26);
+}
+#leressaeThemeToggle:focus-visible {
+    outline: 3px solid rgba(56,189,248,.35);
+    outline-offset: 3px;
+}
+#leressaeThemeToggle .leressae-theme-icon {
+    width: 20px;
+    height: 20px;
     display: grid;
-    align-content: start;
-    gap: 5px;
-  }
+    place-items: center;
+    font-size: 17px;
+    line-height: 1;
+}
+#leressaeThemeToggle .leressae-theme-text {
+    white-space: nowrap;
+}
+html[data-leressae-theme="dark"] #leressaeThemeToggle {
+    background: rgba(15,27,43,.94);
+    color: #f8fafc;
+    border-color: #475569;
+    box-shadow: 0 10px 30px rgba(0,0,0,.38);
+}
+html[data-leressae-theme="dark"] #leressaeThemeToggle:hover {
+    background: #172437;
+}
 
-  .admin-customer-mobile-stats span,
-  .admin-customer-mobile-meta span {
-    color: #65778d;
-    font-size: .7rem;
-    line-height: 1.35;
-  }
+/* Respect reduced motion without removing the theme feature. */
+@media (prefers-reduced-motion: reduce) {
+    #leressaeThemeToggle,
+    html[data-leressae-theme="dark"] * {
+        transition-duration: .01ms !important;
+    }
+}
+@media (max-width: 640px) {
+    #leressaeThemeToggle {
+        right: 12px;
+        bottom: 12px;
+        min-width: 104px;
+        height: 40px;
+        padding: 0 12px;
+        font-size: 12px;
+    }
+}
 
-  .admin-customer-mobile-stats strong,
-  .admin-customer-mobile-meta strong {
-    color: #1e3149;
-    font-size: .95rem;
-    line-height: 1.3;
-    overflow-wrap: anywhere;
-  }
 
-  .admin-customer-mobile-meta {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-    padding: 12px 0;
-  }
+/* =========================================================
+   DARK MODE OPTIMIZATION — FINAL OVERRIDE
+   Keeps existing layout/functionality; only normalizes colors.
+   ========================================================= */
+:root{
+  --dm-bg:#0b1220;
+  --dm-surface:#111827;
+  --dm-surface-2:#172033;
+  --dm-surface-3:#1e293b;
+  --dm-border:#334155;
+  --dm-border-soft:#263449;
+  --dm-text:#e5edf7;
+  --dm-text-strong:#f8fafc;
+  --dm-muted:#a9b8ca;
+  --dm-muted-2:#8797aa;
+  --dm-input:#0f172a;
+  --dm-hover:#1b2a3d;
+  --dm-shadow:0 12px 30px rgba(0,0,0,.28);
+}
 
-  .admin-customer-mobile-card > button {
-    width: 100%;
-    min-height: 40px;
-  }
+/* Both supported activation patterns: JS class and data attribute. */
+html[data-theme="dark"] body,
+body.dark-mode{
+  color-scheme:dark;
+  background-color:var(--dm-bg) !important;
+  color:var(--dm-text) !important;
+}
 
-  @media (max-width: 900px) {
-    .admin-shell {
-      position: relative;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      gap: 0;
-    }
+/* Remove the bright fixed page background in dark mode. */
+html[data-theme="dark"] body,
+body.dark-mode{
+  background-image:none !important;
+}
 
-    .admin-shell::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      z-index: 1299;
-      background: rgba(15, 23, 42, .48);
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity .2s ease, visibility .2s ease;
-    }
+/* Main surfaces */
+html[data-theme="dark"] .navbar,
+body.dark-mode .navbar{
+  background:rgba(17,24,39,.92) !important;
+  border-color:var(--dm-border) !important;
+  box-shadow:var(--dm-shadow) !important;
+}
+html[data-theme="dark"] .brand-title,
+body.dark-mode .brand-title,
+html[data-theme="dark"] .nav-links li a,
+body.dark-mode .nav-links li a{
+  color:var(--dm-text-strong) !important;
+}
+html[data-theme="dark"] .brand-sub,
+body.dark-mode .brand-sub{color:#67b7e8 !important}
 
-    .admin-shell.admin-menu-open::before {
-      opacity: 1;
-      visibility: visible;
-    }
+html[data-theme="dark"] .dropdown-content,
+body.dark-mode .dropdown-content,
+html[data-theme="dark"] .login-dropdown-content,
+body.dark-mode .login-dropdown-content{
+  background:var(--dm-surface) !important;
+  border-color:var(--dm-border) !important;
+  box-shadow:var(--dm-shadow) !important;
+}
+html[data-theme="dark"] .dropdown-content li a,
+body.dark-mode .dropdown-content li a,
+html[data-theme="dark"] .login-dropdown-content a,
+body.dark-mode .login-dropdown-content a{
+  color:var(--dm-text) !important;
+}
+html[data-theme="dark"] .dropdown-content li a:hover,
+body.dark-mode .dropdown-content li a:hover,
+html[data-theme="dark"] .login-dropdown-content a:hover,
+body.dark-mode .login-dropdown-content a:hover{
+  background:var(--dm-hover) !important;
+  color:#67c7ff !important;
+}
 
-    .admin-sidebar {
-      position: fixed;
-      z-index: 1300;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      width: min(300px, 86vw);
-      max-height: 100dvh;
-      overflow-y: auto;
-      border-radius: 0 18px 18px 0;
-      transform: translateX(-105%);
-      transition: transform .22s ease;
-      visibility: hidden;
-    }
+/* Generic cards/sections */
+html[data-theme="dark"] .card-container,
+body.dark-mode .card-container,
+html[data-theme="dark"] .pillar-card,
+body.dark-mode .pillar-card,
+html[data-theme="dark"] .dashboard-section,
+body.dark-mode .dashboard-section,
+html[data-theme="dark"] .media-item,
+body.dark-mode .media-item,
+html[data-theme="dark"] .status-lookup-wrap,
+body.dark-mode .status-lookup-wrap,
+html[data-theme="dark"] .service-status-card,
+body.dark-mode .service-status-card,
+html[data-theme="dark"] .service-item-card,
+body.dark-mode .service-item-card{
+  background:var(--dm-surface) !important;
+  border-color:var(--dm-border) !important;
+  color:var(--dm-text) !important;
+  box-shadow:var(--dm-shadow) !important;
+}
 
-    .admin-shell.admin-menu-open .admin-sidebar {
-      transform: translateX(0);
-      visibility: visible;
-    }
+html[data-theme="dark"] .service-item-card,
+body.dark-mode .service-item-card{
+  background:var(--dm-surface-2) !important;
+}
+html[data-theme="dark"] .service-item-icon,
+body.dark-mode .service-item-icon{
+  background:var(--dm-surface-3) !important;
+  border-color:var(--dm-border) !important;
+}
+html[data-theme="dark"] .pillar-icon,
+body.dark-mode .pillar-icon{
+  background:#12314a !important;
+  color:#67c7ff !important;
+}
 
-    .admin-menu-toggle {
-      display: inline-grid;
-      flex: 0 0 40px;
-    }
+/* Typography */
+html[data-theme="dark"] h1,
+body.dark-mode h1,
+html[data-theme="dark"] h2,
+body.dark-mode h2,
+html[data-theme="dark"] h3,
+body.dark-mode h3,
+html[data-theme="dark"] h4,
+body.dark-mode h4,
+html[data-theme="dark"] .page-header-title,
+body.dark-mode .page-header-title,
+html[data-theme="dark"] .section-title-text,
+body.dark-mode .section-title-text,
+html[data-theme="dark"] .pillar-title,
+body.dark-mode .pillar-title,
+html[data-theme="dark"] .service-item-title,
+body.dark-mode .service-item-title,
+html[data-theme="dark"] .media-item .title,
+body.dark-mode .media-item .title,
+html[data-theme="dark"] .tutorial-card h3,
+body.dark-mode .tutorial-card h3,
+html[data-theme="dark"] .service-status-card h3,
+body.dark-mode .service-status-card h3{
+  color:var(--dm-text-strong) !important;
+}
+html[data-theme="dark"] p,
+body.dark-mode p,
+html[data-theme="dark"] .page-header-desc,
+body.dark-mode .page-header-desc,
+html[data-theme="dark"] .section-sub-text,
+body.dark-mode .section-sub-text,
+html[data-theme="dark"] .pillar-desc,
+body.dark-mode .pillar-desc,
+html[data-theme="dark"] .service-item-desc,
+body.dark-mode .service-item-desc,
+html[data-theme="dark"] .media-item figcaption,
+body.dark-mode .media-item figcaption,
+html[data-theme="dark"] .media-item .desc,
+body.dark-mode .media-item .desc,
+html[data-theme="dark"] .tutorial-card p,
+body.dark-mode .tutorial-card p{
+  color:var(--dm-muted) !important;
+}
 
-    .admin-customers-mobile-list {
-      display: grid;
-      gap: 12px;
-    }
+/* Tutorial/media */
+html[data-theme="dark"] .tutorial-card,
+body.dark-mode .tutorial-card{
+  background:linear-gradient(180deg,#172235 0%,#111827 100%) !important;
+  border-color:var(--dm-border) !important;
+  color:var(--dm-text) !important;
+}
+html[data-theme="dark"] .tutorial-meta,
+body.dark-mode .tutorial-meta{
+  border-top-color:var(--dm-border) !important;
+}
+html[data-theme="dark"] .tutorial-scroll::-webkit-scrollbar-thumb,
+body.dark-mode .tutorial-scroll::-webkit-scrollbar-thumb{
+  background:#475569 !important;
+}
 
-    .admin-customers-table-wrap {
-      display: none;
-    }
-  }
+/* Forms — catches native controls that otherwise stay white. */
+html[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]),
+body.dark-mode input:not([type="checkbox"]):not([type="radio"]),
+html[data-theme="dark"] select,
+body.dark-mode select,
+html[data-theme="dark"] textarea,
+body.dark-mode textarea{
+  background:var(--dm-input) !important;
+  color:var(--dm-text) !important;
+  border-color:var(--dm-border) !important;
+  color-scheme:dark;
+}
+html[data-theme="dark"] input::placeholder,
+body.dark-mode input::placeholder,
+html[data-theme="dark"] textarea::placeholder,
+body.dark-mode textarea::placeholder{
+  color:#718096 !important;
+}
+html[data-theme="dark"] option,
+body.dark-mode option{
+  background:var(--dm-surface) !important;
+  color:var(--dm-text) !important;
+}
 
-  @media (max-width: 480px) {
-    .admin-customer-mobile-card {
-      padding: 13px;
-    }
+/* Login/stock/lightbox modals */
+html[data-theme="dark"] .login-panel,
+body.dark-mode .login-panel,
+html[data-theme="dark"] .stock-panel,
+body.dark-mode .stock-panel,
+html[data-theme="dark"] .lightbox-content,
+body.dark-mode .lightbox-content{
+  background:var(--dm-surface) !important;
+  border-color:var(--dm-border) !important;
+  color:var(--dm-text) !important;
+  box-shadow:var(--dm-shadow) !important;
+}
+html[data-theme="dark"] .login-body,
+body.dark-mode .login-body,
+html[data-theme="dark"] .stock-body,
+body.dark-mode .stock-body{
+  background:var(--dm-surface) !important;
+}
+html[data-theme="dark"] .login-field label,
+body.dark-mode .login-field label,
+html[data-theme="dark"] .stock-body .field-row label,
+body.dark-mode .stock-body .field-row label{
+  color:var(--dm-text) !important;
+}
+html[data-theme="dark"] .login-role-btn,
+body.dark-mode .login-role-btn{
+  background:var(--dm-surface-2) !important;
+  border-color:var(--dm-border) !important;
+  color:var(--dm-text) !important;
+}
+html[data-theme="dark"] .login-role-btn.active,
+body.dark-mode .login-role-btn.active{
+  background:#12314a !important;
+  border-color:#38bdf8 !important;
+  color:#8bdcff !important;
+}
+html[data-theme="dark"] .login-btn-secondary,
+body.dark-mode .login-btn-secondary,
+html[data-theme="dark"] .video-controls button.secondary,
+body.dark-mode .video-controls button.secondary{
+  background:var(--dm-surface-3) !important;
+  color:var(--dm-text) !important;
+}
+html[data-theme="dark"] .lightbox-caption,
+body.dark-mode .lightbox-caption{
+  background:rgba(17,24,39,.96) !important;
+  color:var(--dm-text) !important;
+}
+html[data-theme="dark"] .lightbox-caption strong,
+body.dark-mode .lightbox-caption strong,
+html[data-theme="dark"] .lightbox-caption p,
+body.dark-mode .lightbox-caption p{
+  color:var(--dm-text) !important;
+}
+html[data-theme="dark"] .lightbox-close,
+body.dark-mode .lightbox-close,
+html[data-theme="dark"] .lightbox-nav,
+body.dark-mode .lightbox-nav{
+  background:rgba(30,41,59,.94) !important;
+  color:#f8fafc !important;
+}
 
-    .admin-customer-mobile-stats {
-      gap: 5px;
-    }
+/* Status/empty/notice */
+html[data-theme="dark"] .status-empty,
+body.dark-mode .status-empty,
+html[data-theme="dark"] .admin-empty-state,
+body.dark-mode .admin-empty-state,
+html[data-theme="dark"] .admin-notice,
+body.dark-mode .admin-notice{
+  background:var(--dm-surface-2) !important;
+  border-color:var(--dm-border) !important;
+  color:var(--dm-muted) !important;
+}
 
-    .admin-customer-mobile-stats span,
-    .admin-customer-mobile-meta span {
-      font-size: .66rem;
-    }
+/* Tables and table wrappers: colors only, no dimensions/overflow changes. */
+html[data-theme="dark"] table,
+body.dark-mode table{
+  color:var(--dm-text) !important;
+}
+html[data-theme="dark"] th,
+body.dark-mode th{
+  background:#172235 !important;
+  color:#eaf2fb !important;
+  border-color:var(--dm-border) !important;
+}
+html[data-theme="dark"] td,
+body.dark-mode td{
+  background:var(--dm-surface) !important;
+  color:var(--dm-text) !important;
+  border-color:var(--dm-border-soft) !important;
+}
+html[data-theme="dark"] tbody tr:hover td,
+body.dark-mode tbody tr:hover td{
+  background:var(--dm-hover) !important;
+}
+html[data-theme="dark"] .admin-table-wrap,
+body.dark-mode .admin-table-wrap,
+html[data-theme="dark"] .admin-customers-table-wrap,
+body.dark-mode .admin-customers-table-wrap,
+html[data-theme="dark"] .admin-tech-management-wrap,
+body.dark-mode .admin-tech-management-wrap,
+html[data-theme="dark"] .tech-table-wrap,
+body.dark-mode .tech-table-wrap,
+html[data-theme="dark"] .tech-client-table-wrap,
+body.dark-mode .tech-client-table-wrap{
+  scrollbar-color:#475569 #111827;
+}
 
-    .admin-customer-mobile-stats strong,
-    .admin-customer-mobile-meta strong {
-      font-size: .88rem;
-    }
-  }
+/* Admin + Teknisi surfaces */
+html[data-theme="dark"] .admin-shell,
+body.dark-mode .admin-shell,
+html[data-theme="dark"] .technician-shell,
+body.dark-mode .technician-shell,
+html[data-theme="dark"] .admin-content,
+body.dark-mode .admin-content,
+html[data-theme="dark"] .technician-content,
+body.dark-mode .technician-content,
+html[data-theme="dark"] .admin-topbar,
+body.dark-mode .admin-topbar{
+  color:var(--dm-text) !important;
+}
+html[data-theme="dark"] .admin-sidebar,
+body.dark-mode .admin-sidebar,
+html[data-theme="dark"] .technician-sidebar,
+body.dark-mode .technician-sidebar{
+  background:#0d1625 !important;
+  border-color:var(--dm-border) !important;
+}
+html[data-theme="dark"] .admin-card,
+body.dark-mode .admin-card{
+  background:var(--dm-surface) !important;
+  border-color:var(--dm-border) !important;
+  color:var(--dm-text) !important;
+}
+html[data-theme="dark"] .admin-topbar,
+body.dark-mode .admin-topbar{
+  background:var(--dm-surface) !important;
+  border-color:var(--dm-border) !important;
+}
 
-  @media (min-width: 1024px) {
-    .admin-sidebar {
-      position: sticky;
-      top: 16px;
-      max-height: calc(100dvh - 32px);
-      overflow-y: auto;
-      scrollbar-width: thin;
-    }
-  }
+/* Generic controls, filters, pagination and buttons that are not brand/status buttons. */
+html[data-theme="dark"] .admin-filter-row input,
+body.dark-mode .admin-filter-row input,
+html[data-theme="dark"] .admin-filter-row select,
+body.dark-mode .admin-filter-row select,
+html[data-theme="dark"] .admin-table select,
+body.dark-mode .admin-table select{
+  background:var(--dm-input) !important;
+  color:var(--dm-text) !important;
+  border-color:var(--dm-border) !important;
+}
 
-  @media (min-width: 768px) and (max-width: 1023px) {
-    .admin-shell {
-      grid-template-columns: 210px minmax(0, 1fr);
-      gap: 14px;
-    }
-    .admin-sidebar {
-      padding: 18px 12px;
-    }
-    .admin-nav-list button {
-      padding: 10px;
-      font-size: 0.88rem;
-    }
-    .admin-card {
-      padding: 15px;
-    }
-    .admin-report-filters {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
+/* Common white utility surfaces discovered in large SPA markup. */
+html[data-theme="dark"] [style*="background: #fff"],
+body.dark-mode [style*="background: #fff"],
+html[data-theme="dark"] [style*="background:#fff"],
+body.dark-mode [style*="background:#fff"],
+html[data-theme="dark"] [style*="background: white"],
+body.dark-mode [style*="background: white"],
+html[data-theme="dark"] [style*="background:#ffffff"],
+body.dark-mode [style*="background:#ffffff"],
+html[data-theme="dark"] [style*="background: #ffffff"],
+body.dark-mode [style*="background: #ffffff"]{
+  background:var(--dm-surface) !important;
+}
 
-  @media (max-width: 767px) {
-    .admin-shell {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 12px;
-    }
-    .admin-table th,
-    .admin-table td {
-      font-size: 0.74rem !important;
-      line-height: 1.4;
-      padding: 9px 10px !important;
-    }
-    .admin-table .save-status-btn,
-    .admin-table .btn-secondary.small {
-      min-height: 36px !important;
-      padding: 7px 9px !important;
-      font-size: 0.7rem !important;
-    }
-    .admin-stat-mini .label {
-      font-size: 0.64rem !important;
-      line-height: 1.35;
-    }
-    .admin-stat-mini .value {
-      font-size: 1.12rem !important;
-    }
-    .admin-card-header .section-sub-text,
-    .admin-report-filter,
-    .admin-service-filter-group {
-      font-size: 0.78rem;
-      line-height: 1.45;
-    }
-    .admin-service-filter-bar {
-      flex-wrap: wrap;
-    }
-    .technician-shell {
-      border-radius: 14px !important;
-    }
-    .technician-content {
-      padding: 14px !important;
-    }
-    .technician-topbar h2 {
-      font-size: 1.12rem !important;
-      white-space: normal !important;
-      overflow: visible !important;
-      text-overflow: clip !important;
-    }
-    .technician-topbar p {
-      font-size: 0.76rem !important;
-      line-height: 1.45 !important;
-      white-space: normal !important;
-      overflow: visible !important;
-      text-overflow: clip !important;
-    }
-    .technician-shell .tech-table {
-      min-width: 720px !important;
-    }
-    .technician-shell .tech-dashboard-jobs-table {
-      min-width: 940px !important;
-    }
-    .technician-shell .tech-client-table {
-      min-width: 1180px !important;
-    }
-    .technician-shell .tech-status-page .tech-client-table {
-      min-width: 1325px !important;
-    }
-    .technician-shell .tech-table th,
-    .technician-shell .tech-table td {
-      font-size: 0.72rem !important;
-      line-height: 1.4 !important;
-      padding: 9px 10px !important;
-    }
-    .technician-shell .tech-table .tech-btn {
-      min-height: 36px !important;
-      padding: 8px 10px !important;
-      font-size: 0.72rem !important;
-    }
-    .technician-shell .tech-client-table th {
-      font-size: 0.66rem !important;
-    }
-    .technician-shell .tech-stat .label {
-      font-size: 0.68rem !important;
-    }
-    .technician-shell .tech-section-header h3,
-    .tech-dashboard-page .tech-section-header h3 {
-      font-size: 0.95rem !important;
-    }
-    .technician-shell .tech-client-period-summary {
-      font-size: 0.74rem;
-    }
-    .technician-shell .tech-empty {
-      font-size: 0.78rem !important;
-    }
-  }
+/* Preserve intentional status colors and primary action gradients by not overriding them here. */
 
-  @media (max-width: 480px) {
-    .admin-topbar {
-      align-items: flex-start;
-    }
-    .admin-card-header {
-      align-items: flex-start;
-    }
-    .admin-table th,
-    .admin-table td {
-      font-size: 0.72rem !important;
-      padding: 8px 9px !important;
-    }
-    .admin-stat-mini .label {
-      font-size: 0.62rem !important;
-    }
-    .technician-content {
-      padding: 12px !important;
-    }
-    .technician-shell .tech-table th,
-    .technician-shell .tech-table td {
-      font-size: 0.7rem !important;
-    }
-  }
+/* Scrollbars */
+html[data-theme="dark"] *,
+body.dark-mode *{
+  scrollbar-color:#475569 #0f172a;
+}
+html[data-theme="dark"] *::-webkit-scrollbar,
+body.dark-mode *::-webkit-scrollbar{background:#0f172a}
+html[data-theme="dark"] *::-webkit-scrollbar-thumb,
+body.dark-mode *::-webkit-scrollbar-thumb{
+  background:#475569;
+  border-radius:999px;
+}
+html[data-theme="dark"] *::-webkit-scrollbar-thumb:hover,
+body.dark-mode *::-webkit-scrollbar-thumb:hover{background:#64748b}
+
+/* Native browser controls */
+html[data-theme="dark"],
+body.dark-mode{
+  color-scheme:dark;
+}
+
+/* Hero remains image-led; normalize its glass/text elements without changing geometry. */
+html[data-theme="dark"] .hero-slogan-card,
+body.dark-mode .hero-slogan-card{
+  background:rgba(10,18,32,.58) !important;
+  border-color:rgba(148,163,184,.28) !important;
+}
+html[data-theme="dark"] .slogan-label,
+body.dark-mode .slogan-label,
+html[data-theme="dark"] .slogan-main,
+body.dark-mode .slogan-main,
+html[data-theme="dark"] .slogan-sub,
+body.dark-mode .slogan-sub{
+  color:#f1f5f9 !important;
+}
+html[data-theme="dark"] .btn-secondary,
+body.dark-mode .btn-secondary{
+  background:rgba(15,23,42,.72) !important;
+  color:#e2e8f0 !important;
+  border-color:#475569 !important;
+}
+html[data-theme="dark"] .btn-secondary:hover,
+body.dark-mode .btn-secondary:hover{
+  background:#1e293b !important;
+  color:#fff !important;
+}
+
+
+
+/* =========================================================
+   DARK MODE — TEXT CONTRAST / VISIBILITY FINAL PASS
+   Fixes dark-on-dark text without changing layout.
+   ========================================================= */
+html[data-theme="dark"] body,
+body.dark-mode{
+  --dm-text:#e8eef7;
+  --dm-text-strong:#ffffff;
+  --dm-muted:#b8c5d6;
+  --dm-muted-2:#9aabc0;
+}
+
+/* Force readable text for common inherited/legacy selectors. */
+html[data-theme="dark"] .admin-content *,
+body.dark-mode .admin-content *,
+html[data-theme="dark"] .technician-content *,
+body.dark-mode .technician-content *,
+html[data-theme="dark"] .admin-card *,
+body.dark-mode .admin-card *,
+html[data-theme="dark"] .tech-card *,
+body.dark-mode .tech-card *{
+  text-shadow:none;
+}
+
+/* Explicitly readable headings, labels, descriptions and table text. */
+html[data-theme="dark"] .admin-content h1,
+body.dark-mode .admin-content h1,
+html[data-theme="dark"] .admin-content h2,
+body.dark-mode .admin-content h2,
+html[data-theme="dark"] .admin-content h3,
+body.dark-mode .admin-content h3,
+html[data-theme="dark"] .admin-content h4,
+body.dark-mode .admin-content h4,
+html[data-theme="dark"] .technician-content h1,
+body.dark-mode .technician-content h1,
+html[data-theme="dark"] .technician-content h2,
+body.dark-mode .technician-content h2,
+html[data-theme="dark"] .technician-content h3,
+body.dark-mode .technician-content h3,
+html[data-theme="dark"] .technician-content h4,
+body.dark-mode .technician-content h4,
+html[data-theme="dark"] .admin-card h1,
+body.dark-mode .admin-card h1,
+html[data-theme="dark"] .admin-card h2,
+body.dark-mode .admin-card h2,
+html[data-theme="dark"] .admin-card h3,
+body.dark-mode .admin-card h3,
+html[data-theme="dark"] .admin-card h4,
+body.dark-mode .admin-card h4{
+  color:#f8fafc !important;
+}
+
+html[data-theme="dark"] .admin-content p,
+body.dark-mode .admin-content p,
+html[data-theme="dark"] .technician-content p,
+body.dark-mode .technician-content p,
+html[data-theme="dark"] .admin-card p,
+body.dark-mode .admin-card p,
+html[data-theme="dark"] .technician-card p,
+body.dark-mode .technician-card p,
+html[data-theme="dark"] .admin-content small,
+body.dark-mode .admin-content small,
+html[data-theme="dark"] .technician-content small,
+body.dark-mode .technician-content small{
+  color:#b8c5d6 !important;
+}
+
+html[data-theme="dark"] label,
+body.dark-mode label{
+  color:#dbe6f2 !important;
+}
+
+html[data-theme="dark"] table caption,
+body.dark-mode table caption,
+html[data-theme="dark"] th,
+body.dark-mode th{
+  color:#f1f5f9 !important;
+}
+
+html[data-theme="dark"] td,
+body.dark-mode td{
+  color:#dbe6f2 !important;
+}
+
+/* Links must remain visible even when old CSS sets navy/black. */
+html[data-theme="dark"] a:not(.btn-primary):not(.btn-login),
+body.dark-mode a:not(.btn-primary):not(.btn-login){
+  color:#8bd5ff;
+}
+html[data-theme="dark"] a:not(.btn-primary):not(.btn-login):hover,
+body.dark-mode a:not(.btn-primary):not(.btn-login):hover{
+  color:#c7edff;
+}
+
+/* Buttons whose legacy CSS uses dark text on a light background. */
+html[data-theme="dark"] button:not(.btn-primary):not(.btn-login),
+body.dark-mode button:not(.btn-primary):not(.btn-login){
+  color:#e5edf7;
+}
+html[data-theme="dark"] .btn-secondary,
+body.dark-mode .btn-secondary{
+  color:#f1f5f9 !important;
+}
+
+/* Form text, including date/time controls and searchable controls. */
+html[data-theme="dark"] input,
+body.dark-mode input,
+html[data-theme="dark"] select,
+body.dark-mode select,
+html[data-theme="dark"] textarea,
+body.dark-mode textarea{
+  color:#f1f5f9 !important;
+  -webkit-text-fill-color:#f1f5f9 !important;
+  caret-color:#fff !important;
+}
+html[data-theme="dark"] input::placeholder,
+body.dark-mode input::placeholder,
+html[data-theme="dark"] textarea::placeholder,
+body.dark-mode textarea::placeholder{
+  color:#8fa1b5 !important;
+  -webkit-text-fill-color:#8fa1b5 !important;
+}
+
+/* Common legacy text-color literals that frequently remain dark. */
+html[data-theme="dark"] [style*="color: #000"],
+body.dark-mode [style*="color: #000"],
+html[data-theme="dark"] [style*="color:#000"],
+body.dark-mode [style*="color:#000"],
+html[data-theme="dark"] [style*="color: black"],
+body.dark-mode [style*="color: black"],
+html[data-theme="dark"] [style*="color: #0f172a"],
+body.dark-mode [style*="color: #0f172a"],
+html[data-theme="dark"] [style*="color:#0f172a"],
+body.dark-mode [style*="color:#0f172a"],
+html[data-theme="dark"] [style*="color: #1e293b"],
+body.dark-mode [style*="color: #1e293b"],
+html[data-theme="dark"] [style*="color:#1e293b"],
+body.dark-mode [style*="color:#1e293b"],
+html[data-theme="dark"] [style*="color: #334155"],
+body.dark-mode [style*="color: #334155"],
+html[data-theme="dark"] [style*="color:#334155"],
+body.dark-mode [style*="color:#334155"],
+html[data-theme="dark"] [style*="color: #475569"],
+body.dark-mode [style*="color: #475569"],
+html[data-theme="dark"] [style*="color:#475569"],
+body.dark-mode [style*="color:#475569"],
+html[data-theme="dark"] [style*="color: #64748b"],
+body.dark-mode [style*="color: #64748b"],
+html[data-theme="dark"] [style*="color:#64748b"],
+body.dark-mode [style*="color:#64748b"]{
+  color:#dbe6f2 !important;
+  -webkit-text-fill-color:#dbe6f2 !important;
+}
+
+/* Inline styles sometimes use rgba dark text. */
+html[data-theme="dark"] [style*="rgba(15, 23, 42"],
+body.dark-mode [style*="rgba(15, 23, 42"],
+html[data-theme="dark"] [style*="rgba(11, 42, 74"],
+body.dark-mode [style*="rgba(11, 42, 74"]{
+  color:#dbe6f2 !important;
+}
+
+/* Disabled controls: still readable, not nearly invisible. */
+html[data-theme="dark"] :disabled,
+body.dark-mode :disabled{
+  color:#8293a8 !important;
+  -webkit-text-fill-color:#8293a8 !important;
+  opacity:.78;
+}
+
+/* Icons that inherit a dark currentColor. */
+html[data-theme="dark"] svg,
+body.dark-mode svg{
+  color:#dbe6f2;
+}
+html[data-theme="dark"] svg text,
+body.dark-mode svg text{
+  fill:#e8eef7 !important;
+}
+
+/* Keep status colors readable and recognizable. */
+html[data-theme="dark"] .status-badge,
+body.dark-mode .status-badge{
+  text-shadow:none !important;
+}
+
+/* Dark-mode focus ring. */
+html[data-theme="dark"] :focus-visible,
+body.dark-mode :focus-visible{
+  outline:2px solid #38bdf8 !important;
+  outline-offset:2px;
+}
+
+/* Native autofill can otherwise create a bright field with dark text. */
+html[data-theme="dark"] input:-webkit-autofill,
+body.dark-mode input:-webkit-autofill,
+html[data-theme="dark"] textarea:-webkit-autofill,
+body.dark-mode textarea:-webkit-autofill,
+html[data-theme="dark"] select:-webkit-autofill,
+body.dark-mode select:-webkit-autofill{
+  -webkit-text-fill-color:#f1f5f9 !important;
+  box-shadow:0 0 0 1000px #0f172a inset !important;
+  transition:background-color 9999s ease-in-out 0s;
+}
+
+/* Do not let generic text rules alter branded/status button text. */
+html[data-theme="dark"] .btn-primary,
+body.dark-mode .btn-primary,
+html[data-theme="dark"] .admin-primary-btn,
+body.dark-mode .admin-primary-btn,
+html[data-theme="dark"] .save-status-btn,
+body.dark-mode .save-status-btn{
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+}
+
+
+
+/* =========================================================
+   DARK MODE — STOCK FLOW TABLE FINAL FIX
+   Fixes alternating spreadsheet rows that were still white
+   and made their text unreadable. No layout dimensions changed.
+   ========================================================= */
+
+/* The Stock Flow / Persediaan area is fully dark. */
+html[data-theme="dark"] .stock-source-panel,
+body.dark-mode .stock-source-panel,
+html[data-theme="dark"] .stock-source-panel .bon-total-table-scroll,
+body.dark-mode .stock-source-panel .bon-total-table-scroll{
+  background:#111827 !important;
+  color:#e5edf7 !important;
+}
+
+/* Override the legacy even-row light background with higher specificity. */
+html[data-theme="dark"] .stock-source-panel .bon-total-table tbody tr:nth-child(even) td,
+body.dark-mode .stock-source-panel .bon-total-table tbody tr:nth-child(even) td,
+html[data-theme="dark"] .stock-source-panel .bon-total-table tbody tr:nth-child(odd) td,
+body.dark-mode .stock-source-panel .bon-total-table tbody tr:nth-child(odd) td{
+  background:#111827 !important;
+  color:#e5edf7 !important;
+  border-color:#334155 !important;
+}
+
+/* Group rows: dark blue surface + bright text. */
+html[data-theme="dark"] .stock-source-panel .bon-total-table tbody tr.bon-total-group-row td,
+body.dark-mode .stock-source-panel .bon-total-table tbody tr.bon-total-group-row td{
+  background:#172b43 !important;
+  color:#f8fafc !important;
+  border-color:#3b526d !important;
+  font-weight:800 !important;
+}
+
+/* Total rows: distinct but still dark and readable. */
+html[data-theme="dark"] .stock-source-panel .bon-total-table tbody tr.bon-total-summary-row td,
+body.dark-mode .stock-source-panel .bon-total-table tbody tr.bon-total-summary-row td{
+  background:#243247 !important;
+  color:#ffffff !important;
+  border-color:#475569 !important;
+  font-weight:800 !important;
+}
+
+/* Header stays clearly separated from body rows. */
+html[data-theme="dark"] .stock-source-panel .bon-total-table thead th,
+body.dark-mode .stock-source-panel .bon-total-table thead th{
+  background:#0f1b2d !important;
+  color:#f8fafc !important;
+  border-color:#3b4d64 !important;
+}
+
+/* Hover state must not flash to a light row. */
+html[data-theme="dark"] .stock-source-panel .bon-total-table tbody tr:hover td,
+body.dark-mode .stock-source-panel .bon-total-table tbody tr:hover td{
+  background:#1d3047 !important;
+  color:#ffffff !important;
+}
+
+/* The title/subtitle above the APBD table also follows dark mode. */
+html[data-theme="dark"] .stock-source-panel strong[style*="color:#0f172a"],
+body.dark-mode .stock-source-panel strong[style*="color:#0f172a"],
+html[data-theme="dark"] .stock-source-panel strong[style*="color: #0f172a"],
+body.dark-mode .stock-source-panel strong[style*="color: #0f172a"]{
+  color:#f8fafc !important;
+}
+html[data-theme="dark"] .stock-source-panel div[style*="color:#64748b"],
+body.dark-mode .stock-source-panel div[style*="color:#64748b"],
+html[data-theme="dark"] .stock-source-panel div[style*="color: #64748b"],
+body.dark-mode .stock-source-panel div[style*="color: #64748b"]{
+  color:#aebed0 !important;
+}
+
+/* Stock Flow tab buttons: readable inactive/active states. */
+html[data-theme="dark"] .stock-source-tab,
+body.dark-mode .stock-source-tab{
+  background:#1b2738 !important;
+  color:#dce7f3 !important;
+  border:1px solid #3b4d64 !important;
+}
+html[data-theme="dark"] .stock-source-tab:hover,
+body.dark-mode .stock-source-tab:hover{
+  background:#263852 !important;
+  color:#ffffff !important;
+}
+html[data-theme="dark"] .stock-source-tab.active,
+body.dark-mode .stock-source-tab.active{
+  background:#173e63 !important;
+  color:#ffffff !important;
+  border-color:#4aaee8 !important;
+  box-shadow:0 0 0 1px rgba(74,174,232,.25) inset !important;
+}
+
+/* Status chip in the Stock Flow header. */
+html[data-theme="dark"] .stock-source-panel ~ *,
+body.dark-mode .stock-source-panel ~ *{
+  color:#e5edf7;
+}
+
+/* Catch any inline dark text inside Stock Flow cells. */
+html[data-theme="dark"] .stock-source-panel .bon-total-table td[style],
+body.dark-mode .stock-source-panel .bon-total-table td[style]{
+  color:#e5edf7 !important;
+}
+
+/* Keep intentionally colored status badges readable. */
+html[data-theme="dark"] .stock-source-panel .status-badge,
+body.dark-mode .stock-source-panel .status-badge{
+  -webkit-text-fill-color:currentColor !important;
+}
+
 </style>
+
+
+
+<script>
+/* =========================================================
+   LERESSAE — DARK MODE CONTROLLER
+   - No saved preference: follow device/browser theme.
+   - User click: switch to a manual Light/Dark preference.
+   - Saved preference survives refresh.
+   - Double-click: return to device/system theme.
+   ========================================================= */
+(function () {
+    'use strict';
+
+    const STORAGE_KEY = 'leressae-theme-preference';
+    const root = document.documentElement;
+    const mediaQuery = window.matchMedia
+        ? window.matchMedia('(prefers-color-scheme: dark)')
+        : null;
+
+    function getSavedPreference() {
+        try {
+            const value = localStorage.getItem(STORAGE_KEY);
+            return value === 'dark' || value === 'light' ? value : 'system';
+        } catch (error) {
+            return 'system';
+        }
+    }
+
+    function setSavedPreference(value) {
+        try {
+            if (value === 'system') {
+                localStorage.removeItem(STORAGE_KEY);
+            } else {
+                localStorage.setItem(STORAGE_KEY, value);
+            }
+        } catch (error) {
+            /* Storage may be blocked in private/embedded contexts. */
+        }
+    }
+
+    function systemTheme() {
+        return mediaQuery && mediaQuery.matches ? 'dark' : 'light';
+    }
+
+    function currentPreference() {
+        return getSavedPreference();
+    }
+
+    function applyTheme(preference) {
+        const resolved = preference === 'system' ? systemTheme() : preference;
+        root.setAttribute('data-leressae-theme', resolved);
+        root.setAttribute('data-leressae-theme-preference', preference);
+        root.style.colorScheme = resolved;
+        updateToggle(resolved, preference);
+    }
+
+    function updateToggle(resolved, preference) {
+        const button = document.getElementById('leressaeThemeToggle');
+        if (!button) return;
+
+        const icon = button.querySelector('.leressae-theme-icon');
+        const text = button.querySelector('.leressae-theme-text');
+        const isDark = resolved === 'dark';
+
+        if (icon) icon.textContent = isDark ? '☀' : '☾';
+        if (text) text.textContent = isDark ? 'Mode Terang' : 'Mode Gelap';
+
+        button.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+        button.setAttribute(
+            'title',
+            preference === 'system'
+                ? 'Mengikuti tema perangkat • Klik untuk mengubah • Double-click untuk tetap mengikuti sistem'
+                : 'Mode manual aktif • Double-click untuk mengikuti tema perangkat'
+        );
+    }
+
+    function ensureToggle() {
+        if (document.getElementById('leressaeThemeToggle')) {
+            updateToggle(root.getAttribute('data-leressae-theme') || systemTheme(), currentPreference());
+            return;
+        }
+
+        const button = document.createElement('button');
+        button.id = 'leressaeThemeToggle';
+        button.type = 'button';
+        button.setAttribute('aria-label', 'Ubah mode tampilan');
+        button.setAttribute('aria-live', 'polite');
+        button.innerHTML = '<span class="leressae-theme-icon" aria-hidden="true">☾</span><span class="leressae-theme-text">Mode Gelap</span>';
+
+        button.addEventListener('click', function () {
+            const resolved = root.getAttribute('data-leressae-theme') || systemTheme();
+            const next = resolved === 'dark' ? 'light' : 'dark';
+            setSavedPreference(next);
+            applyTheme(next);
+        });
+
+        /* Convenient escape hatch: double-click returns to device theme. */
+        button.addEventListener('dblclick', function (event) {
+            event.preventDefault();
+            setSavedPreference('system');
+            applyTheme('system');
+        });
+
+        document.body.appendChild(button);
+        updateToggle(root.getAttribute('data-leressae-theme') || systemTheme(), currentPreference());
+    }
+
+    function boot() {
+        applyTheme(currentPreference());
+        ensureToggle();
+    }
+
+    if (mediaQuery) {
+        const handleSystemChange = function () {
+            if (currentPreference() === 'system') applyTheme('system');
+        };
+        if (typeof mediaQuery.addEventListener === 'function') {
+            mediaQuery.addEventListener('change', handleSystemChange);
+        } else if (typeof mediaQuery.addListener === 'function') {
+            mediaQuery.addListener(handleSystemChange);
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot, { once: true });
+    } else {
+        boot();
+    }
+})();
+</script>
+
 </body> 
-</html>
+</html
