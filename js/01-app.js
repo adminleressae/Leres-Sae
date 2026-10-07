@@ -5857,7 +5857,20 @@ function renderReportsPage() {
             const wrapper = document.querySelector('.wrapper'); if (wrapper && !document.getElementById('page-info')) wrapper.insertAdjacentHTML('beforeend', '<section id="page-info" class="page-view card-container"><h1 class="page-header-title">Info / Berita</h1><p class="page-header-desc">Informasi terbaru LERESSAE BPTI Disperindag DIY.</p><div id="publicNewsList" class="tutorial-scroll" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));overflow:visible"></div></section>');
             const dashboard = document.getElementById('page-dashboard');
             if (dashboard && !document.getElementById('homeMediaSpotlight')) dashboard.insertAdjacentHTML('beforeend', '<section id="homeMediaSpotlight" class="home-media-spotlight" aria-label="Sorotan dokumentasi media"><div class="media-spotlight-head"><div><h2 class="media-spotlight-title">Sorotan Media</h2><p class="media-spotlight-subtitle">Momen kegiatan, praktik, dan kolaborasi terbaru BPTI Disperindag DIY.</p></div></div><div class="home-media-content"><div class="home-media-empty">Memuat dokumentasi foto…</div></div></section>');
-            if (dashboard && !document.getElementById('homeNewsList')) dashboard.insertAdjacentHTML('beforeend', '<div class="dashboard-section"><div class="section-header"><h2 class="section-title-text">Berita Terbaru</h2></div><div id="homeNewsList" class="tutorial-scroll"></div><button class="btn-primary" onclick="navigateTo(\'page-info\')" style="margin-top:16px">Lihat Semua Berita</button></div>');
+            if (dashboard && !document.getElementById('homeNewsList')) {
+                const newsSection = document.createElement('div');
+                newsSection.className = 'dashboard-section';
+                newsSection.innerHTML = '<div class="section-header"><h2 class="section-title-text">Berita Terbaru</h2></div><div id="homeNewsList" class="tutorial-scroll"></div><button class="btn-primary" onclick="navigateTo(\'page-info\')" style="margin-top:16px">Lihat Semua Berita</button>';
+                const tutorialSection = Array.from(dashboard.querySelectorAll('.dashboard-section')).find(section => {
+                    const title = section.querySelector('.section-title-text');
+                    return title && title.textContent.includes('Tutorial');
+                });
+                if (tutorialSection) {
+                    dashboard.insertBefore(newsSection, tutorialSection);
+                } else {
+                    dashboard.appendChild(newsSection);
+                }
+            }
             renderHomeMediaSlideshow();
         }
         document.addEventListener('keydown', event => { if (event.key === 'Escape') { const modal = document.getElementById('publicNewsModal'); if (modal && modal.classList.contains('is-open')) modal.__closeNewsModal?.(); } });
