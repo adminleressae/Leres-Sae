@@ -3351,6 +3351,7 @@ section#page-media > h1.page-header-title {
         flex-direction: row;
         align-items: center;
         flex-wrap: wrap;
+        padding: 10px 12px;
     }
     .brand {
         width: auto;
@@ -3364,6 +3365,7 @@ section#page-media > h1.page-header-title {
         color: #0369a1;
         border-color: #bae6fd;
         background: #f0f9ff;
+        box-shadow: 0 10px 18px rgba(15, 23, 42, 0.06);
     }
     .nav-right {
         display: flex !important;
@@ -3410,6 +3412,7 @@ section#page-media > h1.page-header-title {
         font-weight: 650 !important;
         line-height: 1.35;
         background: #ffffff;
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.03);
     }
     .nav-links li a.active {
         color: #075985;
@@ -3455,6 +3458,71 @@ section#page-media > h1.page-header-title {
     }
     .login-dropdown-content.show {
         display: block !important;
+    }
+
+    html[data-leressae-theme="dark"] .navbar,
+    html[data-theme="dark"] .navbar,
+    body.dark-mode .navbar {
+        background: rgba(11, 18, 32, 0.96) !important;
+        border-color: rgba(148, 163, 184, 0.18) !important;
+        box-shadow: 0 12px 28px rgba(2, 6, 23, 0.28) !important;
+    }
+    html[data-leressae-theme="dark"] .nav-toggle,
+    html[data-theme="dark"] .nav-toggle,
+    body.dark-mode .nav-toggle {
+        background: rgba(15, 23, 42, 0.92) !important;
+        border-color: rgba(148, 163, 184, 0.28) !important;
+        color: #e2e8f0 !important;
+        box-shadow: 0 10px 18px rgba(2, 6, 23, 0.26) !important;
+    }
+    html[data-leressae-theme="dark"] .nav-right,
+    html[data-theme="dark"] .nav-right,
+    body.dark-mode .nav-right {
+        border-top-color: rgba(148, 163, 184, 0.18) !important;
+    }
+    html[data-leressae-theme="dark"] .nav-links li a,
+    html[data-theme="dark"] .nav-links li a,
+    body.dark-mode .nav-links li a,
+    html[data-leressae-theme="dark"] .btn-login,
+    html[data-theme="dark"] .btn-login,
+    body.dark-mode .btn-login {
+        background: rgba(15, 23, 42, 0.82) !important;
+        border-color: rgba(148, 163, 184, 0.22) !important;
+        color: #e2e8f0 !important;
+    }
+    html[data-leressae-theme="dark"] .nav-links li a.active,
+    html[data-theme="dark"] .nav-links li a.active,
+    body.dark-mode .nav-links li a.active {
+        color: #bae6fd !important;
+        background: rgba(14, 116, 144, 0.24) !important;
+        border-color: rgba(125, 211, 252, 0.5) !important;
+    }
+    html[data-leressae-theme="dark"] .dropdown-content.show,
+    html[data-theme="dark"] .dropdown-content.show,
+    body.dark-mode .dropdown-content.show,
+    html[data-leressae-theme="dark"] .login-dropdown-content.show,
+    html[data-theme="dark"] .login-dropdown-content.show,
+    body.dark-mode .login-dropdown-content.show {
+        background: rgba(15, 23, 42, 0.98) !important;
+        border-color: rgba(148, 163, 184, 0.2) !important;
+    }
+    html[data-leressae-theme="dark"] .dropdown-content li a,
+    html[data-theme="dark"] .dropdown-content li a,
+    body.dark-mode .dropdown-content li a,
+    html[data-leressae-theme="dark"] .login-dropdown-content a,
+    html[data-theme="dark"] .login-dropdown-content a,
+    body.dark-mode .login-dropdown-content a {
+        color: #dbeafc !important;
+        background: transparent !important;
+    }
+    html[data-leressae-theme="dark"] .dropdown-content li a:hover,
+    html[data-theme="dark"] .dropdown-content li a:hover,
+    body.dark-mode .dropdown-content li a:hover,
+    html[data-leressae-theme="dark"] .login-dropdown-content a:hover,
+    html[data-theme="dark"] .login-dropdown-content a:hover,
+    body.dark-mode .login-dropdown-content a:hover {
+        background: rgba(59, 130, 246, 0.12) !important;
+        color: #7dd3fc !important;
     }
 }
 @media (max-width: 767px) {
@@ -9779,6 +9847,15 @@ img, video, iframe { max-width: 100%; }
 .technician-shell .tech-table, #page-technician .tech-table { min-width:900px !important; }
 .technician-shell .tech-table th:last-child, .technician-shell .tech-table td:last-child, #page-technician .tech-table th:last-child, #page-technician .tech-table td:last-child { width:150px !important; text-align:center; }
 .status-badge { display:inline-flex; align-items:center; justify-content:center; min-height:28px; padding:4px 10px; white-space:nowrap; box-sizing:border-box; }
+#page-admin .status-badge,
+#page-admin .admin-report-page .status-badge,
+#page-admin .admin-report-table .status-badge {
+  white-space:normal !important;
+  overflow-wrap:anywhere !important;
+  word-break:break-word !important;
+  text-align:center !important;
+  max-width:100% !important;
+}
 
 @media (max-width:720px) {
   #page-admin, #page-technician { padding-left:12px; padding-right:12px; }
@@ -10427,17 +10504,20 @@ body.admin-mode>.wrapper{width:100%!important;max-width:1380px!important;min-wid
 
 #page-admin .admin-services-table .status-badge,
 #page-admin .admin-running-services-table .status-badge,
-#page-admin .admin-completed-services-table .status-badge{
+#page-admin .admin-completed-services-table .status-badge,
+#page-admin .admin-report-table .status-badge{
   display:inline-flex!important;
   align-items:center!important;
   justify-content:center!important;
   max-width:100%!important;
   min-width:0!important;
-  padding:5px 6px!important;
+  min-height:28px!important;
+  padding:5px 8px!important;
   font-size:.62rem!important;
   line-height:1.05!important;
   white-space:normal!important;
   overflow-wrap:anywhere!important;
+  word-break:break-word!important;
   text-align:center!important;
 }
 
@@ -10724,6 +10804,103 @@ body.admin-mode { overflow-x:hidden !important; }
   .admin-customers-table { min-width:1120px !important; }
   .admin-table th { font-size:.78rem !important; }
   .admin-table td { font-size:.82rem !important; }
+}
+
+/* Dark mode: admin dashboard and technician detail panel */
+html[data-leressae-theme="dark"] .admin-card,
+html[data-theme="dark"] .admin-card,
+body.dark-mode .admin-card {
+    background: #0d1b2a !important;
+    border-color: #29425e !important;
+    color: #edf6ff !important;
+    box-shadow: 0 12px 30px rgba(0,0,0,.22) !important;
+}
+
+html[data-leressae-theme="dark"] .admin-card-header h3,
+html[data-theme="dark"] .admin-card-header h3,
+body.dark-mode .admin-card-header h3,
+html[data-leressae-theme="dark"] .admin-card h3,
+html[data-theme="dark"] .admin-card h3,
+body.dark-mode .admin-card h3 {
+    color: #f8fbff !important;
+}
+
+html[data-leressae-theme="dark"] .admin-stat-mini,
+html[data-theme="dark"] .admin-stat-mini,
+body.dark-mode .admin-stat-mini {
+    background: linear-gradient(135deg, #132538 0%, #10263a 100%) !important;
+    border-color: #35506d !important;
+}
+
+html[data-leressae-theme="dark"] .admin-stat-mini .label,
+html[data-theme="dark"] .admin-stat-mini .label,
+body.dark-mode .admin-stat-mini .label,
+html[data-leressae-theme="dark"] .admin-info-label,
+html[data-theme="dark"] .admin-info-label,
+body.dark-mode .admin-info-label,
+html[data-leressae-theme="dark"] .settings-field label,
+html[data-theme="dark"] .settings-field label,
+body.dark-mode .settings-field label {
+    color: #b9c8da !important;
+}
+
+html[data-leressae-theme="dark"] .admin-stat-mini .value,
+html[data-theme="dark"] .admin-stat-mini .value,
+body.dark-mode .admin-stat-mini .value,
+html[data-leressae-theme="dark"] .admin-info-value,
+html[data-theme="dark"] .admin-info-value,
+body.dark-mode .admin-info-value,
+html[data-leressae-theme="dark"] .api-url-text,
+html[data-theme="dark"] .api-url-text,
+body.dark-mode .api-url-text {
+    color: #f3f8ff !important;
+}
+
+html[data-leressae-theme="dark"] .admin-info-card,
+html[data-theme="dark"] .admin-info-card,
+body.dark-mode .admin-info-card {
+    background: linear-gradient(180deg, #102033 0%, #0f2033 100%) !important;
+    border-color: #35506d !important;
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12) !important;
+}
+
+html[data-leressae-theme="dark"] .chart-box,
+html[data-theme="dark"] .chart-box,
+body.dark-mode .chart-box {
+    background: #102133 !important;
+    border-color: #36516d !important;
+}
+
+html[data-leressae-theme="dark"] .chart-box h4,
+html[data-theme="dark"] .chart-box h4,
+body.dark-mode .chart-box h4 {
+    color: #ebf3ff !important;
+}
+
+html[data-leressae-theme="dark"] .line-chart-axis,
+html[data-theme="dark"] .line-chart-axis,
+body.dark-mode .line-chart-axis {
+    fill: #b9c8da !important;
+}
+
+html[data-leressae-theme="dark"] .line-chart-grid,
+html[data-theme="dark"] .line-chart-grid,
+body.dark-mode .line-chart-grid {
+    stroke: #35506d !important;
+}
+
+html[data-leressae-theme="dark"] .copy-api-btn,
+html[data-theme="dark"] .copy-api-btn,
+body.dark-mode .copy-api-btn {
+    background: #17314d !important;
+    border-color: #3d6289 !important;
+    color: #eaf4ff !important;
+}
+
+html[data-leressae-theme="dark"] .copy-api-btn:hover,
+html[data-theme="dark"] .copy-api-btn:hover,
+body.dark-mode .copy-api-btn:hover {
+    background: #1d3d5e !important;
 }
 
 /* ===== ORIGINAL STYLE BLOCK 24 id="leressae-settings-dark-fix" ===== */
@@ -12140,6 +12317,29 @@ html[data-leressae-theme="dark"] .lightbox-content {
 html[data-leressae-theme="dark"] .login-body,
 html[data-leressae-theme="dark"] .stock-body {
     color: #dbe7f5 !important;
+}
+html[data-leressae-theme="dark"] .stock-panel .service-meta,
+html[data-theme="dark"] .stock-panel .service-meta,
+body.dark-mode .stock-panel .service-meta,
+html[data-leressae-theme="dark"] .stock-panel .service-meta div,
+html[data-theme="dark"] .stock-panel .service-meta div,
+body.dark-mode .stock-panel .service-meta div,
+html[data-leressae-theme="dark"] .stock-panel .service-meta strong,
+html[data-theme="dark"] .stock-panel .service-meta strong,
+body.dark-mode .stock-panel .service-meta strong,
+html[data-leressae-theme="dark"] .stock-panel .admin-table,
+html[data-theme="dark"] .stock-panel .admin-table,
+body.dark-mode .stock-panel .admin-table,
+html[data-leressae-theme="dark"] .stock-panel .admin-table th,
+html[data-theme="dark"] .stock-panel .admin-table th,
+body.dark-mode .stock-panel .admin-table th,
+html[data-leressae-theme="dark"] .stock-panel .admin-table td,
+html[data-theme="dark"] .stock-panel .admin-table td,
+body.dark-mode .stock-panel .admin-table td,
+html[data-leressae-theme="dark"] .stock-panel .admin-empty-state,
+html[data-theme="dark"] .stock-panel .admin-empty-state,
+body.dark-mode .stock-panel .admin-empty-state {
+    color: #edf6ff !important;
 }
 html[data-leressae-theme="dark"] .login-field label,
 html[data-leressae-theme="dark"] .stock-body .field-row label {
