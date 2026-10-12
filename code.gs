@@ -207,6 +207,10 @@ function doPost(e) {
         requireToken_(body.token, ['admin']);
         return json_(cleanupDuplicateServices());
 
+      case 'assignServiceTechnician':
+        requireToken_(body.token, ['admin']);
+        return json_(assignServiceTechnician_(body));
+
       case 'updateServiceStatus':
         requireToken_(body.token, ['admin', 'teknisi']);
         return json_(updateServiceStatus_(body));
@@ -490,13 +494,13 @@ function onFormSubmit(e) {
 
     let formRow = e.range ? e.range.getRow() : 0;
 
-    const timestamp =
+    const eventTimestamp =
       firstValue_(named, ['Timestamp', 'timestamp']) ||
       (values.length ? values[0] : new Date());
 
     // Event lama/manual yang tidak punya range tetap dicari ke Form Responses.
     if (!formRow && responseSheet) {
-      formRow = findResponseRowByEvent_(responseSheet, timestamp, named, values);
+      formRow = findResponseRowByEvent_(responseSheet, eventTimestamp, named, values);
     }
 
     // Jangan pernah membuat ID acak jika source row tidak diketahui.
@@ -507,6 +511,19 @@ function onFormSubmit(e) {
         'Data tidak ditambahkan untuk mencegah duplikasi.'
       );
     }
+
+    const responseHeaders = responseSheet && responseSheet.getLastColumn()
+      ? responseSheet.getRange(1, 1, 1, responseSheet.getLastColumn())
+        .getValues()[0]
+        .map(function(value) { return String(value || '').trim(); })
+      : [];
+    const timestampCol = findHeaderIndex_(responseHeaders, ['Timestamp', 'timestamp']);
+    const responseTimestamp = responseSheet && timestampCol >= 0
+      ? responseSheet.getRange(formRow, timestampCol + 1).getValue()
+      : '';
+    const timestamp = responseTimestamp instanceof Date
+      ? responseTimestamp
+      : eventTimestamp;
 
     const stableId = createFormServiceId_(formRow);
     const existingId = findServiceIdByFormRow_(sheet, formRow);
@@ -1007,10 +1024,15 @@ function getServices_(payload) {
 
 function getMyServices_(body) {
   const session = requireToken_(body && body.token, ['admin', 'teknisi']);
-  const username = String(body && body.username ? body.username : session.username || '').trim();
   const role = String(session.role || '').trim().toLowerCase();
+  const requestedUsername = String(body && body.username || '').trim();
+  const username = role === 'teknisi'
+    ? String(session.username || '').trim()
+    : requestedUsername || String(session.username || '').trim();
 
-  const records = getServices_({ skipSync: true, role: role, username: username, forceSync: false }).data || [];
+  const records = role === 'teknisi'
+    ? getVisibleServicesForUser_(username, role)
+    : getServices_({ skipSync: true, role: role, username: username, forceSync: false }).data || [];
   return { success: true, data: records };
 }
 
@@ -1056,30 +1078,36 @@ function getDashboard_(body) {
 function getTechnicianDashboard_(body) {
   const session = requireToken_(body && body.token, ['teknisi']);
   const username = String(session.username || '').trim();
-  const records = getServices_({ skipSync: true, username: username, role: 'teknisi' }).data || [];
+  const records = getVisibleServicesForUser_(username, 'teknisi');
 
   return {
     success: true,
     data: {
       total: records.length,
-      assigned: records.filter(function(item) {
-        return String(item.technician || '').trim() !== '';
-      }).length,
-      unassigned: records.filter(function(item) {
-        return String(item.technician || '').trim() === '';
-      }).length,
+      assigned: records.length,
+      unassigned: 0,
       records: records
     }
   };
 }
 
-function updateServiceStatus_(body) {
-    const serviceId = String(body.serviceId || body.id || '').trim();
-    if (!serviceId) throw new Error('serviceId wajib diisi.');
+function assignServiceTechnician_(body) {
+  const session = requireToken_(body && body.token, ['admin']);
+  const serviceId = String(body && (body.serviceId || body.id) || '').trim();
+  const technicianUsername = String(body && body.technician || '').trim();
+  if (!serviceId) throw new Error('serviceId wajib diisi.');
+  if (!technicianUsername) throw new Error('Teknisi wajib dipilih.');
 
-    const token = String(body.token || '').trim();
-    const session = requireToken_(token, ['admin', 'teknisi']);
+  const technicians = getTechnicians_().data || [];
+  const technician = technicians.find(function(item) {
+    return String(item.USERNAME || '').trim().toLowerCase() === technicianUsername.toLowerCase()
+      && String(item.STATUS || '').trim().toUpperCase() === 'AKTIF';
+  });
+  if (!technician) throw new Error('Teknisi tidak ditemukan atau tidak aktif.');
 
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
     const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEETS.SERVICES);
     if (!sheet) throw new Error('Sheet SERVICES tidak ditemukan.');
 
@@ -1088,69 +1116,130 @@ function updateServiceStatus_(body) {
 
     const headers = values[0].map(String);
     const idCol = findHeaderIndex_(headers, ['ID', 'id', 'service_id']);
+    const technicianCol = findHeaderIndex_(headers, ['technician', 'teknisi']);
     if (idCol < 0) throw new Error('Kolom ID tidak ditemukan.');
+    if (technicianCol < 0) throw new Error('Kolom teknisi tidak ditemukan.');
 
     let rowNumber = -1;
     let oldRecord = null;
-
     for (let r = 1; r < values.length; r++) {
-      const currentId = String(values[r][idCol] || '');
-      if (currentId === serviceId) {
+      if (String(values[r][idCol] || '').trim() === serviceId) {
         rowNumber = r + 1;
         oldRecord = objectFromRow_(headers, values[r]);
         break;
       }
     }
-
     if (rowNumber < 0) throw new Error('Data servis dengan ID ' + serviceId + ' tidak ditemukan.');
 
-    const data = body.data || body;
-    const newStatus = String(data.status || '').trim();
-    if (CONFIG.STATUS_OPTIONS.indexOf(newStatus) < 0) {
-      throw new Error('Status tidak valid: ' + newStatus);
-    }
-
-    if (session.role !== 'admin') {
-      const allowedForTech = !String(oldRecord.technician || '').trim() || normalizeText_(oldRecord.technician) === normalizeText_(session.username) || normalizeText_(oldRecord.technician) === '';
-      if (!allowedForTech) {
-        throw new Error('Anda tidak memiliki akses untuk mengubah servis ini.');
-      }
+    const terminalStatuses = ['selesai', 'siap diambil', 'sudah diambil', 'dibatalkan'];
+    if (terminalStatuses.indexOf(normalizeText_(oldRecord.status)) >= 0) {
+      throw new Error('Servis yang sudah selesai atau dibatalkan tidak dapat ditugaskan.');
     }
 
     const now = new Date().toISOString();
-    const costType = String(data.biaya_tipe || data.BIAYA_TIPE || body.biaya_tipe || '').trim();
-    const rawCost = data.biaya_nominal !== undefined ? data.biaya_nominal
-      : (data.BIAYA_NOMINAL !== undefined ? data.BIAYA_NOMINAL : body.biaya_nominal);
-    let serviceCost = String(data.biaya !== undefined ? data.biaya : oldRecord.biaya || '');
-    if (costType.toLowerCase() === 'gratis') {
-      serviceCost = 'Gratis';
-    } else if (costType.toLowerCase() === 'custom' && rawCost !== undefined && rawCost !== null && rawCost !== '') {
-      const amount = Number(String(rawCost).replace(/[^0-9.-]/g, ''));
-      if (!isFinite(amount) || amount < 0) throw new Error('Nominal biaya tidak valid.');
-      serviceCost = 'Rp ' + Math.round(amount).toLocaleString('id-ID');
-    }
     const updated = Object.assign({}, oldRecord, {
-      status: newStatus,
-      technician: session.role === 'teknisi'
-        ? session.username
-        : String(data.technician || oldRecord.technician || ''),
-      // Teknisi mengirim biaya_tipe/biaya_nominal. Simpan hasilnya ke kolom
-      // biaya yang sudah digunakan panel Admin dan kompatibel dengan sheet lama.
-      biaya: serviceCost,
-      notes: String(data.notes !== undefined ? data.notes : oldRecord.notes || ''),
-      admin_update: String(data.admin_update || data.updated_by || session.username || 'ADMIN_1'),
+      technician: String(technician.USERNAME || '').trim(),
       timestamp_update: now,
-      tanggal_selesai: (newStatus === 'Selesai' || newStatus === 'Sudah Diambil') ? (data.tanggal_selesai || now.slice(0, 10)) : (oldRecord.tanggal_selesai || '')
+      admin_update: String(session.username || 'ADMIN')
     });
+    sheet.getRange(rowNumber, technicianCol + 1).setValue(updated.technician);
 
-    writeObjectToRow_(sheet, rowNumber, headers, updated);
-    appendHistory_(serviceId, oldRecord.status || '', newStatus, updated.technician, updated.notes, updated.admin_update, now);
+    const updatedCol = findHeaderIndex_(headers, ['timestamp_update', 'updated_at']);
+    if (updatedCol >= 0) sheet.getRange(rowNumber, updatedCol + 1).setValue(now);
+    const adminCol = findHeaderIndex_(headers, ['admin_update', 'updated_by']);
+    if (adminCol >= 0) sheet.getRange(rowNumber, adminCol + 1).setValue(updated.admin_update);
 
     return {
       success: true,
-      message: 'Status servis berhasil diperbarui.',
+      message: 'Teknisi berhasil ditugaskan.',
       data: updated
     };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function updateServiceStatus_(body) {
+  const serviceId = String(body.serviceId || body.id || '').trim();
+  if (!serviceId) throw new Error('serviceId wajib diisi.');
+
+  const token = String(body.token || '').trim();
+  const session = requireToken_(token, ['admin', 'teknisi']);
+
+  const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEETS.SERVICES);
+  if (!sheet) throw new Error('Sheet SERVICES tidak ditemukan.');
+
+  const values = sheet.getDataRange().getValues();
+  if (values.length < 2) throw new Error('Data servis kosong.');
+
+  const headers = values[0].map(String);
+  const idCol = findHeaderIndex_(headers, ['ID', 'id', 'service_id']);
+  if (idCol < 0) throw new Error('Kolom ID tidak ditemukan.');
+
+  let rowNumber = -1;
+  let oldRecord = null;
+
+  for (let r = 1; r < values.length; r++) {
+    const currentId = String(values[r][idCol] || '');
+    if (currentId === serviceId) {
+      rowNumber = r + 1;
+      oldRecord = objectFromRow_(headers, values[r]);
+      break;
+    }
+  }
+
+  if (rowNumber < 0) throw new Error('Data servis dengan ID ' + serviceId + ' tidak ditemukan.');
+
+  const data = body.data || body;
+  const newStatus = String(data.status || '').trim();
+  if (CONFIG.STATUS_OPTIONS.indexOf(newStatus) < 0) {
+    throw new Error('Status tidak valid: ' + newStatus);
+  }
+
+  if (String(session.role || '').trim().toLowerCase() !== 'admin') {
+    const technician = (getTechnicians_().data || []).find(function(item) {
+      return String(item.USERNAME || '').trim().toLowerCase() === String(session.username || '').trim().toLowerCase();
+    });
+    const technicianName = String(technician && technician.NAMA || '').trim();
+    if (!isTechnicianAssigned_(oldRecord.technician, session.username, technicianName)) {
+      throw new Error('Anda tidak memiliki akses untuk mengubah servis ini.');
+    }
+  }
+
+  const now = new Date().toISOString();
+  const costType = String(data.biaya_tipe || data.BIAYA_TIPE || body.biaya_tipe || '').trim();
+  const rawCost = data.biaya_nominal !== undefined ? data.biaya_nominal
+    : (data.BIAYA_NOMINAL !== undefined ? data.BIAYA_NOMINAL : body.biaya_nominal);
+  let serviceCost = String(data.biaya !== undefined ? data.biaya : oldRecord.biaya || '');
+  if (costType.toLowerCase() === 'gratis') {
+    serviceCost = 'Gratis';
+  } else if (costType.toLowerCase() === 'custom' && rawCost !== undefined && rawCost !== null && rawCost !== '') {
+    const amount = Number(String(rawCost).replace(/[^0-9.-]/g, ''));
+    if (!isFinite(amount) || amount < 0) throw new Error('Nominal biaya tidak valid.');
+    serviceCost = 'Rp ' + Math.round(amount).toLocaleString('id-ID');
+  }
+  const updated = Object.assign({}, oldRecord, {
+    status: newStatus,
+    technician: String(session.role || '').trim().toLowerCase() === 'teknisi'
+      ? session.username
+      : String(data.technician || oldRecord.technician || ''),
+    // Teknisi mengirim biaya_tipe/biaya_nominal. Simpan hasilnya ke kolom
+    // biaya yang sudah digunakan panel Admin dan kompatibel dengan sheet lama.
+    biaya: serviceCost,
+    notes: String(data.notes !== undefined ? data.notes : oldRecord.notes || ''),
+    admin_update: String(data.admin_update || data.updated_by || session.username || 'ADMIN_1'),
+    timestamp_update: now,
+    tanggal_selesai: (newStatus === 'Selesai' || newStatus === 'Sudah Diambil') ? (data.tanggal_selesai || now.slice(0, 10)) : (oldRecord.tanggal_selesai || '')
+  });
+
+  writeObjectToRow_(sheet, rowNumber, headers, updated);
+  appendHistory_(serviceId, oldRecord.status || '', newStatus, updated.technician, updated.notes, updated.admin_update, now);
+
+  return {
+    success: true,
+    message: 'Status servis berhasil diperbarui.',
+    data: updated
+  };
 }
 
 function upsertService_(record) {
@@ -2619,6 +2708,25 @@ function hashPassword_(password) {
 }
 
 function getVisibleServicesForUser_(username, role) {
-  // Antrean pengajuan pelanggan dapat dilihat oleh semua akun Teknisi.
-  return getServices_({ skipSync: true }).data || [];
+  const records = getServices_({ skipSync: true }).data || [];
+  const normalizedRole = String(role || '').trim().toLowerCase();
+  if (normalizedRole === 'admin') return records;
+  if (normalizedRole !== 'teknisi' && normalizedRole !== 'technician') return [];
+
+  const normalizedUsername = String(username || '').trim().toLowerCase();
+  const technician = (getTechnicians_().data || []).find(function(item) {
+    return String(item.USERNAME || '').trim().toLowerCase() === normalizedUsername;
+  });
+  const technicianName = String(technician && technician.NAMA || '').trim();
+
+  return records.filter(function(item) {
+    return isTechnicianAssigned_(item.technician, username, technicianName);
+  });
+}
+
+function isTechnicianAssigned_(assignment, username, technicianName) {
+  const normalizedAssignment = normalizeText_(assignment);
+  if (!normalizedAssignment) return false;
+  return normalizedAssignment === normalizeText_(username)
+    || (String(technicianName || '').trim() && normalizedAssignment === normalizeText_(technicianName));
 }

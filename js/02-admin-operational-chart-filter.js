@@ -76,43 +76,60 @@
         ];
         return data;
     };
-    window.buildAdminOperationalHistogramData=function(lineData){
-        const rows=Array.isArray(lineData)?lineData:[];
-        const values=rows.map(x=>Math.max(0,Number(x.value||0)));
-        if(!values.length) return [];
-        const max=Math.max(...values);
-        if(max===0) return [{label:'0',value:values.length}];
-        const binCount=Math.min(6,Math.max(3,Math.ceil(Math.sqrt(values.length))));
-        const width=Math.max(1,Math.ceil(max/binCount));
-        const bins=[];
-        for(let start=0;start<=max;start+=width){
-            const end=Math.min(max,start+width-1);
-            const count=values.filter(v=>v>=start && v<=end).length;
-            bins.push({label:start===end?String(start):`${start}-${end}`,value:count});
-            if(end===max) break;
+    window.buildAdminOperationalHistogramData=function(lineData, records){
+        const p=window.__ADMIN_CHART_PERIOD__ || '7d';
+        const source=Array.isArray(records)?records:[];
+        const dateOf=row=>{
+            const raw=row?.created_at || row?.tanggal_masuk || row?.date || row?.timestamp || row?.tanggal || '';
+            const d=new Date(raw);
+            return Number.isNaN(d.getTime())?null:d;
+        };
+        const countInRange=(start,end)=>source.filter(row=>{const d=dateOf(row);return d && d>=start && d<end;}).length;
+        if(p==='7d'){
+            const now=new Date();
+            const today=startOfDay(now);
+            const day=today.getDay();
+            const mondayOffset=day===0?-6:1-day;
+            const monday=new Date(today); monday.setDate(monday.getDate()+mondayOffset);
+            return ['Senin','Selasa','Rabu','Kamis','Jumat'].map((label,index)=>{
+                const start=new Date(monday);start.setDate(start.getDate()+index);
+                const end=new Date(start);end.setDate(end.getDate()+1);
+                return {label,value:countInRange(start,end)};
+            });
         }
-        return bins;
-    };
-    window.buildAdminOperationalItemData=function(records){
-        const rows=Array.isArray(records)?records:[];
-        const counts=new Map();
-        rows.forEach(row=>{
-            const name=String(row.item_name||row.nama_barang||row.barang||row.jenis_barang||row.type||'Tidak diketahui').trim() || 'Tidak diketahui';
-            counts.set(name,(counts.get(name)||0)+1);
-        });
-        return Array.from(counts.entries()).map(([label,value])=>({label,value})).sort((a,b)=>b.value-a.value || a.label.localeCompare(b.label,'id')).slice(0,5);
+        if(p==='30d'){
+            const now=new Date();
+            const monthStart=new Date(now.getFullYear(),now.getMonth(),1);
+            const monthEnd=new Date(now.getFullYear(),now.getMonth()+1,1);
+            const weeks=[];
+            for(let startDay=1,week=1;startDay<=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();startDay+=7,week++){
+                const start=new Date(now.getFullYear(),now.getMonth(),startDay);
+                const end=new Date(now.getFullYear(),now.getMonth(),Math.min(startDay+7,new Date(now.getFullYear(),now.getMonth()+1,0).getDate()+1));
+                weeks.push({label:`Minggu ${week}`,value:countInRange(start,end)});
+            }
+            return weeks;
+        }
+        if(p==='1d'){
+            const now=new Date(); const start=startOfDay(now); const end=endOfDay(now);
+            return Array.from({length:24},(_,hour)=>({label:String(hour).padStart(2,'0')+'.00',value:source.filter(row=>{const d=dateOf(row);return d && d>=start && d<=end && d.getHours()===hour;}).length}));
+        }
+        const rows=Array.isArray(lineData)?lineData:[];
+        return rows.map(x=>({label:x.label,value:Math.max(0,Number(x.value||0))}));
     };
     window.renderAdminOperationalHistogramChart=function(data){
         const rows=Array.isArray(data)?data:[];
-        if(!rows.length || rows.every(x=>Number(x.value||0)===0)) return '<div class="chart-empty">Belum ada data volume servis pada periode yang dipilih.</div>';
+        if(!rows.length) return '<div class="chart-empty">Belum ada data volume servis pada periode yang dipilih.</div>';
         const max=Math.max(1,...rows.map(x=>Number(x.value||0)));
+        const ticks=[0,Math.ceil(max/4),Math.ceil(max/2),Math.ceil(max*3/4),max].filter((v,i,a)=>a.indexOf(v)===i);
         const bars=rows.map(x=>{
-            const value=Number(x.value||0);
-            const height=Math.max(4,(value/max)*100);
-            return `<div class="histogram-bar" style="--bar-height:${height.toFixed(2)}%" data-count="${value}" title="${escapeHtml(x.label)}: ${value} hari/periode"></div>`;
+            const value=Math.max(0,Number(x.value||0));
+            const height=Math.max(value>0?3:0,(value/max)*100);
+            return `<div class="histogram-column"><div class="histogram-bar" style="--bar-height:${height.toFixed(2)}%" data-count="${value}" title="${escapeHtml(x.label)}: ${value} IKM"></div></div>`;
         }).join('');
         const labels=rows.map(x=>`<span>${escapeHtml(x.label)}</span>`).join('');
-        return `<div class="histogram-wrap"><span class="histogram-note">Frekuensi periode</span><div class="histogram-axis">${bars}</div><div class="histogram-labels">${labels}</div></div>`;
+        // Sumbu Y dibaca dari nilai terbesar di atas menuju 0 di bawah.
+        const yLabels=[...ticks].reverse().map(v=>`<span>${v}</span>`).join('');
+        return `<div class="histogram-wrap"><span class="histogram-note">Jumlah IKM yang mendaftar</span><div class="histogram-plot"><div class="histogram-y-labels">${yLabels}</div><div class="histogram-plot-main"><div class="histogram-axis">${bars}</div><div class="histogram-labels">${labels}</div></div></div></div>`;
     };
     window.renderAdminOperationalItemChart=function(data){
         const rows=Array.isArray(data)?data:[];

@@ -50,8 +50,12 @@
     function applyTheme(preference) {
         const resolved = preference === 'system' ? systemTheme() : preference;
         root.setAttribute('data-leressae-theme', resolved);
+        root.setAttribute('data-theme', resolved);
         root.setAttribute('data-leressae-theme-preference', preference);
         root.style.colorScheme = resolved;
+        if (document.body) {
+            document.body.classList.toggle('dark-mode', resolved === 'dark');
+        }
         updateToggle(resolved, preference);
     }
 

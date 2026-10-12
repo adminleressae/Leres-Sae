@@ -89,27 +89,35 @@ body::before,         body::after {
     min-width: 0;
 }
 .logo-img {
-    height: 50px;
+    height: 88px;
     width: auto;
     object-fit: contain;
     cursor: pointer;
+    transform: scale(2.1);
+    transform-origin: left center;
+    max-width: 118px;
+    display: block;
+    flex-shrink: 0;
 }
 .brand-text {
     display: flex;
     flex-direction: column;
     line-height: 1.1;
+    min-width: 0;
 }
 .brand-title {
-    font-size: 19px;
+    font-size: clamp(1.5rem, 1.8vw, 2.25rem);
     font-weight: 800;
     color: #0f172a;
     letter-spacing: -0.3px;
+    white-space: nowrap;
 }
 .brand-sub {
-    font-size: 12px;
+    font-size: 0.88rem;
     color: #0a4d82;
     font-weight: 700;
     letter-spacing: 0.02em;
+    white-space: nowrap;
 }
 .nav-right {
     display: flex;
@@ -836,18 +844,21 @@ body.login-modal-open {
 .media-item figcaption {
     padding: 12px;
     font-size: 13px;
-    color: #475569;
+    color: #0f172a;
+    background: rgba(255,255,255,.9);
 }
 .media-item .title {
-    font-weight: 700;
+    font-weight: 800;
     color: #0f172a;
     font-size: 14px;
     margin-bottom: 6px;
+    letter-spacing: -0.01em;
 }
 .media-item .desc {
-    color: #64748b;
+    color: #475569;
     font-size: 13px;
-    line-height: 1.4;
+    line-height: 1.45;
+    font-weight: 600;
 }
 
 .video-section {
@@ -1147,10 +1158,10 @@ body.login-modal-open {
         align-items: center;
     }
     .brand-title {
-        font-size: clamp(1rem, 3.2vw, 1.2rem);
+        font-size: clamp(1.5rem, 4vw, 2rem);
     }
     .brand-sub {
-        font-size: 0.7rem;
+        font-size: 0.8rem;
     }
     .nav-right {
         flex-direction: column;
@@ -1247,7 +1258,15 @@ body.login-modal-open {
         border-radius: 10px;
     }
     .logo-img {
-        height: 42px;
+        height: 54px;
+        max-width: 72px;
+        transform: scale(1.25);
+    }
+    .brand-title {
+        font-size: 1.2rem !important;
+    }
+    .brand-sub {
+        font-size: 0.72rem !important;
     }
     .hero-section {
         padding: 22px 18px;
@@ -1306,10 +1325,15 @@ body.login-modal-open {
         gap: 14px;
     }
     .brand-title {
-        font-size: 0.95rem;
+        font-size: 1.1rem !important;
     }
     .brand-sub {
-        font-size: 0.62rem;
+        font-size: 0.68rem !important;
+    }
+    .logo-img {
+        height: 52px;
+        max-width: 70px;
+        transform: scale(1.2);
     }
     .hero-section {
         padding: 18px 14px;
@@ -1446,7 +1470,7 @@ p, .service-item-desc, .media-item .desc {
     font-weight: 700 !important;
 }
 .brand-title {
-    font-size: clamp(1rem, 1vw, 1.35rem) !important;
+    font-size: clamp(1.15rem, 1.7vw, 1.8rem) !important;
     font-weight: 700 !important;
 }
 .brand-sub {
@@ -1485,7 +1509,7 @@ p, .service-item-desc, .media-item .desc {
         font-size: 0.92rem !important;
     }
     .brand-title {
-        font-size: 0.98rem !important;
+        font-size: 1.1rem !important;
     }
 }
 @media (max-width: 480px) {
@@ -1502,7 +1526,7 @@ p, .service-item-desc, .media-item .desc {
         font-size: 0.88rem !important;
     }
     .brand-title {
-        font-size: 0.92rem !important;
+        font-size: 1rem !important;
     }
     .page-header-desc, .hero-desc {
         font-size: 0.86rem !important;
@@ -6352,10 +6376,12 @@ body.admin-mode .admin-content > .leressae-back-row, body.technician-mode .techn
 
 .navbar .brand .logo-img {
     width: auto !important;
-    height: 92px !important;
-    max-width: 110px !important;
+    height: 65px !important;
+    max-width: 88px !important;
     object-fit: contain !important;
     flex: 0 0 auto !important;
+    transform: scale(1.5);
+    transform-origin: left center;
 }
 .navbar .brand {
     gap: 14px !important;
@@ -6363,8 +6389,9 @@ body.admin-mode .admin-content > .leressae-back-row, body.technician-mode .techn
 }
 @media (max-width: 768px) {
     .navbar .brand .logo-img {
-        height: 78px !important;
-        max-width: 94px !important;
+        height: 82px !important;
+        max-width: 80px !important;
+        transform: scale(1.7);
     }
     .navbar .brand {
         gap: 10px !important;
@@ -6372,8 +6399,9 @@ body.admin-mode .admin-content > .leressae-back-row, body.technician-mode .techn
 }
 @media (max-width: 420px) {
     .navbar .brand .logo-img {
-        height: 70px !important;
-        max-width: 84px !important;
+        height: 74px !important;
+        max-width: 100px !important;
+        transform: scale(1.7);
     }
 }
 
@@ -7242,6 +7270,146 @@ body.admin-mode .admin-content > .leressae-back-row, body.technician-mode .techn
     min-width:0;
   }
 }
+
+/* ===== Unified public, admin, and technician theme surfaces ===== */
+:root {
+  --leressae-light-canvas: #f6f9fc;
+  --leressae-light-surface: #ffffff;
+  --leressae-light-surface-soft: #f8fbfe;
+  --leressae-light-border: #dce7f0;
+  --leressae-light-ink: #122b45;
+  --leressae-light-muted: #5d7185;
+  --leressae-dark-canvas: #0b1220;
+  --leressae-dark-surface: #111c2d;
+  --leressae-dark-surface-soft: #17263a;
+  --leressae-dark-border: #31445b;
+  --leressae-dark-ink: #f3f7fc;
+  --leressae-dark-muted: #b7c6d8;
+}
+
+/* Default / light mode: make operational panels crisp and consistent. */
+html[data-leressae-theme="light"] :is(.admin-shell, .technician-shell) {
+  color: var(--leressae-light-ink);
+}
+html[data-leressae-theme="light"] :is(.admin-content, .technician-content) {
+  background: transparent;
+}
+html[data-leressae-theme="light"] :is(.admin-card, .tech-section, .tech-card, .admin-topbar) {
+  background: var(--leressae-light-surface) !important;
+  border-color: var(--leressae-light-border) !important;
+  color: var(--leressae-light-ink) !important;
+  box-shadow: 0 8px 24px rgba(24, 50, 75, .06);
+}
+html[data-leressae-theme="light"] :is(.admin-card h1, .admin-card h2, .admin-card h3, .admin-card h4, .tech-section h1, .tech-section h2, .tech-section h3, .tech-section h4, .technician-content h1, .technician-content h2) {
+  color: var(--leressae-light-ink) !important;
+}
+html[data-leressae-theme="light"] :is(.admin-card p, .tech-section p, .technician-content p, .section-sub-text, .tech-section small) {
+  color: var(--leressae-light-muted) !important;
+}
+html[data-leressae-theme="light"] :is(.admin-card input, .admin-card select, .admin-card textarea, .tech-section input, .tech-section select, .tech-section textarea, .technician-content input, .technician-content select, .technician-content textarea) {
+  background: #fff !important;
+  color: var(--leressae-light-ink) !important;
+  border-color: #cbd9e5 !important;
+}
+html[data-leressae-theme="light"] :is(.admin-table th, .tech-table th) {
+  background: #edf4f9 !important;
+  color: #183b58 !important;
+  border-color: var(--leressae-light-border) !important;
+}
+html[data-leressae-theme="light"] :is(.admin-table td, .tech-table td) {
+  background: #fff !important;
+  color: #29465e !important;
+  border-color: #e1eaf1 !important;
+}
+html[data-leressae-theme="light"] :is(.admin-table tbody tr:hover td, .tech-table tbody tr:hover td) {
+  background: #f2f8fc !important;
+}
+
+/* Dark mode: explicit per-component colors prevent low-contrast inherited text. */
+html[data-leressae-theme="dark"] :is(.admin-shell, .technician-shell) {
+  color: var(--leressae-dark-ink);
+}
+html[data-leressae-theme="dark"] :is(.admin-content, .technician-content) {
+  background: var(--leressae-dark-canvas) !important;
+  color: var(--leressae-dark-ink) !important;
+}
+html[data-leressae-theme="dark"] :is(.admin-card, .tech-section, .tech-card, .admin-topbar) {
+  background: var(--leressae-dark-surface) !important;
+  border-color: var(--leressae-dark-border) !important;
+  color: var(--leressae-dark-ink) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .24) !important;
+}
+html[data-leressae-theme="dark"] :is(.admin-card h1, .admin-card h2, .admin-card h3, .admin-card h4, .tech-section h1, .tech-section h2, .tech-section h3, .tech-section h4, .technician-content h1, .technician-content h2, .admin-content h1, .admin-content h2) {
+  color: var(--leressae-dark-ink) !important;
+}
+html[data-leressae-theme="dark"] :is(.admin-card p, .tech-section p, .technician-content p, .admin-content p, .section-sub-text, .tech-section small, .admin-card small) {
+  color: var(--leressae-dark-muted) !important;
+}
+html[data-leressae-theme="dark"] :is(.admin-card input, .admin-card select, .admin-card textarea, .tech-section input, .tech-section select, .tech-section textarea, .technician-content input, .technician-content select, .technician-content textarea) {
+  background: #0d1726 !important;
+  color: #f3f7fc !important;
+  border-color: #3a516a !important;
+  -webkit-text-fill-color: #f3f7fc !important;
+}
+html[data-leressae-theme="dark"] :is(.admin-card input::placeholder, .admin-card textarea::placeholder, .tech-section input::placeholder, .tech-section textarea::placeholder) {
+  color: #8fa4ba !important;
+  -webkit-text-fill-color: #8fa4ba !important;
+}
+html[data-leressae-theme="dark"] :is(.admin-table-wrap, .tech-table-wrap) {
+  border-color: var(--leressae-dark-border) !important;
+  scrollbar-color: #526a82 #0b1220;
+}
+html[data-leressae-theme="dark"] :is(.admin-table th, .tech-table th) {
+  background: #182a40 !important;
+  color: #f5f9ff !important;
+  border-color: #385069 !important;
+}
+html[data-leressae-theme="dark"] :is(.admin-table td, .tech-table td) {
+  background: var(--leressae-dark-surface) !important;
+  color: #dce8f4 !important;
+  border-color: #2d4055 !important;
+}
+html[data-leressae-theme="dark"] :is(.admin-table tbody tr:hover td, .tech-table tbody tr:hover td) {
+  background: #1a2c42 !important;
+  color: #fff !important;
+}
+html[data-leressae-theme="dark"] :is(.admin-nav-item, .technician-nav button) {
+  color: #c7d6e6 !important;
+}
+html[data-leressae-theme="dark"] :is(.admin-nav-item:hover, .admin-nav-item.active, .technician-nav button:hover, .technician-nav button.active) {
+  background: rgba(96, 165, 250, .16) !important;
+  border-color: rgba(147, 197, 253, .48) !important;
+  color: #fff !important;
+}
+
+/* Public dashboard maintains the same readable hierarchy in dark mode. */
+html[data-leressae-theme="dark"] #page-dashboard {
+  --pub-ink: #f4f8fc;
+  --pub-muted: #c1cfdd;
+  --pub-border: #334a61;
+  --pub-surface: #111c2d;
+}
+html[data-leressae-theme="dark"] #page-dashboard :is(.hero-section, .hero-slogan-card, .pillar-card, .dashboard-section, .service-item-card, .tutorial-card) {
+  background: linear-gradient(155deg, #15243a, #101a2a) !important;
+  border-color: #334a61 !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .22) !important;
+}
+html[data-leressae-theme="dark"] #page-dashboard :is(.hero-title, .slogan-main, .pillar-title, .service-item-title, .tutorial-card h3, .section-title-text) {
+  color: #f4f8fc !important;
+}
+html[data-leressae-theme="dark"] #page-dashboard :is(.hero-desc, .slogan-label, .slogan-sub, .pillar-desc, .service-item-desc, .tutorial-card p, .section-sub-text, .tutorial-meta) {
+  color: #c1cfdd !important;
+}
+html[data-leressae-theme="dark"] #page-dashboard :is(.hero-actions .btn-secondary, .pillar-icon, .service-item-icon, .tutorial-tag) {
+  background: #1b3049 !important;
+  border-color: #3c5874 !important;
+  color: #bfe3ff !important;
+}
+
+html[data-leressae-theme="dark"] :is(.admin-content, .technician-content, #page-dashboard) :is(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid #60a5fa !important;
+  outline-offset: 2px;
+}
 @media(max-width:600px){
   .technician-shell .tech-client-filters{
     display:grid;
@@ -7715,8 +7883,13 @@ img, video, iframe { max-width: 100%; }
   border: 1px solid rgba(255,255,255,.72);
   border-radius: 28px;
   background-color: #e8f1f8;
-  background-image: linear-gradient(112deg, rgba(245,250,255,.97) 0%, rgba(239,247,253,.91) 48%, rgba(222,238,248,.76) 100%);
-  background-size: cover;
+  background-image:
+    linear-gradient(112deg, rgba(245,250,255,.97) 0%, rgba(239,247,253,.91) 48%, rgba(222,238,248,.76) 100%),
+    radial-gradient(circle at 15% 20%, rgba(52,211,153,.18) 0 6%, transparent 6.5%),
+    radial-gradient(circle at 80% 25%, rgba(14,116,144,.12) 0 10%, transparent 10.5%),
+    linear-gradient(135deg, transparent 0 66%, rgba(14,116,144,.08) 66% 67%, transparent 67% 100%),
+    linear-gradient(315deg, transparent 0 72%, rgba(88,166,204,.08) 72% 73%, transparent 73% 100%);
+  background-size: cover, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
   background-position: center;
   box-shadow: 0 18px 50px rgba(28, 55, 83, .10), inset 0 1px 0 rgba(255,255,255,.9);
 }
@@ -7728,10 +7901,12 @@ img, video, iframe { max-width: 100%; }
 #page-dashboard .hero-section::before {
   width: 340px; height: 340px; right: 13%; top: -190px;
   background: rgba(255,255,255,.44);
+  box-shadow: -160px 90px 0 rgba(255,255,255,.18), -280px 200px 0 rgba(110,169,215,.08);
 }
 #page-dashboard .hero-section::after {
   width: 260px; height: 260px; right: -110px; bottom: -150px;
   background: rgba(93,157,196,.14);
+  box-shadow: -160px -80px 0 rgba(255,255,255,.2), -210px 30px 0 rgba(34,197,94,.08);
 }
 #page-dashboard .hero-content { position: relative; z-index: 1; max-width: 720px; }
 #page-dashboard .hero-badge {
@@ -8416,6 +8591,43 @@ img, video, iframe { max-width: 100%; }
   font-weight: 700;
 }
 
+/* The news carousel has its own light palette.  Override every surface and
+   text color explicitly so it stays readable in the active dark theme. */
+html[data-leressae-theme="dark"] #homeNewsList .home-news-card {
+  background: linear-gradient(160deg, #172235, #111827);
+  border-color: #3b4d64;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .28);
+}
+html[data-leressae-theme="dark"] #homeNewsList .home-news-card:hover {
+  border-color: #5a7693;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, .36);
+}
+html[data-leressae-theme="dark"] #homeNewsList .home-news-image-wrap { background: #1e293b; }
+html[data-leressae-theme="dark"] #homeNewsList .home-news-image-placeholder,
+html[data-leressae-theme="dark"] #homeNewsList .home-news-image-wrap.image-unavailable::before {
+  color: #c7edff;
+  background: linear-gradient(135deg, #172b43, #111827);
+}
+html[data-leressae-theme="dark"] #homeNewsList .home-news-image-placeholder small,
+html[data-leressae-theme="dark"] #homeNewsList .home-news-date,
+html[data-leressae-theme="dark"] #homeNewsList .home-news-counter { color: #b8c5d6; }
+html[data-leressae-theme="dark"] #homeNewsList .home-news-category {
+  color: #d9f0ff;
+  background: rgba(15, 23, 42, .9);
+  border-color: rgba(191, 219, 254, .38);
+}
+html[data-leressae-theme="dark"] #homeNewsList .home-news-content h3 { color: #f8fafc; }
+html[data-leressae-theme="dark"] #homeNewsList .home-news-content p { color: #d6e2f0; }
+html[data-leressae-theme="dark"] #homeNewsList .home-news-arrow {
+  color: #dbeafe;
+  background: #172235;
+  border-color: #3b4d64;
+}
+html[data-leressae-theme="dark"] #homeNewsList .home-news-arrow:hover:not(:disabled) {
+  color: #ffffff;
+  background: #243b53;
+}
+
 #homeNewsList .home-news-controls {
   display: flex;
   align-items: center;
@@ -8579,11 +8791,11 @@ img, video, iframe { max-width: 100%; }
 .home-media-slide:hover{transform:translateY(-3px);box-shadow:0 14px 28px rgba(15,35,65,.16)}
 .home-media-slide img{display:block;width:100%;height:100%;min-height:0;object-fit:cover;object-position:center;transition:transform 5s ease}
 .home-media-slide:hover img{transform:scale(1.035)}
-.home-media-slide::after{content:"";position:absolute;inset:25% 0 0;background:linear-gradient(180deg,transparent 0%,rgba(5,17,35,.12) 25%,rgba(5,17,35,.88) 100%);pointer-events:none}
-.home-media-caption{position:absolute;z-index:2;left:18px;right:18px;bottom:18px;color:#fff;max-width:100%}
-.home-media-caption .eyebrow{display:inline-flex;padding:5px 9px;border:1px solid rgba(255,255,255,.28);border-radius:999px;background:rgba(255,255,255,.16);backdrop-filter:blur(10px);font-size:.68rem;font-weight:750;letter-spacing:.03em}
-.home-media-caption h3{margin:10px 0 5px;font-size:clamp(1rem,1.35vw,1.25rem);line-height:1.25;font-weight:800;text-shadow:0 2px 12px #0005}
-.home-media-caption p{margin:0;color:rgba(255,255,255,.9);font-size:.84rem;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.home-media-slide::after{content:"";position:absolute;inset:18% 0 0;background:linear-gradient(180deg,transparent 0%,rgba(2,6,23,.18) 30%,rgba(2,6,23,.78) 100%);pointer-events:none}
+.home-media-caption{position:absolute;z-index:2;left:18px;right:18px;bottom:18px;color:#fff;max-width:100%;text-shadow:0 2px 12px rgba(0,0,0,.55)}
+.home-media-caption .eyebrow{display:inline-flex;padding:5px 9px;border:1px solid rgba(255,255,255,.32);border-radius:999px;background:rgba(15,23,42,.24);backdrop-filter:blur(10px);font-size:.68rem;font-weight:750;letter-spacing:.03em;color:#f8fafc}
+.home-media-caption h3{margin:10px 0 5px;font-size:clamp(1rem,1.35vw,1.25rem);line-height:1.25;font-weight:800;color:#ffffff;text-shadow:0 2px 14px rgba(0,0,0,.72)}
+.home-media-caption p{margin:0;color:#e2e8f0;font-size:.86rem;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-shadow:0 2px 10px rgba(0,0,0,.5)}
 .home-media-tools{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px}
 .home-media-dots{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .home-media-dot{width:8px;height:8px;padding:0;border:0;border-radius:99px;background:#cbd5e1;cursor:pointer;transition:width .28s ease,background .28s ease,transform .28s ease}
@@ -8688,6 +8900,9 @@ img, video, iframe { max-width: 100%; }
       .admin-customers-card{min-width:0;max-width:100%}.admin-customers-card .admin-card-header{align-items:center;gap:16px}.admin-customers-card .admin-card-header h3{margin:0}.admin-customers-card .admin-card-header .section-sub-text{margin:5px 0 0;color:#64748b}.admin-customers-table-wrap{max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain}.admin-customers-table{min-width:900px}.admin-customers-table th,.admin-customers-table td{vertical-align:middle}.admin-customers-table td:first-child{min-width:150px}.admin-customer-profile-modal{position:fixed;inset:0;z-index:10070;display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;background:rgba(10,22,38,.62);backdrop-filter:blur(3px)}.admin-customer-profile-modal.open{display:flex}.admin-customer-profile-dialog{width:min(980px,100%);max-height:min(90vh,900px);overflow:auto;border:1px solid #dce5ef;border-radius:18px;background:#fff;box-shadow:0 24px 80px rgba(0,0,0,.25)}.admin-customer-profile-dialog>header{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px;border-bottom:1px solid #e2eaf2;background:rgba(255,255,255,.96);backdrop-filter:blur(8px)}.admin-customer-profile-dialog h2{margin:0;color:#14243a;font-size:1.35rem}.admin-customer-profile-subtitle{margin:5px 0 0;color:#65758a}.admin-customer-profile-close{flex:0 0 auto;width:40px;height:40px;border:1px solid #d7e1eb;border-radius:50%;background:#f7f9fc;color:#24364b;font-size:25px;cursor:pointer}.admin-customer-profile-body{display:grid;gap:12px;padding:20px 24px 24px}.admin-customer-history-card{padding:16px;border:1px solid #e0e8f0;border-radius:14px;background:#fff}.admin-customer-history-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}.admin-customer-history-heading>div{display:grid;gap:4px;min-width:0}.admin-customer-history-heading>div strong{overflow-wrap:anywhere;color:#155e91}.admin-customer-history-heading>div span{color:#718198;font-size:.9rem}.admin-customer-history-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 18px}.admin-customer-history-grid>div{display:grid;align-content:start;gap:4px;min-width:0}.admin-customer-history-grid small{color:#718198;font-size:.78rem}.admin-customer-history-grid strong{color:#26384d;font-size:.92rem;font-weight:600;overflow-wrap:anywhere}.admin-customer-history-grid>div:last-child>span{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.admin-customer-map-link{font-weight:700;color:#087bab;text-decoration:none}.admin-customer-map-link:hover{text-decoration:underline}.admin-customer-muted{color:#8995a5;font-size:.83rem}
       .admin-report-page{min-width:0;max-width:100%;overflow:hidden}.admin-report-header{align-items:center;gap:16px}.admin-report-header h3{margin:0}.admin-report-header .section-sub-text{margin:5px 0 0;color:#64748b}.admin-report-filters{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:12px;margin:18px 0}.admin-report-filter{display:grid;gap:6px;min-width:0;color:#52647a;font-size:.83rem;font-weight:700}.admin-report-filter select,.admin-report-filter input{width:100%;min-width:0;min-height:44px;padding:9px 12px;border:1px solid #d2deea;border-radius:10px;background:#fff;color:#1e293b;font:inherit;font-size:.95rem;box-sizing:border-box}.admin-report-search{grid-column:span 2}.admin-report-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px;margin:8px 0 18px}.admin-report-summary-grid>.admin-stat-mini{min-width:0;min-height:112px;padding:16px;border:1px solid #dce6f0;border-radius:14px;background:linear-gradient(145deg,#f9fbfe,#eff5fb);box-sizing:border-box}.admin-report-summary-grid .label{display:block;line-height:1.35}.admin-report-summary-grid .value{display:block;margin-top:9px;line-height:1.15;overflow-wrap:anywhere}.admin-report-cost-card .value{font-size:clamp(1.15rem,2vw,1.65rem);white-space:nowrap}.admin-report-error{margin-bottom:12px}.admin-report-charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:8px 0 20px}.admin-report-chart-card{min-width:0;padding:17px;border:1px solid #dce6f0;border-radius:15px;background:#f8fafc;box-sizing:border-box}.admin-report-volume-card{min-height:300px}.admin-report-chart-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}.admin-report-chart-heading h4,.admin-report-details-heading h4{margin:0;color:#1b2c43;font-size:1.05rem}.admin-report-chart-heading span,.admin-report-details-heading span{color:#75859a;font-size:.82rem}.admin-report-volume-scroll{width:100%;overflow-x:auto;overflow-y:hidden;overscroll-behavior-inline:contain}.admin-report-volume-chart{display:flex;align-items:stretch;gap:9px;min-width:max-content;height:220px;padding:5px 2px 0}.admin-report-volume-item{display:flex;flex:0 0 42px;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;color:#5b6d83;font-size:.75rem}.admin-report-volume-item strong{color:#34465d;font-size:.78rem}.admin-report-volume-bar{display:flex;align-items:flex-end;justify-content:center;width:22px;height:155px;border-radius:8px 8px 3px 3px;background:#e3ebf4;overflow:hidden}.admin-report-volume-bar i{display:block;width:100%;min-height:2px;border-radius:8px 8px 2px 2px;background:linear-gradient(180deg,#43b6ec,#087bb5);box-shadow:0 3px 8px rgba(8,123,181,.16)}.admin-report-volume-item>span{max-width:56px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.admin-report-meter-list{display:grid;gap:15px;padding:5px 0}.admin-report-meter-row{display:grid;grid-template-columns:minmax(90px,1fr) minmax(90px,2fr) 28px;align-items:center;gap:10px;color:#52647a;font-size:.86rem}.admin-report-meter-row>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.admin-report-meter-row>strong{text-align:right;color:#24364b}.admin-report-meter{height:11px;border-radius:99px;background:#e1e9f1;overflow:hidden}.admin-report-meter i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#128bc2,#50bee7)}.admin-report-empty-chart{display:grid;min-height:150px;place-items:center;color:#75859a;text-align:center}.admin-report-details{min-width:0}.admin-report-details-heading{display:flex;align-items:center;justify-content:space-between;margin:8px 0 12px}.admin-report-details-heading>div{display:flex;align-items:baseline;gap:12px}.admin-report-table-wrap{max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain}.admin-report-table{min-width:900px}.admin-report-table th,.admin-report-table td{vertical-align:middle;white-space:nowrap}.admin-report-table td:nth-child(3){white-space:normal;min-width:150px}.admin-report-table td.id-cell{max-width:190px;white-space:normal;overflow-wrap:anywhere}
       .admin-report-volume-card{border-top:3px solid #178fc0}.admin-report-status-card{border-top:3px solid #31a66f}.admin-report-technician-card{border-top:3px solid #8d2444}.admin-report-item-card{border-top:3px solid #c28b2c}.admin-report-status-card .admin-report-meter i.is-done{background:linear-gradient(90deg,#23a366,#57c58a)}.admin-report-status-card .admin-report-meter i.is-progress{background:linear-gradient(90deg,#d99a25,#f0c15e)}.admin-report-status-card .admin-report-meter i.is-new{background:linear-gradient(90deg,#8d2444,#c45670)}.admin-report-status-card .admin-report-meter i.is-other{background:linear-gradient(90deg,#64748b,#94a3b8)}.admin-report-tech-meter i{background:linear-gradient(90deg,#8d2444,#c45670)}.admin-report-item-meter i{background:linear-gradient(90deg,#c28b2c,#e6bd63)}
+      .admin-report-export-button{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-height:44px;padding:11px 20px;border-radius:10px;font-weight:700;white-space:nowrap;box-shadow:0 5px 12px rgba(141,36,68,.16)}
+      .admin-report-export-button:focus-visible{outline:3px solid rgba(141,36,68,.28);outline-offset:3px}
+      @media(max-width:560px){.admin-report-header{align-items:stretch;flex-direction:column}.admin-report-export-button{width:100%}}
       .tech-dashboard-page {
         display: grid;
         gap: 16px;
@@ -12118,7 +12333,7 @@ body.dark-mode .admin-media-panel img {
 #page-admin .admin-activity-table th:nth-child(10),#page-admin .admin-activity-table td:nth-child(10),
 #page-admin .admin-services-table th:nth-child(10),#page-admin .admin-services-table td:nth-child(10){width:120px!important;min-width:120px!important}
 #page-admin .admin-activity-table th:nth-child(11),#page-admin .admin-activity-table td:nth-child(11),
-#page-admin .admin-services-table th:nth-child(11),#page-admin .admin-services-table td:nth-child(11){width:130px!important;min-width:130px!important}
+#page-admin .admin-services-table th:nth-child(11),#page-admin .admin-services-table td:nth-child(11){width:245px!important;min-width:245px!important}
 #page-admin .admin-activity-table th:nth-child(12),#page-admin .admin-activity-table td:nth-child(12),
 #page-admin .admin-services-table th:nth-child(12),#page-admin .admin-services-table td:nth-child(12){width:135px!important;min-width:135px!important}
 
@@ -12159,8 +12374,14 @@ body.dark-mode .admin-media-panel img {
   #page-admin .admin-customers-table{min-width:1120px!important}
 }
 
+  .admin-service-assignment{display:grid;gap:7px;min-width:205px}
+  .admin-service-assignment-select{width:100%;min-width:0;min-height:36px;padding:7px 9px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#1e293b;font:inherit;font-size:.8rem}
+  .admin-service-assign-button{width:100%;min-height:34px}
+  .admin-service-assign-button:disabled,.admin-service-assignment-select:disabled{cursor:not-allowed;opacity:.6}
+  html[data-leressae-theme="dark"] .admin-service-assignment-select{border-color:#475569;background:#111c2c;color:#e5edf7}
 
-html {
+
+  html {
     color-scheme: light;
 }
 html[data-leressae-theme="dark"] {
@@ -12238,7 +12459,15 @@ html[data-leressae-theme="dark"] .page-header-title,
 html[data-leressae-theme="dark"] .pillar-title,
 html[data-leressae-theme="dark"] .media-item .title,
 html[data-leressae-theme="dark"] .service-item-title {
-    color: #f1f5f9 !important;
+    color: #f8fafc !important;
+    text-shadow: none !important;
+}
+html[data-leressae-theme="dark"] .page-header-title,
+html[data-leressae-theme="dark"] section#page-media > h1.page-header-title {
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.02em !important;
+    text-shadow: none !important;
 }
 html[data-leressae-theme="dark"] .section-sub-text,
 html[data-leressae-theme="dark"] .page-header-desc,
@@ -12246,8 +12475,39 @@ html[data-leressae-theme="dark"] .pillar-desc,
 html[data-leressae-theme="dark"] .media-item figcaption,
 html[data-leressae-theme="dark"] .media-item .desc,
 html[data-leressae-theme="dark"] .service-item-desc,
+html[data-leressae-theme="dark"] section#page-media > p.page-header-desc,
 html[data-leressae-theme="dark"] p {
-    color: #aebed0 !important;
+    color: #e0ebf8 !important;
+    text-shadow: none !important;
+}
+html[data-leressae-theme="dark"] #page-kontak .page-header-title {
+    color: #ffffff !important;
+    text-shadow: none !important;
+}
+html[data-leressae-theme="dark"] #page-kontak .page-header-desc {
+    color: #dfeaf8 !important;
+    text-shadow: none !important;
+}
+html[data-leressae-theme="dark"] #page-kontak .contact-card {
+    background: rgba(15, 23, 42, 0.88) !important;
+    border-color: rgba(148, 163, 184, 0.22) !important;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18) !important;
+    color: #f8fafc !important;
+    text-shadow: none !important;
+    filter: none !important;
+    -webkit-filter: none !important;
+}
+html[data-leressae-theme="dark"] #page-kontak .contact-card strong,
+html[data-leressae-theme="dark"] #page-kontak .contact-card p,
+html[data-leressae-theme="dark"] #page-kontak .contact-card a {
+    color: #f8fafc !important;
+    text-shadow: none !important;
+    filter: none !important;
+    -webkit-filter: none !important;
+}
+html[data-leressae-theme="dark"] #page-kontak .contact-card a {
+    color: #7dd3fc !important;
+    text-decoration: underline;
 }
 html[data-leressae-theme="dark"] .pillar-icon {
     background: #102b43 !important;
@@ -12771,13 +13031,53 @@ html[data-theme="dark"] .pillar-desc,
 body.dark-mode .pillar-desc,
 html[data-theme="dark"] .service-item-desc,
 body.dark-mode .service-item-desc,
-html[data-theme="dark"] .media-item figcaption,
-body.dark-mode .media-item figcaption,
-html[data-theme="dark"] .media-item .desc,
-body.dark-mode .media-item .desc,
 html[data-theme="dark"] .tutorial-card p,
 body.dark-mode .tutorial-card p{
   color:var(--dm-muted) !important;
+}
+html[data-leressae-theme="dark"] .media-item,
+html[data-leressae-theme="dark"] .media-item figcaption,
+html[data-leressae-theme="dark"] .home-media-spotlight,
+html[data-leressae-theme="dark"] .home-media-stage{
+  transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+}
+html[data-leressae-theme="dark"] .media-item{
+  background: rgba(15, 23, 42, 0.96) !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+  box-shadow: 0 12px 30px rgba(0,0,0,.18) !important;
+}
+html[data-leressae-theme="dark"] .media-item figcaption{
+  background: #0b1220 !important;
+  color: #edf6ff !important;
+  border-top: 1px solid rgba(148, 163, 184, 0.24) !important;
+}
+html[data-leressae-theme="dark"] .media-item .title{
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+html[data-leressae-theme="dark"] .media-item .desc{
+  color: #dfeaf8 !important;
+  font-weight: 600 !important;
+}
+html[data-leressae-theme="dark"] .home-media-spotlight{
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(17, 24, 39, 0.96)) !important;
+  border-color: rgba(148, 163, 184, 0.22) !important;
+}
+html[data-leressae-theme="dark"] .home-media-stage{
+  background: linear-gradient(135deg, #0f172a, #1e293b) !important;
+}
+html[data-leressae-theme="dark"] .home-media-caption h3{
+  color: #ffffff !important;
+}
+html[data-leressae-theme="dark"] .home-media-caption p{
+  color: #e2ebf7 !important;
+}
+html[data-leressae-theme="light"] .media-item figcaption,
+html[data-leressae-theme="light"] .media-item .title,
+html[data-leressae-theme="light"] .media-item .desc,
+html[data-leressae-theme="light"] .home-media-caption h3,
+html[data-leressae-theme="light"] .home-media-caption p{
+  transition: color .2s ease, background-color .2s ease;
 }
 
 
@@ -13348,4 +13648,2142 @@ body.dark-mode .stock-source-panel .bon-total-table td[style]{
 html[data-theme="dark"] .stock-source-panel .status-badge,
 body.dark-mode .stock-source-panel .status-badge{
   -webkit-text-fill-color:currentColor !important;
+}
+
+/* ===== Footer responsive cleanup =====
+   This final block intentionally supersedes the older, conflicting mobile
+   footer rules above.  Footer content must reflow, never become a horizontal
+   slider or four narrow columns. */
+.site-footer {
+  width: min(100%, 1840px) !important;
+  min-width: 0;
+  padding: 28px clamp(20px, 3vw, 48px) 20px !important;
+  overflow: clip !important;
+}
+
+.site-footer-grid {
+  display: grid !important;
+  grid-template-columns: minmax(190px, 1.15fr) repeat(3, minmax(0, 1fr)) !important;
+  gap: 22px clamp(14px, 1.8vw, 30px) !important;
+  width: 100% !important;
+  align-items: start !important;
+}
+
+.site-footer-grid > *,
+.site-footer-grid > :first-child {
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+.site-footer-grid > * {
+  flex: initial !important;
+}
+
+.site-footer p,
+.site-footer li,
+.site-footer a,
+.site-footer-bottom {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.site-footer ul { gap: 6px; }
+.site-footer-contact {
+  width: 100%;
+  margin-top: 0;
+}
+.site-footer-bottom { margin-top: 26px !important; }
+
+@media (min-width: 641px) and (max-width: 1000px) {
+  .site-footer-grid {
+    grid-template-columns: minmax(160px, 1.1fr) repeat(3, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+  }
+  .site-footer p,
+  .site-footer li,
+  .site-footer a {
+    font-size: .84rem !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .site-footer {
+    margin-top: 16px !important;
+    padding: 24px 20px 100px !important;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .site-footer-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 26px !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  .site-footer-grid > *,
+  .site-footer-grid > :first-child {
+    flex: initial !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .site-footer-brand img { width: 64px !important; }
+  .site-footer-contact { margin-top: 0; }
+  .site-footer h4 { font-size: 1.05rem !important; }
+  .site-footer p,
+  .site-footer li,
+  .site-footer a { font-size: .95rem !important; line-height: 1.6 !important; }
+  .site-footer-bottom {
+    margin-top: 26px !important;
+    padding-top: 16px !important;
+    font-size: .78rem !important;
+    line-height: 1.5 !important;
+  }
+}
+
+/* Final theme precedence: kept last so legacy blocks cannot desynchronise the UI. */
+html[data-leressae-theme="light"] :is(.admin-card, .tech-section, .tech-card, .admin-topbar) {
+  background: #fff !important; border-color: #dce7f0 !important; color: #122b45 !important;
+}
+html[data-leressae-theme="light"] :is(.admin-card h1, .admin-card h2, .admin-card h3, .admin-card h4, .tech-section h1, .tech-section h2, .tech-section h3, .tech-section h4) { color: #122b45 !important; }
+html[data-leressae-theme="light"] :is(.admin-card p, .tech-section p, .admin-card small, .tech-section small) { color: #5d7185 !important; }
+html[data-leressae-theme="light"] :is(.admin-table th, .tech-table th) { background: #edf4f9 !important; color: #183b58 !important; }
+html[data-leressae-theme="light"] :is(.admin-table td, .tech-table td) { background: #fff !important; color: #29465e !important; }
+
+html[data-leressae-theme="dark"] :is(.admin-content, .technician-content) { background: #0b1220 !important; color: #f3f7fc !important; }
+html[data-leressae-theme="dark"] :is(.admin-card, .tech-section, .tech-card, .admin-topbar) {
+  background: #111c2d !important; border-color: #31445b !important; color: #f3f7fc !important;
+}
+html[data-leressae-theme="dark"] :is(.admin-card h1, .admin-card h2, .admin-card h3, .admin-card h4, .tech-section h1, .tech-section h2, .tech-section h3, .tech-section h4, .admin-content h1, .admin-content h2, .technician-content h1, .technician-content h2) { color: #f3f7fc !important; }
+html[data-leressae-theme="dark"] :is(.admin-card p, .tech-section p, .admin-card small, .tech-section small, .admin-content p, .technician-content p) { color: #b7c6d8 !important; }
+html[data-leressae-theme="dark"] :is(.admin-card input, .admin-card select, .admin-card textarea, .tech-section input, .tech-section select, .tech-section textarea) {
+  background: #0d1726 !important; color: #f3f7fc !important; border-color: #3a516a !important; -webkit-text-fill-color: #f3f7fc !important;
+}
+html[data-leressae-theme="dark"] :is(.admin-table th, .tech-table th) { background: #182a40 !important; color: #f5f9ff !important; border-color: #385069 !important; }
+html[data-leressae-theme="dark"] :is(.admin-table td, .tech-table td) { background: #111c2d !important; color: #dce8f4 !important; border-color: #2d4055 !important; }
+html[data-leressae-theme="dark"] :is(.admin-table tbody tr:hover td, .tech-table tbody tr:hover td) { background: #1a2c42 !important; color: #fff !important; }
+html[data-leressae-theme="dark"] :is(.admin-nav-item, .technician-nav button) { color: #c7d6e6 !important; }
+html[data-leressae-theme="dark"] :is(.admin-nav-item:hover, .admin-nav-item.active, .technician-nav button:hover, .technician-nav button.active) { background: rgba(96, 165, 250, .16) !important; color: #fff !important; }
+html[data-leressae-theme="dark"] #page-dashboard { --pub-ink: #f4f8fc; --pub-muted: #c1cfdd; --pub-border: #334a61; --pub-surface: #111c2d; }
+html[data-leressae-theme="dark"] #page-dashboard :is(.hero-section, .hero-slogan-card, .pillar-card, .dashboard-section, .service-item-card, .tutorial-card) { background: linear-gradient(155deg, #15243a, #101a2a) !important; border-color: #334a61 !important; }
+html[data-leressae-theme="dark"] #page-dashboard :is(.hero-title, .slogan-main, .pillar-title, .service-item-title, .tutorial-card h3, .section-title-text) { color: #f4f8fc !important; }
+html[data-leressae-theme="dark"] #page-dashboard :is(.hero-desc, .slogan-label, .slogan-sub, .pillar-desc, .service-item-desc, .tutorial-card p, .section-sub-text, .tutorial-meta) { color: #c1cfdd !important; }
+
+/* Hero copy: remove legacy outline/shadow layers that made the title look
+   duplicated and the subtitle hard to read against the banner. */
+#page-dashboard .hero-section .hero-title,
+#page-dashboard .hero-section .hero-desc {
+  text-shadow: none !important;
+  -webkit-text-stroke: 0 !important;
+  filter: none !important;
+}
+html[data-leressae-theme="light"] #page-dashboard .hero-section .hero-title { color: #102b49 !important; }
+html[data-leressae-theme="light"] #page-dashboard .hero-section .hero-desc { color: #435d74 !important; font-weight: 600 !important; }
+html[data-leressae-theme="dark"] #page-dashboard .hero-section .hero-title { color: #f8fbff !important; }
+html[data-leressae-theme="dark"] #page-dashboard .hero-section .hero-desc { color: #d3dfec !important; font-weight: 500 !important; }
+
+/* ===== TECHNICIAN TABLE COLUMN WIDTHS & HORIZONTAL SCROLL FIX ===== */
+.technician-shell .tech-client-table-wrap {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+
+.technician-shell .tech-client-table {
+  min-width: 1400px !important;
+}
+.technician-shell .tech-status-page .tech-client-table {
+  min-width: 1540px !important;
+}
+
+/* Explicit widths to maintain proportion with table-layout: fixed */
+.technician-shell .tech-client-table th:nth-child(1),
+.technician-shell .tech-client-table td:nth-child(1) { width: 140px !important; min-width: 140px !important; }
+
+.technician-shell .tech-client-table th:nth-child(2),
+.technician-shell .tech-client-table td:nth-child(2) { width: 115px !important; min-width: 115px !important; }
+
+.technician-shell .tech-client-table th:nth-child(3),
+.technician-shell .tech-client-table td:nth-child(3) { width: 155px !important; min-width: 155px !important; }
+
+.technician-shell .tech-client-table th:nth-child(4),
+.technician-shell .tech-client-table td:nth-child(4) { width: 140px !important; min-width: 140px !important; }
+
+.technician-shell .tech-client-table th:nth-child(5),
+.technician-shell .tech-client-table td:nth-child(5) { width: 220px !important; min-width: 220px !important; }
+
+.technician-shell .tech-client-table th:nth-child(6),
+.technician-shell .tech-client-table td:nth-child(6) { width: 135px !important; min-width: 135px !important; text-align: center !important; }
+
+.technician-shell .tech-client-table th:nth-child(7),
+.technician-shell .tech-client-table td:nth-child(7) { width: 145px !important; min-width: 145px !important; }
+
+.technician-shell .tech-client-table th:nth-child(8),
+.technician-shell .tech-client-table td:nth-child(8) { width: 190px !important; min-width: 190px !important; }
+
+.technician-shell .tech-client-table th:nth-child(9),
+.technician-shell .tech-client-table td:nth-child(9),
+.technician-shell .tech-media-cell {
+  width: 156px !important;
+  min-width: 156px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  overflow: visible !important;
+  padding: 8px 6px !important;
+}
+
+.technician-shell .tech-status-page .tech-client-table th:nth-child(10),
+.technician-shell .tech-status-page .tech-client-table td:nth-child(10) {
+  width: 150px !important;
+  min-width: 150px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+/* Neat Google Maps Link Chip */
+.technician-shell .tech-map-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  min-height: 32px !important;
+  padding: 5px 12px !important;
+  border-radius: 8px !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  border: 1px solid rgba(2, 132, 199, 0.25) !important;
+  background: rgba(2, 132, 199, 0.08) !important;
+  color: #0284c7 !important;
+  transition: all 0.2s ease !important;
+}
+.technician-shell .tech-map-link:hover {
+  background: rgba(2, 132, 199, 0.18) !important;
+  border-color: rgba(2, 132, 199, 0.45) !important;
+  color: #0369a1 !important;
+  transform: translateY(-1px) !important;
+  text-decoration: none !important;
+}
+html[data-leressae-theme="dark"] .technician-shell .tech-map-link,
+body.dark-mode .technician-shell .tech-map-link {
+  background: rgba(56, 189, 248, 0.1) !important;
+  border-color: rgba(56, 189, 248, 0.25) !important;
+  color: #38bdf8 !important;
+}
+html[data-leressae-theme="dark"] .technician-shell .tech-map-link:hover,
+body.dark-mode .technician-shell .tech-map-link:hover {
+  background: rgba(56, 189, 248, 0.2) !important;
+  border-color: rgba(56, 189, 248, 0.5) !important;
+  color: #7dd3fc !important;
+}
+
+/* ===== LIHAT MEDIA BUTTON & CELL ENHANCEMENTS ===== */
+.tech-media-cell {
+  text-align: center !important;
+  vertical-align: middle !important;
+  overflow: visible !important;
+  white-space: nowrap !important;
+}
+.tech-media-cell :is(button, a, span) {
+  max-width: none !important;
+}
+
+.tech-media-btn,
+.technician-shell .tech-media-button,
+.technician-content .tech-media-btn,
+.technician-content .tech-media-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  width: auto !important;
+  min-width: 120px !important;
+  max-width: none !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  padding: 0 14px !important;
+  margin: 0 auto !important;
+  border-radius: 9px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.15px !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+  text-decoration: none !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%) !important;
+  color: #0284c7 !important;
+  border: 1px solid #bae6fd !important;
+  box-shadow: 0 1px 3px rgba(2, 132, 199, 0.08) !important;
+}
+
+.tech-media-btn:hover,
+.technician-shell .tech-media-button:hover,
+.technician-content .tech-media-btn:hover,
+.technician-content .tech-media-button:hover {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  color: #ffffff !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.28) !important;
+  transform: translateY(-1px) !important;
+}
+
+.tech-media-btn:active,
+.technician-shell .tech-media-button:active,
+.technician-content .tech-media-btn:active,
+.technician-content .tech-media-button:active {
+  transform: translateY(0) scale(0.98) !important;
+  box-shadow: 0 1px 4px rgba(2, 132, 199, 0.18) !important;
+}
+
+.tech-media-btn .tech-media-btn-icon,
+.tech-media-button .tech-media-btn-icon {
+  width: 15px !important;
+  height: 15px !important;
+  flex-shrink: 0 !important;
+  stroke: currentColor !important;
+  transition: transform 0.2s ease !important;
+}
+
+.tech-media-btn:hover .tech-media-btn-icon,
+.tech-media-button:hover .tech-media-btn-icon {
+  transform: scale(1.12) !important;
+}
+
+.tech-media-btn-count {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  padding: 0 5px !important;
+  border-radius: 999px !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  background: rgba(2, 132, 199, 0.14) !important;
+  color: inherit !important;
+  line-height: 1 !important;
+  transition: all 0.2s ease !important;
+}
+
+.tech-media-btn:hover .tech-media-btn-count,
+.tech-media-button:hover .tech-media-btn-count {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+/* Empty State Badge */
+.tech-media-empty {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  min-height: 32px !important;
+  padding: 4px 10px !important;
+  border-radius: 8px !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  color: #64748b !important;
+  background: rgba(100, 116, 139, 0.08) !important;
+  border: 1px dashed rgba(100, 116, 139, 0.28) !important;
+  white-space: nowrap !important;
+  user-select: none !important;
+}
+.tech-media-empty .tech-media-empty-icon {
+  width: 13px !important;
+  height: 13px !important;
+  flex-shrink: 0 !important;
+  opacity: 0.7 !important;
+}
+
+/* Dark Mode Styling for Media Button */
+html[data-leressae-theme="dark"] .tech-media-btn,
+html[data-leressae-theme="dark"] .technician-shell .tech-media-button,
+html[data-leressae-theme="dark"] .technician-content .tech-btn.secondary.tech-media-button,
+html[data-leressae-theme="dark"] .technician-content .tech-btn.secondary[data-tech-customer-media],
+html[data-leressae-theme="dark"] .technician-content .btn-secondary[data-tech-customer-media],
+html[data-theme="dark"] .tech-media-btn,
+body.dark-mode .tech-media-btn,
+body.dark-mode .technician-shell .tech-media-button {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.16) 0%, rgba(2, 132, 199, 0.26) 100%) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.38) !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.18) !important;
+}
+
+html[data-leressae-theme="dark"] .tech-media-btn:hover,
+html[data-leressae-theme="dark"] .technician-shell .tech-media-button:hover,
+html[data-leressae-theme="dark"] .technician-content .tech-btn.secondary.tech-media-button:hover,
+html[data-leressae-theme="dark"] .technician-content .tech-btn.secondary[data-tech-customer-media]:hover,
+html[data-leressae-theme="dark"] .technician-content .btn-secondary[data-tech-customer-media]:hover,
+html[data-theme="dark"] .tech-media-btn:hover,
+body.dark-mode .tech-media-btn:hover,
+body.dark-mode .technician-shell .tech-media-button:hover {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.35) 0%, rgba(2, 132, 199, 0.5) 100%) !important;
+  color: #ffffff !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 4px 18px rgba(14, 165, 233, 0.35), 0 0 0 1px rgba(56, 189, 248, 0.3) !important;
+  transform: translateY(-1px) !important;
+}
+
+html[data-leressae-theme="dark"] .tech-media-btn .tech-media-btn-count,
+html[data-leressae-theme="dark"] .technician-shell .tech-media-button .tech-media-btn-count,
+body.dark-mode .tech-media-btn .tech-media-btn-count {
+  background: rgba(56, 189, 248, 0.22) !important;
+  color: #7dd3fc !important;
+}
+
+html[data-leressae-theme="dark"] .tech-media-btn:hover .tech-media-btn-count,
+html[data-leressae-theme="dark"] .technician-shell .tech-media-button:hover .tech-media-btn-count,
+body.dark-mode .tech-media-btn:hover .tech-media-btn-count {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+html[data-leressae-theme="dark"] .tech-media-empty,
+body.dark-mode .tech-media-empty {
+  color: #8da2ba !important;
+  background: rgba(141, 162, 186, 0.08) !important;
+  border-color: rgba(141, 162, 186, 0.24) !important;
+}
+
+/* Modal Customer Media Dialog Enhancements */
+.tech-customer-media-dialog {
+  border-radius: 18px !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35) !important;
+}
+.tech-customer-media-header-info {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+.tech-media-dialog-icon {
+  color: #0284c7 !important;
+  flex-shrink: 0 !important;
+}
+.tech-customer-media-subtitle {
+  display: block !important;
+  font-size: 12px !important;
+  color: #64748b !important;
+  margin-top: 2px !important;
+  font-weight: 500 !important;
+}
+.tech-media-close-btn,
+.tech-customer-media-dialog [data-tech-media-close] {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  border: 0 !important;
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  font-size: 22px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  line-height: 1 !important;
+}
+.tech-media-close-btn:hover,
+.tech-customer-media-dialog [data-tech-media-close]:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  transform: rotate(90deg) !important;
+}
+.tech-customer-media-item {
+  border-radius: 14px !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+.tech-customer-media-item:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12) !important;
+}
+.tech-media-direct-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 8px 16px !important;
+  border-radius: 9px !important;
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  transition: all 0.2s ease !important;
+}
+.tech-media-direct-link:hover {
+  background: #0369a1 !important;
+  transform: translateY(-1px) !important;
+}
+.tech-customer-media-empty-dialog {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px 20px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* Dark mode for Media Dialog */
+html[data-leressae-theme="dark"] .tech-customer-media-dialog,
+body.dark-mode .tech-customer-media-dialog {
+  background: #0f1b2d !important;
+  color: #e2e8f0 !important;
+  border-color: #233852 !important;
+  box-shadow: 0 25px 65px rgba(0, 0, 0, 0.65) !important;
+}
+html[data-leressae-theme="dark"] .tech-customer-media-dialog > header,
+body.dark-mode .tech-customer-media-dialog > header {
+  border-bottom-color: #1e2f47 !important;
+}
+html[data-leressae-theme="dark"] .tech-customer-media-dialog h3,
+body.dark-mode .tech-customer-media-dialog h3 {
+  color: #f8fafc !important;
+}
+html[data-leressae-theme="dark"] .tech-media-dialog-icon,
+body.dark-mode .tech-media-dialog-icon {
+  color: #38bdf8 !important;
+}
+html[data-leressae-theme="dark"] .tech-customer-media-subtitle,
+body.dark-mode .tech-customer-media-subtitle {
+  color: #8da2ba !important;
+}
+html[data-leressae-theme="dark"] .tech-media-close-btn,
+html[data-leressae-theme="dark"] .tech-customer-media-dialog [data-tech-media-close],
+body.dark-mode .tech-media-close-btn,
+body.dark-mode .tech-customer-media-dialog [data-tech-media-close] {
+  background: #18283e !important;
+  color: #94a3b8 !important;
+}
+html[data-leressae-theme="dark"] .tech-media-close-btn:hover,
+html[data-leressae-theme="dark"] .tech-customer-media-dialog [data-tech-media-close]:hover,
+body.dark-mode .tech-media-close-btn:hover,
+body.dark-mode .tech-customer-media-dialog [data-tech-media-close]:hover {
+  background: #233852 !important;
+  color: #ffffff !important;
+}
+html[data-leressae-theme="dark"] .tech-customer-media-item,
+body.dark-mode .tech-customer-media-item {
+  background: #132238 !important;
+  border-color: #223750 !important;
+}
+html[data-leressae-theme="dark"] .tech-customer-media-item > div,
+body.dark-mode .tech-customer-media-item > div {
+  background: #091322 !important;
+  border-color: #1b2d44 !important;
+}
+html[data-leressae-theme="dark"] .tech-customer-media-item small,
+body.dark-mode .tech-customer-media-item small {
+  color: #94a3b8 !important;
+}
+html[data-leressae-theme="dark"] .tech-customer-media-empty-dialog,
+body.dark-mode .tech-customer-media-empty-dialog {
+  color: #8da2ba !important;
+}
+@media (max-width: 640px) {
+  .technician-shell .tech-media-cell { min-width: 130px !important; }
+  .tech-media-btn,
+  .technician-shell .tech-media-button {
+    min-width: 108px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 10px !important;
+    font-size: 11px !important;
+  }
+}
+
+
+
+/* ================================================================
+   LERESSAE — FINAL THEME SYNCHRONIZATION & READABILITY OVERRIDE
+   Added as the LAST CSS block intentionally.
+   Supports:
+   - data-leressae-theme="light|dark"
+   - data-theme="light|dark"
+   - body.dark-mode
+   - legacy selectors that may still exist in older HTML
+   ================================================================ */
+
+/* ---------- Theme tokens ---------- */
+html[data-leressae-theme="light"],
+html[data-theme="light"] {
+  color-scheme: light;
+  --ler-theme-bg: #f6f9fc;
+  --ler-theme-surface: #ffffff;
+  --ler-theme-surface-2: #f8fbfe;
+  --ler-theme-border: #dce7f0;
+  --ler-theme-border-strong: #c6d5e2;
+  --ler-theme-text: #122b45;
+  --ler-theme-text-strong: #0f2439;
+  --ler-theme-muted: #5d7185;
+  --ler-theme-link: #0369a1;
+  --ler-theme-input: #ffffff;
+  --ler-theme-input-text: #122b45;
+}
+
+html[data-leressae-theme="dark"],
+html[data-theme="dark"],
+body.dark-mode {
+  color-scheme: dark;
+  --ler-theme-bg: #0b1220;
+  --ler-theme-surface: #111c2d;
+  --ler-theme-surface-2: #162437;
+  --ler-theme-border: #2d4056;
+  --ler-theme-border-strong: #40566f;
+  --ler-theme-text: #f3f7fc;
+  --ler-theme-text-strong: #ffffff;
+  --ler-theme-muted: #b7c6d8;
+  --ler-theme-link: #7dd3fc;
+  --ler-theme-input: #0d1726;
+  --ler-theme-input-text: #f3f7fc;
+}
+
+/* ---------- Global admin/technician canvas ---------- */
+html[data-leressae-theme="light"] :is(
+  .admin-content, .technician-content, .admin-shell, .technician-shell
+),
+html[data-theme="light"] :is(
+  .admin-content, .technician-content, .admin-shell, .technician-shell
+) {
+  color: var(--ler-theme-text) !important;
+}
+
+html[data-leressae-theme="dark"] :is(
+  .admin-content, .technician-content, .admin-shell, .technician-shell
+),
+html[data-theme="dark"] :is(
+  .admin-content, .technician-content, .admin-shell, .technician-shell
+),
+body.dark-mode :is(
+  .admin-content, .technician-content, .admin-shell, .technician-shell
+) {
+  background-color: var(--ler-theme-bg) !important;
+  color: var(--ler-theme-text) !important;
+}
+
+/* ---------- Cards / panels / sections ---------- */
+html[data-leressae-theme="dark"] :is(
+  .admin-card,
+  .tech-card,
+  .tech-section,
+  .tech-stat,
+  .tech-proof-card,
+  .tech-update-proof-box,
+  .admin-topbar,
+  .technician-topbar,
+  .admin-filter-card,
+  .admin-panel,
+  .settings-card,
+  .settings-panel,
+  .stock-source-panel,
+  .stock-body,
+  .card-container
+),
+html[data-theme="dark"] :is(
+  .admin-card,
+  .tech-card,
+  .tech-section,
+  .tech-stat,
+  .tech-proof-card,
+  .tech-update-proof-box,
+  .admin-topbar,
+  .technician-topbar,
+  .admin-filter-card,
+  .admin-panel,
+  .settings-card,
+  .settings-panel,
+  .stock-source-panel,
+  .stock-body,
+  .card-container
+),
+body.dark-mode :is(
+  .admin-card,
+  .tech-card,
+  .tech-section,
+  .tech-stat,
+  .tech-proof-card,
+  .tech-update-proof-box,
+  .admin-topbar,
+  .technician-topbar,
+  .admin-filter-card,
+  .admin-panel,
+  .settings-card,
+  .settings-panel,
+  .stock-source-panel,
+  .stock-body,
+  .card-container
+) {
+  background: var(--ler-theme-surface) !important;
+  border-color: var(--ler-theme-border) !important;
+  color: var(--ler-theme-text) !important;
+}
+
+/* ---------- Headings: always readable ---------- */
+html[data-leressae-theme="dark"] :is(
+  .admin-content h1, .admin-content h2, .admin-content h3, .admin-content h4,
+  .admin-content h5, .admin-content h6,
+  .technician-content h1, .technician-content h2, .technician-content h3,
+  .technician-content h4, .technician-content h5, .technician-content h6,
+  .admin-card h1, .admin-card h2, .admin-card h3, .admin-card h4,
+  .admin-card h5, .admin-card h6,
+  .tech-section h1, .tech-section h2, .tech-section h3, .tech-section h4,
+  .tech-section h5, .tech-section h6,
+  .tech-card h1, .tech-card h2, .tech-card h3, .tech-card h4,
+  .settings-card h1, .settings-card h2, .settings-card h3,
+  .settings-panel h1, .settings-panel h2, .settings-panel h3
+),
+html[data-theme="dark"] :is(
+  .admin-content h1, .admin-content h2, .admin-content h3, .admin-content h4,
+  .admin-content h5, .admin-content h6,
+  .technician-content h1, .technician-content h2, .technician-content h3,
+  .technician-content h4, .technician-content h5, .technician-content h6,
+  .admin-card h1, .admin-card h2, .admin-card h3, .admin-card h4,
+  .admin-card h5, .admin-card h6,
+  .tech-section h1, .tech-section h2, .tech-section h3, .tech-section h4,
+  .tech-section h5, .tech-section h6,
+  .tech-card h1, .tech-card h2, .tech-card h3, .tech-card h4,
+  .settings-card h1, .settings-card h2, .settings-card h3,
+  .settings-panel h1, .settings-panel h2, .settings-panel h3
+),
+body.dark-mode :is(
+  .admin-content h1, .admin-content h2, .admin-content h3, .admin-content h4,
+  .admin-content h5, .admin-content h6,
+  .technician-content h1, .technician-content h2, .technician-content h3,
+  .technician-content h4, .technician-content h5, .technician-content h6,
+  .admin-card h1, .admin-card h2, .admin-card h3, .admin-card h4,
+  .admin-card h5, .admin-card h6,
+  .tech-section h1, .tech-section h2, .tech-section h3, .tech-section h4,
+  .tech-section h5, .tech-section h6,
+  .tech-card h1, .tech-card h2, .tech-card h3, .tech-card h4,
+  .settings-card h1, .settings-card h2, .settings-card h3,
+  .settings-panel h1, .settings-panel h2, .settings-panel h3
+) {
+  color: var(--ler-theme-text-strong) !important;
+}
+
+/* ---------- Normal text / labels / helper text ---------- */
+html[data-leressae-theme="dark"] :is(
+  .admin-content p, .admin-content small, .admin-content label,
+  .admin-content .muted, .admin-content .description,
+  .technician-content p, .technician-content small, .technician-content label,
+  .technician-content .muted, .technician-content .description,
+  .admin-card p, .admin-card small, .admin-card label,
+  .tech-section p, .tech-section small, .tech-section label,
+  .tech-card p, .tech-card small, .tech-card label,
+  .settings-card p, .settings-card small, .settings-card label,
+  .settings-panel p, .settings-panel small, .settings-panel label
+),
+html[data-theme="dark"] :is(
+  .admin-content p, .admin-content small, .admin-content label,
+  .admin-content .muted, .admin-content .description,
+  .technician-content p, .technician-content small, .technician-content label,
+  .technician-content .muted, .technician-content .description,
+  .admin-card p, .admin-card small, .admin-card label,
+  .tech-section p, .tech-section small, .tech-section label,
+  .tech-card p, .tech-card small, .tech-card label,
+  .settings-card p, .settings-card small, .settings-card label,
+  .settings-panel p, .settings-panel small, .settings-panel label
+),
+body.dark-mode :is(
+  .admin-content p, .admin-content small, .admin-content label,
+  .admin-content .muted, .admin-content .description,
+  .technician-content p, .technician-content small, .technician-content label,
+  .technician-content .muted, .technician-content .description,
+  .admin-card p, .admin-card small, .admin-card label,
+  .tech-section p, .tech-section small, .tech-section label,
+  .tech-card p, .tech-card small, .tech-card label,
+  .settings-card p, .settings-card small, .settings-card label,
+  .settings-panel p, .settings-panel small, .settings-panel label
+) {
+  color: var(--ler-theme-muted) !important;
+}
+
+/* ---------- Tables: complete synchronization ---------- */
+html[data-leressae-theme="dark"] :is(
+  .admin-table, .admin-customers-table, .admin-services-table,
+  .admin-running-services-table, .admin-completed-services-table,
+  .admin-activity-table, .tech-table, .tech-client-table
+),
+html[data-theme="dark"] :is(
+  .admin-table, .admin-customers-table, .admin-services-table,
+  .admin-running-services-table, .admin-completed-services-table,
+  .admin-activity-table, .tech-table, .tech-client-table
+),
+body.dark-mode :is(
+  .admin-table, .admin-customers-table, .admin-services-table,
+  .admin-running-services-table, .admin-completed-services-table,
+  .admin-activity-table, .tech-table, .tech-client-table
+) {
+  color: var(--ler-theme-text) !important;
+  border-color: var(--ler-theme-border) !important;
+}
+
+html[data-leressae-theme="dark"] :is(
+  .admin-table th, .admin-customers-table th, .admin-services-table th,
+  .admin-running-services-table th, .admin-completed-services-table th,
+  .admin-activity-table th, .tech-table th, .tech-client-table th
+),
+html[data-theme="dark"] :is(
+  .admin-table th, .admin-customers-table th, .admin-services-table th,
+  .admin-running-services-table th, .admin-completed-services-table th,
+  .admin-activity-table th, .tech-table th, .tech-client-table th
+),
+body.dark-mode :is(
+  .admin-table th, .admin-customers-table th, .admin-services-table th,
+  .admin-running-services-table th, .admin-completed-services-table th,
+  .admin-activity-table th, .tech-table th, .tech-client-table th
+) {
+  background: #182a40 !important;
+  color: #f8fbff !important;
+  border-color: #385069 !important;
+  -webkit-text-fill-color: #f8fbff !important;
+}
+
+html[data-leressae-theme="dark"] :is(
+  .admin-table td, .admin-customers-table td, .admin-services-table td,
+  .admin-running-services-table td, .admin-completed-services-table td,
+  .admin-activity-table td, .tech-table td, .tech-client-table td
+),
+html[data-theme="dark"] :is(
+  .admin-table td, .admin-customers-table td, .admin-services-table td,
+  .admin-running-services-table td, .admin-completed-services-table td,
+  .admin-activity-table td, .tech-table td, .tech-client-table td
+),
+body.dark-mode :is(
+  .admin-table td, .admin-customers-table td, .admin-services-table td,
+  .admin-running-services-table td, .admin-completed-services-table td,
+  .admin-activity-table td, .tech-table td, .tech-client-table td
+) {
+  background: #111c2d !important;
+  color: #e5edf7 !important;
+  border-color: #2d4055 !important;
+  -webkit-text-fill-color: #e5edf7 !important;
+}
+
+html[data-leressae-theme="dark"] :is(
+  .admin-table tbody tr:hover td, .admin-customers-table tbody tr:hover td,
+  .admin-services-table tbody tr:hover td, .admin-running-services-table tbody tr:hover td,
+  .admin-completed-services-table tbody tr:hover td, .admin-activity-table tbody tr:hover td,
+  .tech-table tbody tr:hover td, .tech-client-table tbody tr:hover td
+),
+html[data-theme="dark"] :is(
+  .admin-table tbody tr:hover td, .admin-customers-table tbody tr:hover td,
+  .admin-services-table tbody tr:hover td, .admin-running-services-table tbody tr:hover td,
+  .admin-completed-services-table tbody tr:hover td, .admin-activity-table tbody tr:hover td,
+  .tech-table tbody tr:hover td, .tech-client-table tbody tr:hover td
+),
+body.dark-mode :is(
+  .admin-table tbody tr:hover td, .admin-customers-table tbody tr:hover td,
+  .admin-services-table tbody tr:hover td, .admin-running-services-table tbody tr:hover td,
+  .admin-completed-services-table tbody tr:hover td, .admin-activity-table tbody tr:hover td,
+  .tech-table tbody tr:hover td, .tech-client-table tbody tr:hover td
+) {
+  background: #1a2c42 !important;
+  color: #ffffff !important;
+}
+
+/* ---------- Table links ---------- */
+html[data-leressae-theme="dark"] :is(
+  .admin-table a, .admin-customers-table a, .tech-table a, .tech-client-table a
+),
+html[data-theme="dark"] :is(
+  .admin-table a, .admin-customers-table a, .tech-table a, .tech-client-table a
+),
+body.dark-mode :is(
+  .admin-table a, .admin-customers-table a, .tech-table a, .tech-client-table a
+) {
+  color: #7dd3fc !important;
+  -webkit-text-fill-color: #7dd3fc !important;
+}
+
+/* ---------- Forms / controls ---------- */
+html[data-leressae-theme="dark"] :is(
+  input, select, textarea
+),
+html[data-theme="dark"] :is(
+  input, select, textarea
+),
+body.dark-mode :is(
+  input, select, textarea
+) {
+  background-color: var(--ler-theme-input) !important;
+  color: var(--ler-theme-input-text) !important;
+  border-color: var(--ler-theme-border-strong) !important;
+  -webkit-text-fill-color: var(--ler-theme-input-text) !important;
+  caret-color: #7dd3fc !important;
+}
+
+html[data-leressae-theme="dark"] :is(
+  input::placeholder, textarea::placeholder
+),
+html[data-theme="dark"] :is(
+  input::placeholder, textarea::placeholder
+),
+body.dark-mode :is(
+  input::placeholder, textarea::placeholder
+) {
+  color: #8194aa !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #8194aa !important;
+}
+
+html[data-leressae-theme="dark"] option,
+html[data-theme="dark"] option,
+body.dark-mode option {
+  background: #0d1726 !important;
+  color: #f3f7fc !important;
+}
+
+/* ---------- Settings controls ---------- */
+html[data-leressae-theme="dark"] :is(
+  .settings-form-grid, .settings-form, .settings-section,
+  .settings-card, .settings-panel
+),
+html[data-theme="dark"] :is(
+  .settings-form-grid, .settings-form, .settings-section,
+  .settings-card, .settings-panel
+),
+body.dark-mode :is(
+  .settings-form-grid, .settings-form, .settings-section,
+  .settings-card, .settings-panel
+) {
+  color: #e5edf7 !important;
+}
+
+html[data-leressae-theme="dark"] :is(
+  .settings-form-grid input, .settings-form-grid select,
+  .settings-form-grid textarea, .settings-form input,
+  .settings-form select, .settings-form textarea
+),
+html[data-theme="dark"] :is(
+  .settings-form-grid input, .settings-form-grid select,
+  .settings-form-grid textarea, .settings-form input,
+  .settings-form select, .settings-form textarea
+),
+body.dark-mode :is(
+  .settings-form-grid input, .settings-form-grid select,
+  .settings-form-grid textarea, .settings-form input,
+  .settings-form select, .settings-form textarea
+) {
+  background: #0d1726 !important;
+  color: #f3f7fc !important;
+  border-color: #3a516a !important;
+}
+
+/* ---------- Status / badges ---------- */
+html[data-leressae-theme="dark"] :is(
+  .status-badge, .status-pill, .tech-status-badge,
+  .admin-status-badge, .tech-proof-state
+),
+html[data-theme="dark"] :is(
+  .status-badge, .status-pill, .tech-status-badge,
+  .admin-status-badge, .tech-proof-state
+),
+body.dark-mode :is(
+  .status-badge, .status-pill, .tech-status-badge,
+  .admin-status-badge, .tech-proof-state
+) {
+  -webkit-text-fill-color: currentColor !important;
+}
+
+/* ---------- Media customer / Update Status: clean and readable ---------- */
+.technician-shell .tech-status-page .tech-client-table {
+  min-width: 1540px !important;
+}
+
+.technician-shell .tech-status-page .tech-client-table th,
+.technician-shell .tech-status-page .tech-client-table td {
+  box-sizing: border-box !important;
+  vertical-align: middle !important;
+}
+
+.technician-shell .tech-status-page .tech-client-table th:nth-child(10),
+.technician-shell .tech-status-page .tech-client-table td:nth-child(10) {
+  width: 175px !important;
+  min-width: 175px !important;
+  text-align: center !important;
+  white-space: normal !important;
+}
+
+.technician-shell .tech-status-page .tech-client-table th:nth-child(11),
+.technician-shell .tech-status-page .tech-client-table td:nth-child(11) {
+  width: 185px !important;
+  min-width: 185px !important;
+  text-align: center !important;
+  white-space: normal !important;
+}
+
+.technician-shell .tech-status-page .tech-client-table th:nth-child(10),
+.technician-shell .tech-status-page .tech-client-table th:nth-child(11) {
+  padding: 11px 10px !important;
+  line-height: 1.25 !important;
+  overflow: visible !important;
+}
+
+.technician-shell .tech-status-page .tech-client-table td:nth-child(10),
+.technician-shell .tech-status-page .tech-client-table td:nth-child(11) {
+  padding: 10px 10px !important;
+  overflow: visible !important;
+}
+
+.technician-shell .tech-status-page .tech-client-table
+td:nth-child(10) :is(button, a),
+.technician-shell .tech-status-page .tech-client-table
+td:nth-child(11) :is(button, a) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 150px !important;
+  min-width: 150px !important;
+  max-width: 150px !important;
+  min-height: 44px !important;
+  height: 44px !important;
+  margin: 0 auto !important;
+  padding: 8px 12px !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+  line-height: 1.2 !important;
+  overflow: hidden !important;
+}
+
+.technician-shell .tech-status-page .tech-client-table
+td:nth-child(11) .tech-update-action-btn {
+  width: 150px !important;
+  min-width: 150px !important;
+  max-width: 150px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+}
+
+/* ---------- Dark mode: buttons in technician status table ---------- */
+html[data-leressae-theme="dark"] .technician-shell .tech-status-page
+.tech-client-table td:nth-child(10) :is(button, a),
+html[data-theme="dark"] .technician-shell .tech-status-page
+.tech-client-table td:nth-child(10) :is(button, a),
+body.dark-mode .technician-shell .tech-status-page
+.tech-client-table td:nth-child(10) :is(button, a) {
+  color: #eaf7ff !important;
+  -webkit-text-fill-color: #eaf7ff !important;
+}
+
+html[data-leressae-theme="dark"] .technician-shell .tech-status-page
+.tech-client-table td:nth-child(11) :is(button, a),
+html[data-theme="dark"] .technician-shell .tech-status-page
+.tech-client-table td:nth-child(11) :is(button, a),
+body.dark-mode .technician-shell .tech-status-page
+.tech-client-table td:nth-child(11) :is(button, a) {
+  color: #f8fbff !important;
+  -webkit-text-fill-color: #f8fbff !important;
+}
+
+/* ---------- Navigation ---------- */
+html[data-leressae-theme="dark"] :is(
+  .admin-nav-item, .technician-nav button, .admin-sidebar a,
+  .technician-sidebar a
+),
+html[data-theme="dark"] :is(
+  .admin-nav-item, .technician-nav button, .admin-sidebar a,
+  .technician-sidebar a
+),
+body.dark-mode :is(
+  .admin-nav-item, .technician-nav button, .admin-sidebar a,
+  .technician-sidebar a
+) {
+  color: #dbe7f5 !important;
+  -webkit-text-fill-color: #dbe7f5 !important;
+}
+
+html[data-leressae-theme="dark"] :is(
+  .admin-nav-item.active, .technician-nav button.active,
+  .admin-nav-item:hover, .technician-nav button:hover
+),
+html[data-theme="dark"] :is(
+  .admin-nav-item.active, .technician-nav button.active,
+  .admin-nav-item:hover, .technician-nav button:hover
+),
+body.dark-mode :is(
+  .admin-nav-item.active, .technician-nav button.active,
+  .admin-nav-item:hover, .technician-nav button:hover
+) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* ---------- Generic dark-mode text that was previously hard-coded dark ---------- */
+html[data-leressae-theme="dark"] :is(
+  .text-dark, .text-muted, .text-secondary,
+  .form-text, .helper-text, .description
+),
+html[data-theme="dark"] :is(
+  .text-dark, .text-muted, .text-secondary,
+  .form-text, .helper-text, .description
+),
+body.dark-mode :is(
+  .text-dark, .text-muted, .text-secondary,
+  .form-text, .helper-text, .description
+) {
+  color: #b7c6d8 !important;
+}
+
+/* ---------- SVG/chart labels ---------- */
+html[data-leressae-theme="dark"] svg text,
+html[data-theme="dark"] svg text,
+body.dark-mode svg text {
+  fill: #dce8f4 !important;
+  color: #dce8f4 !important;
+}
+
+/* ---------- Accessibility / focus ---------- */
+html[data-leressae-theme="dark"] :focus-visible,
+html[data-theme="dark"] :focus-visible,
+body.dark-mode :focus-visible {
+  outline: 3px solid rgba(96, 165, 250, .75) !important;
+  outline-offset: 2px !important;
+}
+
+/* ---------- Mobile table buttons ---------- */
+@media (max-width: 640px) {
+  .technician-shell .tech-status-page .tech-client-table {
+    min-width: 1540px !important;
+  }
+
+  .technician-shell .tech-status-page .tech-client-table th:nth-child(10),
+  .technician-shell .tech-status-page .tech-client-table td:nth-child(10) {
+    width: 175px !important;
+    min-width: 175px !important;
+  }
+
+  .technician-shell .tech-status-page .tech-client-table th:nth-child(11),
+  .technician-shell .tech-status-page .tech-client-table td:nth-child(11) {
+    width: 185px !important;
+    min-width: 185px !important;
+  }
+
+  .technician-shell .tech-status-page .tech-client-table
+  td:nth-child(10) :is(button, a),
+  .technician-shell .tech-status-page .tech-client-table
+  td:nth-child(11) :is(button, a) {
+    width: 145px !important;
+    min-width: 145px !important;
+    max-width: 145px !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    font-size: 11px !important;
+  }
+}
+
+/* ---------- Final protection against WebKit text-fill conflicts ---------- */
+html[data-leressae-theme="dark"] :is(
+  .admin-content, .technician-content, .admin-card, .tech-section,
+  .tech-card, .settings-card, .settings-panel
+) :is(
+  h1, h2, h3, h4, h5, h6, p, span, small, label, td, th
+),
+html[data-theme="dark"] :is(
+  .admin-content, .technician-content, .admin-card, .tech-section,
+  .tech-card, .settings-card, .settings-panel
+) :is(
+  h1, h2, h3, h4, h5, h6, p, span, small, label, td, th
+),
+body.dark-mode :is(
+  .admin-content, .technician-content, .admin-card, .tech-section,
+  .tech-card, .settings-card, .settings-panel
+) :is(
+  h1, h2, h3, h4, h5, h6, p, span, small, label, td, th
+) {
+  -webkit-text-fill-color: currentColor !important;
+}
+
+/* ========================================================================
+   FINAL DETAIL VISIBILITY OVERRIDE
+   Public + Admin + Teknisi | Light mode unchanged | Dark mode readable
+   ======================================================================== */
+
+/* Shared detail cards: Public status, Admin customer/service detail,
+   and technician read-only/detail panels. */
+html[data-leressae-theme="dark"] .service-status-card,
+html[data-theme="dark"] .service-status-card,
+body.dark-mode .service-status-card,
+html[data-leressae-theme="dark"] .customer-service-detail-list .service-status-card,
+html[data-theme="dark"] .customer-service-detail-list .service-status-card,
+body.dark-mode .customer-service-detail-list .service-status-card {
+    background: #111827 !important;
+    border-color: #334155 !important;
+    color: #e5edf7 !important;
+    box-shadow: 0 12px 30px rgba(0,0,0,.28) !important;
+}
+
+html[data-leressae-theme="dark"] .service-status-card h3,
+html[data-theme="dark"] .service-status-card h3,
+body.dark-mode .service-status-card h3 {
+    color: #f8fafc !important;
+}
+
+/* The generated detail markup uses plain div text with <strong> labels.
+   Set both the container and its direct children so inherited light-mode
+   colors cannot make the values disappear on a dark surface. */
+html[data-leressae-theme="dark"] .service-status-card .service-meta,
+html[data-theme="dark"] .service-status-card .service-meta,
+body.dark-mode .service-status-card .service-meta,
+html[data-leressae-theme="dark"] .service-status-card .service-meta > div,
+html[data-theme="dark"] .service-status-card .service-meta > div,
+body.dark-mode .service-status-card .service-meta > div {
+    color: #e5edf7 !important;
+}
+
+html[data-leressae-theme="dark"] .service-status-card .service-meta strong,
+html[data-theme="dark"] .service-status-card .service-meta strong,
+body.dark-mode .service-status-card .service-meta strong {
+    color: #f8fafc !important;
+    font-weight: 800 !important;
+}
+
+/* Links/buttons embedded inside detail values, especially Google Maps. */
+html[data-leressae-theme="dark"] .service-status-card .service-meta a,
+html[data-theme="dark"] .service-status-card .service-meta a,
+body.dark-mode .service-status-card .service-meta a,
+html[data-leressae-theme="dark"] .service-status-card .admin-gmaps-link,
+html[data-theme="dark"] .service-status-card .admin-gmaps-link,
+body.dark-mode .service-status-card .admin-gmaps-link {
+    color: #eaf6ff !important;
+    background: #172033 !important;
+    border-color: #4b6480 !important;
+}
+
+html[data-leressae-theme="dark"] .service-status-card .service-meta a:hover,
+html[data-theme="dark"] .service-status-card .service-meta a:hover,
+body.dark-mode .service-status-card .service-meta a:hover,
+html[data-leressae-theme="dark"] .service-status-card .admin-gmaps-link:hover,
+html[data-theme="dark"] .service-status-card .admin-gmaps-link:hover,
+body.dark-mode .service-status-card .admin-gmaps-link:hover {
+    color: #ffffff !important;
+    background: #22334a !important;
+    border-color: #67c7ff !important;
+}
+
+/* Public completion/proof section. */
+html[data-leressae-theme="dark"] .status-proof-public,
+html[data-theme="dark"] .status-proof-public,
+body.dark-mode .status-proof-public {
+    border-top-color: #334155 !important;
+    color: #e5edf7 !important;
+}
+
+html[data-leressae-theme="dark"] .status-proof-public strong,
+html[data-theme="dark"] .status-proof-public strong,
+body.dark-mode .status-proof-public strong {
+    color: #f8fafc !important;
+}
+
+html[data-leressae-theme="dark"] .status-proof-public img,
+html[data-theme="dark"] .status-proof-public img,
+body.dark-mode .status-proof-public img {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+/* Admin customer detail heading/list. These classes are generated by the
+   customer-detail view and must remain readable in both theme selectors. */
+html[data-leressae-theme="dark"] .customer-services-heading,
+html[data-theme="dark"] .customer-services-heading,
+body.dark-mode .customer-services-heading {
+    color: #e5edf7 !important;
+}
+
+html[data-leressae-theme="dark"] .customer-services-heading h3,
+html[data-theme="dark"] .customer-services-heading h3,
+body.dark-mode .customer-services-heading h3 {
+    color: #f8fafc !important;
+}
+
+html[data-leressae-theme="dark"] .customer-service-detail-list,
+html[data-theme="dark"] .customer-service-detail-list,
+body.dark-mode .customer-service-detail-list {
+    color: #e5edf7 !important;
+}
+
+/* Detail back button: keep contrast in dark mode. */
+html[data-leressae-theme="dark"] .leressae-detail-back-row .leressae-back-btn,
+html[data-theme="dark"] .leressae-detail-back-row .leressae-back-btn,
+body.dark-mode .leressae-detail-back-row .leressae-back-btn {
+    background: #334155 !important;
+    color: #f8fafc !important;
+    border-color: #64748b !important;
+}
+
+html[data-leressae-theme="dark"] .leressae-detail-back-row .leressae-back-btn:hover,
+html[data-theme="dark"] .leressae-detail-back-row .leressae-back-btn:hover,
+body.dark-mode .leressae-detail-back-row .leressae-back-btn:hover {
+    background: #475569 !important;
+    color: #ffffff !important;
+    border-color: #94a3b8 !important;
+}
+
+/* Technician detail/update panel. */
+html[data-leressae-theme="dark"] .tech-update-section,
+html[data-theme="dark"] .tech-update-section,
+body.dark-mode .tech-update-section,
+html[data-leressae-theme="dark"] .tech-readonly-grid,
+html[data-theme="dark"] .tech-readonly-grid,
+body.dark-mode .tech-readonly-grid {
+    color: #e5edf7 !important;
+}
+
+html[data-leressae-theme="dark"] .tech-update-section-title strong,
+html[data-theme="dark"] .tech-update-section-title strong,
+body.dark-mode .tech-update-section-title strong,
+html[data-leressae-theme="dark"] .tech-readonly-grid label,
+html[data-theme="dark"] .tech-readonly-grid label,
+body.dark-mode .tech-readonly-grid label,
+html[data-leressae-theme="dark"] .tech-cost-grid label,
+html[data-theme="dark"] .tech-cost-grid label,
+body.dark-mode .tech-cost-grid label,
+html[data-leressae-theme="dark"] .tech-full-field,
+html[data-theme="dark"] .tech-full-field,
+body.dark-mode .tech-full-field {
+    color: #f8fafc !important;
+}
+
+html[data-leressae-theme="dark"] .tech-update-section-title small,
+html[data-theme="dark"] .tech-update-section-title small,
+body.dark-mode .tech-update-section-title small,
+html[data-leressae-theme="dark"] .tech-readonly-grid small,
+html[data-theme="dark"] .tech-readonly-grid small,
+body.dark-mode .tech-readonly-grid small {
+    color: #a9b8ca !important;
+}
+
+html[data-leressae-theme="dark"] .tech-readonly-grid input,
+html[data-theme="dark"] .tech-readonly-grid input,
+body.dark-mode .tech-readonly-grid input,
+html[data-leressae-theme="dark"] .tech-readonly-grid textarea,
+html[data-theme="dark"] .tech-readonly-grid textarea,
+body.dark-mode .tech-readonly-grid textarea,
+html[data-leressae-theme="dark"] .tech-cost-grid input,
+html[data-theme="dark"] .tech-cost-grid input,
+body.dark-mode .tech-cost-grid input,
+html[data-leressae-theme="dark"] .tech-cost-grid select,
+html[data-theme="dark"] .tech-cost-grid select,
+body.dark-mode .tech-cost-grid select,
+html[data-leressae-theme="dark"] .tech-full-field input,
+html[data-theme="dark"] .tech-full-field input,
+body.dark-mode .tech-full-field input,
+html[data-leressae-theme="dark"] .tech-full-field textarea,
+html[data-theme="dark"] .tech-full-field textarea,
+body.dark-mode .tech-full-field textarea {
+    background: #0f172a !important;
+    color: #e5edf7 !important;
+    border-color: #475569 !important;
+}
+
+html[data-leressae-theme="dark"] .tech-update-proof-box,
+html[data-theme="dark"] .tech-update-proof-box,
+body.dark-mode .tech-update-proof-box {
+    background: #172033 !important;
+    color: #e5edf7 !important;
+    border-color: #334155 !important;
+}
+
+html[data-leressae-theme="dark"] .tech-update-proof-head strong,
+html[data-theme="dark"] .tech-update-proof-head strong,
+body.dark-mode .tech-update-proof-head strong {
+    color: #f8fafc !important;
+}
+
+html[data-leressae-theme="dark"] .tech-update-proof-head small,
+html[data-theme="dark"] .tech-update-proof-head small,
+body.dark-mode .tech-update-proof-head small,
+html[data-leressae-theme="dark"] .tech-proof-upload-control small,
+html[data-theme="dark"] .tech-proof-upload-control small,
+body.dark-mode .tech-proof-upload-control small {
+    color: #a9b8ca !important;
+}
+
+/* Keep mobile detail readable without changing the existing layout. */
+@media (max-width: 720px) {
+    html[data-leressae-theme="dark"] .service-status-card .service-meta,
+    html[data-theme="dark"] .service-status-card .service-meta,
+    body.dark-mode .service-status-card .service-meta {
+        color: #e5edf7 !important;
+        font-size: .9rem !important;
+    }
+
+    html[data-leressae-theme="dark"] .service-status-card .service-meta strong,
+    html[data-theme="dark"] .service-status-card .service-meta strong,
+    body.dark-mode .service-status-card .service-meta strong {
+        color: #ffffff !important;
+    }
+}
+
+/* =========================================================
+   FIX: ADMIN > SERVIS SELESAI > STATUS BADGE
+   Memastikan teks "Selesai" selalu terbaca pada Dark Mode.
+   Tidak mengubah Light Mode.
+   ========================================================= */
+
+html[data-leressae-theme="dark"] .admin-completed-summary-status .value.status-badge,
+html[data-leressae-theme="dark"] .admin-completed-summary-status .value,
+html[data-theme="dark"] .admin-completed-summary-status .value.status-badge,
+html[data-theme="dark"] .admin-completed-summary-status .value,
+body.dark-mode .admin-completed-summary-status .value.status-badge,
+body.dark-mode .admin-completed-summary-status .value {
+  background: #123c2b !important;
+  color: #ecfdf5 !important;
+  -webkit-text-fill-color: #ecfdf5 !important;
+  border: 1px solid #34d399 !important;
+  border-radius: 999px !important;
+  font-weight: 800 !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+}
+
+/* Jika badge status menggunakan class .done */
+html[data-leressae-theme="dark"] .admin-completed-summary-status .value.done,
+html[data-theme="dark"] .admin-completed-summary-status .value.done,
+body.dark-mode .admin-completed-summary-status .value.done {
+  background: #123c2b !important;
+  color: #ecfdf5 !important;
+  -webkit-text-fill-color: #ecfdf5 !important;
+  border-color: #34d399 !important;
+}
+
+/* Menjaga ikon/check pada badge tetap terlihat */
+html[data-leressae-theme="dark"] .admin-completed-summary-status .value.status-badge::before,
+html[data-theme="dark"] .admin-completed-summary-status .value.status-badge::before,
+body.dark-mode .admin-completed-summary-status .value.status-badge::before {
+  color: #ecfdf5 !important;
+  -webkit-text-fill-color: #ecfdf5 !important;
+  opacity: 1 !important;
+}
+
+/* Jika struktur HTML berupa .status-badge di dalam .value */
+html[data-leressae-theme="dark"] .admin-completed-summary-status .value .status-badge,
+html[data-theme="dark"] .admin-completed-summary-status .value .status-badge,
+body.dark-mode .admin-completed-summary-status .value .status-badge {
+  background: #123c2b !important;
+  color: #ecfdf5 !important;
+  -webkit-text-fill-color: #ecfdf5 !important;
+  border-color: #34d399 !important;
+  opacity: 1 !important;
+}
+
+/* Admin technician management table and export toolbar. */
+#page-admin .admin-tech-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+#page-admin .admin-tech-toolbar button {
+  min-height: 38px;
+  white-space: nowrap;
+}
+
+#page-admin .admin-tech-management-wrap {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .06);
+}
+
+#page-admin .admin-tech-management-table {
+  min-width: 760px !important;
+}
+
+#page-admin .admin-tech-management-table thead {
+  background: linear-gradient(120deg, #7d1d3e, #a9365b);
+}
+
+#page-admin .admin-tech-management-table thead th {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+#page-admin .admin-tech-sort-button {
+  display: inline-flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 4px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  -webkit-text-fill-color: inherit;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+#page-admin .admin-tech-sort-button:hover,
+#page-admin .admin-tech-sort-button:focus-visible {
+  color: #fff1f5;
+  -webkit-text-fill-color: #fff1f5;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  outline: none;
+}
+
+#page-admin .admin-tech-sort-button span {
+  color: #ffd5e1;
+  -webkit-text-fill-color: #ffd5e1;
+  font-size: 1rem;
+}
+
+#page-admin .admin-tech-sort-button.is-active span {
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+}
+
+#page-admin .admin-tech-management-table tbody tr:nth-child(even) {
+  background: #fff7f9;
+}
+
+#page-admin .admin-tech-management-table tbody tr:hover {
+  background: #fce8ee;
+}
+
+#page-admin .admin-tech-management-table tbody td {
+  border-bottom: 1px solid #f1e4e8;
+  color: #334155;
+  font-variant-numeric: tabular-nums;
+}
+
+#page-admin .admin-tech-management-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+#page-admin .admin-tech-management-table .status-badge {
+  display: inline-flex;
+  min-width: 78px;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: .7rem;
+  font-weight: 800;
+}
+
+#page-admin .admin-tech-table-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 4px 0;
+  color: #64748b;
+  font-size: .78rem;
+}
+
+#page-admin .admin-tech-table-footer strong {
+  color: #7d1d3e;
+}
+
+@media (max-width: 720px) {
+  #page-admin .admin-tech-toolbar {
+    width: 100%;
+    justify-content: stretch;
+    margin-left: 0;
+  }
+
+  #page-admin .admin-tech-toolbar button {
+    flex: 1 1 140px;
+  }
+
+  #page-admin .admin-tech-table-footer {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+
+/* ===== Technician dashboard theme synchronization fixes ===== */
+html[data-leressae-theme="light"] .technician-shell .tech-welcome,
+html[data-leressae-theme="light"] .technician-shell .tech-stat {
+  background: #ffffff !important;
+  border-color: #d8e5f0 !important;
+  color: #102a43 !important;
+}
+html[data-leressae-theme="light"] .technician-shell .tech-welcome :is(.tech-eyebrow, h3, p),
+html[data-leressae-theme="light"] .technician-shell .tech-stat :is(.label, .value) {
+  color: #102a43 !important;
+  -webkit-text-fill-color: #102a43 !important;
+}
+html[data-leressae-theme="light"] .technician-shell .tech-welcome .tech-eyebrow,
+html[data-leressae-theme="light"] .technician-shell .tech-stat .label { color: #536b84 !important; -webkit-text-fill-color: #536b84 !important; }
+html[data-leressae-theme="light"] .technician-shell .tech-welcome p { color: #526b83 !important; -webkit-text-fill-color: #526b83 !important; }
+html[data-leressae-theme="light"] .technician-shell .tech-stat-icon { color: #087bb8 !important; }
+html[data-leressae-theme="light"] .technician-shell .tech-stat-icon svg,
+html[data-leressae-theme="light"] .technician-shell .tech-icon svg,
+html[data-leressae-theme="light"] .technician-shell .technician-mobile-menu svg {
+  stroke: currentColor !important;
+}
+html[data-leressae-theme="dark"] .technician-shell .tech-welcome,
+html[data-leressae-theme="dark"] .technician-shell .tech-stat {
+  background: #111c2d !important;
+  border-color: #31445b !important;
+  color: #f3f7fc !important;
+}
+html[data-leressae-theme="dark"] .technician-shell .tech-welcome :is(.tech-eyebrow, h3, p),
+html[data-leressae-theme="dark"] .technician-shell .tech-stat :is(.label, .value) {
+  color: #f3f7fc !important;
+  -webkit-text-fill-color: #f3f7fc !important;
+}
+html[data-leressae-theme="dark"] .technician-shell .tech-welcome .tech-eyebrow,
+html[data-leressae-theme="dark"] .technician-shell .tech-stat .label,
+html[data-leressae-theme="dark"] .technician-shell .tech-welcome p {
+  color: #b7c6d8 !important;
+  -webkit-text-fill-color: #b7c6d8 !important;
+}
+html[data-leressae-theme="dark"] .technician-shell .tech-stat-icon {
+  background: #20334a !important; color: #9bd8ff !important;
+}
+html[data-leressae-theme="dark"] .technician-shell .tech-stat.is-progress .tech-stat-icon { background: #3a2d19 !important; color: #ffc96b !important; }
+html[data-leressae-theme="dark"] .technician-shell .tech-stat.is-done .tech-stat-icon { background: #153b32 !important; color: #67e8a5 !important; }
+html[data-leressae-theme="dark"] .technician-shell .tech-stat-icon svg,
+html[data-leressae-theme="dark"] .technician-shell .tech-icon svg,
+html[data-leressae-theme="dark"] .technician-shell .technician-mobile-menu svg {
+  stroke: currentColor !important;
+}
+/* The chart/status row was removed from the technician dashboard; retain responsive stat layout. */
+.tech-dashboard-page .tech-dashboard-grid { display: none !important; }
+
+
+/* Admin navigation notification badges */
+.admin-nav-notification{display:inline-flex;align-items:center;justify-content:center;min-width:21px;height:21px;padding:0 6px;margin-left:auto;border-radius:999px;background:#dc2626;color:#fff!important;font-size:11px;font-weight:800;line-height:1;box-shadow:0 0 0 2px rgba(255,255,255,.08);font-variant-numeric:tabular-nums}
+.admin-nav-item{gap:10px}
+.admin-nav-item>span:not(.admin-nav-notification){min-width:0}
+
+/* Histogram: weekday/monthly counts with an explicit numeric Y axis */
+.histogram-wrap{display:flex;flex-direction:column;align-items:stretch;gap:8px;min-height:260px;padding:10px 4px 24px}
+.histogram-plot{display:flex;gap:8px;align-items:stretch;width:100%;min-height:220px}
+.histogram-y-labels{display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;min-width:20px;padding:0 0 23px;color:var(--admin-muted,#64748b);font-size:10px;line-height:1}
+.histogram-plot-main{position:relative;flex:1;min-width:0}
+.histogram-axis{display:flex;align-items:flex-end;gap:8px;width:100%;height:195px;border-bottom:1px solid var(--admin-border,#cbd5e1);position:relative;background:repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),var(--admin-border,#cbd5e1) calc(25% - 1px),var(--admin-border,#cbd5e1) 25%)}
+.histogram-column{height:100%;display:flex;align-items:flex-end;flex:1;min-width:0}
+.histogram-bar{width:100%;height:var(--bar-height,0%);min-height:0;background:linear-gradient(180deg,#38bdf8 0%,#0284c7 100%);border-radius:7px 7px 0 0;position:relative;transition:height .2s ease}
+.histogram-bar[data-count="0"]{height:0!important}
+.histogram-bar::after{content:attr(data-count);position:absolute;left:50%;top:-18px;transform:translateX(-50%);font-size:10px;font-weight:700;color:var(--admin-text,#475569)}
+.histogram-labels{position:relative;display:flex;gap:8px;justify-content:space-between;color:var(--admin-muted,#64748b);font-size:10px;font-weight:700;margin-top:8px;text-align:center}
+.histogram-labels span{flex:1;min-width:0;overflow-wrap:anywhere}
+.histogram-note{position:static;color:var(--admin-muted,#94a3b8);font-size:10px;font-weight:700}
+
+/* ===== Public website finish: softened backdrop and clearer navigation ===== */
+.navbar .nav-links > li > a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  text-underline-offset: 4px;
+  transition: color .18s ease, background-color .18s ease, border-color .18s ease;
+}
+.navbar .nav-links > li > a.active::after,
+.navbar .nav-links > li > a[aria-current="page"]::after {
+  background: linear-gradient(90deg, #8f1734, #b64a65);
+}
+.navbar .dropdown-content li a.nav-service-link.active,
+.navbar .dropdown-content li a.nav-service-link[aria-current="page"] {
+  color: #123b63;
+  background: #edf5fb;
+  border-left: 3px solid #8f1734;
+  padding-left: 15px;
+}
+.navbar .nav-links > li > a:focus-visible,
+.navbar .dropdown-content a:focus-visible,
+.navbar .btn-login:focus-visible,
+.navbar .nav-toggle:focus-visible {
+  outline: 3px solid rgba(14, 116, 144, .42);
+  outline-offset: 3px;
+}
+
+#page-pendaftaran :is(.btn-primary, .btn-secondary),
+#page-media-penanganan :is(.btn-primary, .btn-secondary),
+#page-media :is(.btn-primary, .btn-secondary),
+#page-kontak :is(.btn-primary, .btn-secondary),
+#page-status :is(.btn-primary, .btn-secondary),
+#page-status .status-form button,
+#page-info :is(.btn-primary, .btn-secondary) {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.35;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .navbar .nav-links > li > a,
+  .navbar .btn-login {
+    min-height: 44px;
+  }
+  .navbar .nav-toggle {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    border-radius: 12px;
+  }
+  .navbar .dropdown-content li a.nav-service-link.active,
+  .navbar .dropdown-content li a.nav-service-link[aria-current="page"] {
+    border-radius: 8px;
+  }
+}
+
+/* ===== Public palette: soft LERESSAE greens, with the backdrop kept clear ===== */
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) {
+  --leressae-green: #28784a;
+  --leressae-green-deep: #175d38;
+  --leressae-green-line: #d7e8da;
+  --leressae-green-wash: #f2f8f2;
+}
+
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar {
+  background: linear-gradient(125deg, rgba(255,255,255,.86), rgba(245,250,245,.84));
+  border-color: rgba(214, 232, 216, .78);
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar .nav-links > li > a.active::after,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar .nav-links > li > a[aria-current="page"]::after {
+  background: linear-gradient(90deg, #28784a, #83b78a);
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar .nav-links > li > a.active,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar .nav-links > li > a[aria-current="page"] {
+  color: #246b42;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar .dropdown-content li a.nav-service-link.active,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar .dropdown-content li a.nav-service-link[aria-current="page"] {
+  color: #1d633b;
+  background: #eff7ef;
+  border-left-color: #4d925c;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar .btn-login {
+  background: linear-gradient(135deg, #318451, #1b633b) !important;
+  box-shadow: 0 6px 16px rgba(38, 111, 62, .2), inset 0 1px 0 rgba(255,255,255,.18) !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar .btn-login:hover {
+  background: linear-gradient(135deg, #267346, #155531) !important;
+  box-shadow: 0 9px 22px rgba(38, 111, 62, .28), inset 0 1px 0 rgba(255,255,255,.2) !important;
+}
+
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard {
+  --pub-blue: #28784a;
+  --pub-border: rgba(207, 226, 210, .84);
+  --pub-surface: rgba(255, 255, 255, .94);
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard .hero-section {
+  background-color: #eef6ef;
+  background-image:
+    radial-gradient(ellipse at 12% 16%, rgba(114, 176, 122, .18), transparent 38%),
+    radial-gradient(ellipse at 84% 82%, rgba(159, 199, 143, .18), transparent 35%),
+    linear-gradient(118deg, #f7faf7 0%, #eff7f0 52%, #e8f2e9 100%);
+  border-color: rgba(255,255,255,.82);
+  box-shadow: 0 18px 50px rgba(36, 82, 48, .09), inset 0 1px 0 rgba(255,255,255,.92);
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard .hero-section::before {
+  background: radial-gradient(ellipse, rgba(126, 185, 132, .2), rgba(126, 185, 132, 0) 72%);
+  filter: none;
+  box-shadow: -160px 90px 0 rgba(178, 211, 177, .12), -280px 200px 0 rgba(117, 172, 124, .07);
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard .hero-section::after {
+  background: radial-gradient(ellipse, rgba(149, 195, 145, .19), rgba(149, 195, 145, 0) 72%);
+  filter: none;
+  box-shadow: -160px -80px 0 rgba(255,255,255,.24), -210px 30px 0 rgba(110, 171, 117, .08);
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard .hero-badge,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard .pillar-icon,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard .service-item-icon,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard .tutorial-tag {
+  color: #286b42;
+  border-color: rgba(87, 145, 96, .2);
+  background-color: rgba(237, 247, 238, .84);
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard .hero-slogan-card {
+  border-color: rgba(255,255,255,.86);
+  background: linear-gradient(145deg, rgba(255,255,255,.78), rgba(245,250,245,.69));
+  box-shadow: 0 16px 36px rgba(44, 86, 51, .09), inset 0 1px 0 rgba(255,255,255,.92);
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard :is(.slogan-label, .slogan-main) {
+  color: #245d3b;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard .hero-actions .btn-primary,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) :is(#page-pendaftaran, #page-media-penanganan, #page-media, #page-kontak, #page-status, #page-info) .btn-primary,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-status .status-form button,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #homeNewsList .home-news-content .news-read-more {
+  color: #fff;
+  background: linear-gradient(135deg, #318451, #1b633b);
+  box-shadow: 0 9px 22px rgba(38, 111, 62, .18);
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard .hero-actions .btn-primary:hover,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) :is(#page-pendaftaran, #page-media-penanganan, #page-media, #page-kontak, #page-status, #page-info) .btn-primary:hover,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-status .status-form button:hover,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #homeNewsList .home-news-content .news-read-more:hover {
+  background: linear-gradient(135deg, #267346, #155531);
+  box-shadow: 0 12px 26px rgba(38, 111, 62, .24);
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard .hero-actions .btn-secondary,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) :is(#page-pendaftaran, #page-media-penanganan, #page-media, #page-kontak, #page-status, #page-info) .btn-secondary {
+  color: #28563a;
+  border-color: rgba(78, 137, 88, .26);
+  background: rgba(250, 253, 250, .88);
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard :is(.pillar-card, .dashboard-section, .service-item-card, .tutorial-card),
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard #homeNewsList .news-card,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-info #publicNewsList .news-card,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .home-media-spotlight {
+  border-color: #d8e9da;
+  background-color: rgba(255,255,255,.96);
+  box-shadow: 0 10px 28px rgba(38, 80, 47, .055);
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard #homeNewsList .news-card,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-info #publicNewsList .news-card,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #homeNewsList .home-news-card {
+  background: linear-gradient(155deg, rgba(255,255,255,.98), rgba(244,250,244,.96));
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #homeNewsList :is(.home-news-category, .home-news-arrow),
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .home-media-arrow {
+  border-color: rgba(79, 139, 88, .24);
+  color: #286b42;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #homeNewsList .home-news-dot.is-active,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .home-media-dot.is-active {
+  background: #378650;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #homeNewsList .home-news-arrow:hover,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .home-media-arrow:hover {
+  color: #fff;
+  border-color: #28784a;
+  background: #28784a;
+}
+
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) :is(#page-pendaftaran, #page-media-penanganan, #page-media, #page-kontak, #page-status, #page-info) {
+  border-color: rgba(211, 229, 214, .84);
+  background: linear-gradient(145deg, rgba(255,255,255,.97), rgba(247,251,247,.95));
+  box-shadow: 0 12px 32px rgba(36, 78, 46, .065);
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-kontak .contact-card,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-status .status-lookup-wrap,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-status .service-status-card {
+  border-color: #dceade;
+  background: linear-gradient(145deg, rgba(255,255,255,.98), rgba(245,250,245,.94));
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-kontak .contact-card a,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-media a:not(.btn-primary):not(.btn-secondary),
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-info a:not(.btn-primary):not(.btn-secondary) {
+  color: #28784a;
+}
+
+html[data-leressae-theme="dark"] .navbar .nav-links > li > a.active,
+html[data-leressae-theme="dark"] .navbar .nav-links > li > a[aria-current="page"] {
+  color: #9fd3a4 !important;
+}
+html[data-leressae-theme="dark"] .navbar .nav-links > li > a.active::after,
+html[data-leressae-theme="dark"] .navbar .nav-links > li > a[aria-current="page"]::after {
+  background: linear-gradient(90deg, #58ad6b, #a9dca9) !important;
+}
+html[data-leressae-theme="dark"] .navbar .dropdown-content li a.nav-service-link.active,
+html[data-leressae-theme="dark"] .navbar .dropdown-content li a.nav-service-link[aria-current="page"] {
+  color: #b3e1b7 !important;
+  background: rgba(61, 128, 72, .2) !important;
+  border-left-color: #68b879 !important;
+}
+html[data-leressae-theme="dark"] .navbar .btn-login {
+  background: linear-gradient(135deg, #32814f, #1d5d39) !important;
+  box-shadow: 0 6px 16px rgba(34, 103, 54, .34), inset 0 1px 0 rgba(255,255,255,.12) !important;
+}
+html[data-leressae-theme="dark"] #page-dashboard .hero-actions .btn-primary,
+html[data-leressae-theme="dark"] :is(#page-pendaftaran, #page-media-penanganan, #page-media, #page-kontak, #page-status, #page-info) .btn-primary,
+html[data-leressae-theme="dark"] #page-status .status-form button,
+html[data-leressae-theme="dark"] #homeNewsList .home-news-content .news-read-more {
+  background: linear-gradient(135deg, #32814f, #1d5d39) !important;
+  box-shadow: 0 8px 20px rgba(34, 103, 54, .24) !important;
+}
+
+/* ===== Admin + Technician: LERESSAE soft-green glass surfaces =====
+   Keep the existing navy identity, page geometry, and status colors. Green is
+   used as a restrained brand accent; no backdrop blur is applied. */
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell {
+  --ops-green: #28784a;
+  --ops-green-deep: #175d38;
+  --ops-green-border: #d5e7d8;
+  --ops-green-wash: #f2f8f2;
+  --ops-green-shadow: rgba(38, 91, 51, .09);
+}
+
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-shell,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell {
+  background: linear-gradient(145deg, #f8fbf8 0%, #eff6f0 58%, #f8fbf8 100%);
+  border-color: var(--ops-green-border);
+  box-shadow: 0 18px 44px var(--ops-green-shadow), inset 0 1px 0 rgba(255,255,255,.9);
+}
+
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-sidebar,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .technician-sidebar {
+  background:
+    radial-gradient(ellipse at 95% 4%, rgba(81, 153, 91, .2), transparent 36%),
+    linear-gradient(160deg, #0d1c2d 0%, #102132 58%, #10251d 100%) !important;
+  border: 1px solid rgba(136, 190, 143, .2);
+  box-shadow: 0 18px 38px rgba(16, 44, 28, .2), inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-brand-box .logo-mini,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .technician-avatar,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .tech-dashboard-page .tech-welcome-avatar {
+  background: linear-gradient(145deg, #5eaa70 0%, #28784a 72%, #1c633a 100%) !important;
+  box-shadow: 0 8px 18px rgba(40, 120, 74, .22), inset 0 1px 0 rgba(255,255,255,.3) !important;
+}
+
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-nav-item:hover,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-nav-item.active,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .technician-nav button:hover,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .technician-nav button.active {
+  background: linear-gradient(125deg, rgba(71, 145, 86, .34), rgba(39, 111, 62, .2)) !important;
+  border-color: rgba(145, 198, 148, .55) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 5px 14px rgba(15, 54, 28, .12) !important;
+  color: #f7fff8 !important;
+}
+
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-topbar,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-card,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-stat-card,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-stat-mini,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-info-card,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-report-chart-card,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .tech-welcome,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .tech-stat,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .tech-section {
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(143, 192, 145, .1), transparent 36%),
+    linear-gradient(145deg, rgba(255,255,255,.98), rgba(246,250,246,.96)) !important;
+  border-color: var(--ops-green-border) !important;
+  box-shadow: 0 10px 26px var(--ops-green-shadow), inset 0 1px 0 rgba(255,255,255,.96) !important;
+}
+
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-user-chip {
+  color: #286b42;
+  background: linear-gradient(135deg, #f0f8f0, #e6f3e7);
+  border-color: #cfe4d1;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-table-wrap,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .tech-table-wrap {
+  border-color: #d7e7d9;
+  box-shadow: 0 5px 16px rgba(38, 91, 51, .045);
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin :is(.admin-table th, .admin-report-table th),
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .tech-table th {
+  background: linear-gradient(180deg, #f0f7f0, #eaf3eb) !important;
+  color: #315840 !important;
+  border-color: #d9e8da !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin :is(.admin-table td, .admin-report-table td),
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .tech-table td {
+  border-color: #e4eee5 !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-table tbody tr:hover td,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .tech-table tbody tr:hover td {
+  background: #f3f9f3 !important;
+}
+
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-table .id-cell,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-customer-map-link,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-report-table .id-cell {
+  color: #28784a;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-report-volume-bar i,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-report-meter i:not(.is-progress):not(.is-new):not(.is-other),
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-report-tech-meter i,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-report-item-meter i {
+  background: linear-gradient(180deg, #72b982 0%, #28784a 100%);
+  box-shadow: 0 4px 10px rgba(40, 120, 74, .18);
+}
+
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .btn-primary,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-primary-btn,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .tech-btn:not(.secondary),
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .tech-dashboard-action {
+  color: #fff !important;
+  background: linear-gradient(140deg, #4b9b60 0%, #28784a 56%, #1b633b 100%) !important;
+  border: 1px solid rgba(30, 102, 57, .55) !important;
+  box-shadow: 0 7px 16px rgba(34, 105, 55, .2), inset 0 1px 0 rgba(255,255,255,.2) !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .btn-primary:hover,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-primary-btn:hover,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .tech-btn:not(.secondary):hover,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .tech-dashboard-action:hover {
+  background: linear-gradient(140deg, #3e8c53 0%, #206c3f 100%) !important;
+  box-shadow: 0 10px 20px rgba(34, 105, 55, .26), inset 0 1px 0 rgba(255,255,255,.22) !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .btn-secondary,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .tech-btn.secondary {
+  color: #28563a !important;
+  background: linear-gradient(145deg, #fff, #f2f8f2) !important;
+  border-color: #cfe1d1 !important;
+  box-shadow: 0 4px 12px rgba(38, 91, 51, .07), inset 0 1px 0 #fff !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .tech-chart-bar {
+  background: linear-gradient(180deg, #75bd82 0%, #28784a 100%) !important;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.55), 0 4px 9px rgba(40,120,74,.18) !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .tech-stat:not(.is-progress) .tech-stat-icon {
+  color: #28784a !important;
+  background: #edf7ee !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .tech-stat.is-progress .tech-stat-icon {
+  color: #bd7911 !important;
+  background: #fff4df !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .tech-status-row.is-progress .tech-status-track i {
+  background: linear-gradient(90deg, #dfa22b, #f2c15e) !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .technician-shell .tech-status-row.is-done .tech-status-track i {
+  background: linear-gradient(90deg, #2c9a58, #6dc886) !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) :is(#page-admin, .technician-shell) :is(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid rgba(64, 139, 78, .42) !important;
+  outline-offset: 3px;
+}
+
+html[data-leressae-theme="dark"] #page-admin,
+html[data-leressae-theme="dark"] .technician-shell {
+  --ops-green: #82c890;
+  --ops-green-deep: #3b8f59;
+  --ops-green-border: #294b39;
+}
+html[data-leressae-theme="dark"] #page-admin .admin-shell,
+html[data-leressae-theme="dark"] .technician-shell {
+  background: linear-gradient(145deg, #0d1823 0%, #101d27 58%, #10231b 100%) !important;
+  border-color: #294b39 !important;
+  box-shadow: 0 18px 46px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.035) !important;
+}
+html[data-leressae-theme="dark"] #page-admin .admin-sidebar,
+html[data-leressae-theme="dark"] .technician-shell .technician-sidebar {
+  background:
+    radial-gradient(ellipse at 95% 4%, rgba(69, 146, 84, .18), transparent 38%),
+    linear-gradient(160deg, #0b1725 0%, #0e1d2b 62%, #10251d 100%) !important;
+  border-color: rgba(112, 171, 121, .24) !important;
+}
+html[data-leressae-theme="dark"] #page-admin .admin-nav-item:hover,
+html[data-leressae-theme="dark"] #page-admin .admin-nav-item.active,
+html[data-leressae-theme="dark"] .technician-shell .technician-nav button:hover,
+html[data-leressae-theme="dark"] .technician-shell .technician-nav button.active {
+  background: linear-gradient(125deg, rgba(61, 132, 75, .3), rgba(42, 100, 57, .17)) !important;
+  border-color: rgba(121, 184, 129, .48) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 5px 16px rgba(0,0,0,.16) !important;
+  color: #f3fff4 !important;
+}
+html[data-leressae-theme="dark"] #page-admin :is(.admin-topbar, .admin-card, .admin-stat-card, .admin-stat-mini, .admin-info-card, .admin-report-chart-card),
+html[data-leressae-theme="dark"] .technician-shell :is(.tech-welcome, .tech-stat, .tech-section) {
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(77, 143, 86, .1), transparent 38%),
+    linear-gradient(145deg, #14231e, #111d24 70%) !important;
+  border-color: #2b4a38 !important;
+  box-shadow: 0 12px 30px rgba(0,0,0,.23), inset 0 1px 0 rgba(255,255,255,.045) !important;
+}
+html[data-leressae-theme="dark"] #page-admin .admin-brand-box .logo-mini,
+html[data-leressae-theme="dark"] .technician-shell .technician-avatar,
+html[data-leressae-theme="dark"] .tech-dashboard-page .tech-welcome-avatar {
+  background: linear-gradient(145deg, #5da96e, #286b42 76%, #1b5735) !important;
+  box-shadow: 0 8px 20px rgba(21, 95, 49, .28), inset 0 1px 0 rgba(255,255,255,.16) !important;
+}
+html[data-leressae-theme="dark"] #page-admin :is(.admin-table th, .admin-report-table th),
+html[data-leressae-theme="dark"] .technician-shell .tech-table th {
+  background: #1a3024 !important;
+  color: #d9f1dc !important;
+  border-color: #345440 !important;
+}
+html[data-leressae-theme="dark"] #page-admin :is(.admin-table td, .admin-report-table td),
+html[data-leressae-theme="dark"] .technician-shell .tech-table td {
+  border-color: #263d31 !important;
+}
+html[data-leressae-theme="dark"] #page-admin .admin-table tbody tr:hover td,
+html[data-leressae-theme="dark"] .technician-shell .tech-table tbody tr:hover td {
+  background: #172a20 !important;
+}
+html[data-leressae-theme="dark"] #page-admin .admin-user-chip {
+  color: #c6ebcc !important;
+  background: #1b3425 !important;
+  border-color: #345a3d !important;
+}
+html[data-leressae-theme="dark"] #page-admin .btn-primary,
+html[data-leressae-theme="dark"] #page-admin .admin-primary-btn,
+html[data-leressae-theme="dark"] .technician-shell .tech-btn:not(.secondary),
+html[data-leressae-theme="dark"] .technician-shell .tech-dashboard-action {
+  color: #fff !important;
+  background: linear-gradient(140deg, #448f57, #236b40) !important;
+  border-color: #347549 !important;
+  box-shadow: 0 7px 18px rgba(20, 89, 44, .3), inset 0 1px 0 rgba(255,255,255,.14) !important;
+}
+html[data-leressae-theme="dark"] #page-admin .btn-secondary,
+html[data-leressae-theme="dark"] .technician-shell .tech-btn.secondary {
+  color: #c8e8ce !important;
+  background: linear-gradient(145deg, #1b3024, #15251e) !important;
+  border-color: #365742 !important;
+}
+html[data-leressae-theme="dark"] #page-admin .admin-report-volume-bar i,
+html[data-leressae-theme="dark"] #page-admin .admin-report-tech-meter i,
+html[data-leressae-theme="dark"] #page-admin .admin-report-item-meter i,
+html[data-leressae-theme="dark"] .technician-shell .tech-chart-bar {
+  background: linear-gradient(180deg, #78c486, #2e8050) !important;
+}
+html[data-leressae-theme="dark"] .technician-shell .tech-stat:not(.is-progress) .tech-stat-icon {
+  color: #9bd7a4 !important;
+  background: #1c3928 !important;
+}
+html[data-leressae-theme="dark"] .technician-shell .tech-stat.is-progress .tech-stat-icon {
+  color: #ffc96b !important;
+  background: #3a2d19 !important;
+}
+html[data-leressae-theme="dark"] :is(#page-admin, .technician-shell) :is(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid rgba(126, 202, 139, .62) !important;
+  outline-offset: 3px;
+}
+
+/* Carry the same restrained green through Admin charts and utility controls. */
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin :is(.line-chart-line, .line-chart-point) {
+  stroke: #398851;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .line-chart-area {
+  fill: rgba(65, 139, 80, .12);
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .histogram-bar {
+  background: linear-gradient(180deg, #78bd82 0%, #28784a 100%) !important;
+  box-shadow: 0 4px 10px rgba(40, 120, 74, .17);
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .item-fill,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .chart-box .mini-bars > span {
+  background: linear-gradient(180deg, #75b981 0%, #28784a 100%) !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin :is(.admin-report-volume-card, .admin-report-status-card, .admin-report-technician-card, .admin-report-item-card) {
+  border-top-color: #6ca879;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .admin-report-status-card .admin-report-meter i.is-progress {
+  background: linear-gradient(90deg, #dfa22b, #f2c15e) !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-admin .save-status-btn:not(.danger-delete-news) {
+  border-color: #cfe1d1;
+  background: linear-gradient(145deg, #f5faf5, #eaf4eb);
+  color: #28563a;
+}
+html[data-leressae-theme="dark"] #page-admin :is(.line-chart-line, .line-chart-point) {
+  stroke: #81c88d;
+}
+html[data-leressae-theme="dark"] #page-admin .line-chart-area {
+  fill: rgba(98, 174, 111, .16);
+}
+html[data-leressae-theme="dark"] #page-admin .histogram-bar,
+html[data-leressae-theme="dark"] #page-admin .item-fill,
+html[data-leressae-theme="dark"] #page-admin .chart-box .mini-bars > span {
+  background: linear-gradient(180deg, #78c486 0%, #2e8050 100%) !important;
+}
+html[data-leressae-theme="dark"] #page-admin :is(.admin-report-volume-card, .admin-report-status-card, .admin-report-technician-card, .admin-report-item-card) {
+  border-top-color: #4a8a5a;
 }

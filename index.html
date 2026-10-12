@@ -7,10 +7,11 @@
     <link rel="stylesheet" href="css/leressae.css">
 
 </head>
+<body>
     <div class="wrapper">
 
         <nav class="navbar">
-            <a onclick="navigateTo('page-dashboard', {fromNavbar:true})" class="brand">
+            <a href="#page-dashboard" onclick="navigateTo('page-dashboard', {fromNavbar:true}); return false;" class="brand">
                   <img id="logoImg" src="https://cdn.corenexis.com/f/F8cB0zGPxfg.png" alt="Logo Leres Sae" title="Logo Leres Sae" class="logo-img" loading="lazy">
                 <div class="brand-text">
                     <span class="brand-title">Leres Sae</span>
@@ -18,24 +19,24 @@
                 </div>
             </a>
             <button class="nav-toggle" id="navToggle" type="button"
-                    aria-label="Buka menu navigasi" aria-expanded="false">☰</button>
-            <div class="nav-right">
+                    aria-label="Buka menu navigasi" aria-expanded="false" aria-controls="navMenu">☰</button>
+            <div class="nav-right" id="navMenu">
                 <ul class="nav-links">
-                    <li><a onclick="navigateTo('page-dashboard', {fromNavbar:true})" class="nav-item active" id="nav-dashboard">Dashboard</a></li>
-                    <li><a onclick="navigateTo('page-media', {fromNavbar:true})" class="nav-item" id="nav-media">Media</a></li>
+                    <li><a href="#page-dashboard" onclick="navigateTo('page-dashboard', {fromNavbar:true}); return false;" class="nav-item active" id="nav-dashboard" aria-current="page">Dashboard</a></li>
+                    <li><a href="#page-media" onclick="navigateTo('page-media', {fromNavbar:true}); return false;" class="nav-item" id="nav-media">Media</a></li>
 
                     <li class="dropdown">
-                        <a id="layananToggle">Layanan</a>
+                        <a href="#layananMenu" id="layananToggle" aria-controls="layananMenu" aria-haspopup="true" aria-expanded="false">Layanan</a>
                         <ul class="dropdown-content" id="layananMenu">
                             <li><a href="#page-pendaftaran" class="nav-service-link" data-nav-page="page-pendaftaran">Pendaftaran Layanan Service</a></li>
                             <li><a href="#page-media-penanganan" class="nav-service-link" data-nav-page="page-media-penanganan">Media Cara Mengatasinya</a></li>
                         </ul>
                     </li>
-                    <li><a onclick="navigateTo('page-status', {fromNavbar:true})" class="nav-item" id="nav-status">Cek Status</a></li>
-                    <li><a onclick="navigateTo('page-kontak', {fromNavbar:true})" class="nav-item" id="nav-kontak">Kontak</a></li>
+                    <li><a href="#page-status" onclick="navigateTo('page-status', {fromNavbar:true}); return false;" class="nav-item" id="nav-status">Cek Status</a></li>
+                    <li><a href="#page-kontak" onclick="navigateTo('page-kontak', {fromNavbar:true}); return false;" class="nav-item" id="nav-kontak">Kontak</a></li>
                 </ul>
                 <div class="login-dropdown">
-                    <button class="btn-login" id="loginToggle" type="button" aria-label="Login">
+                    <button class="btn-login" id="loginToggle" type="button" aria-label="Login" aria-controls="loginMenu" aria-haspopup="true" aria-expanded="false">
                         <svg class="btn-login-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                             <circle cx="12" cy="8" r="3.2"></circle>
                             <path d="M5.5 19c.7-3.1 3-5 6.5-5s5.8 1.9 6.5 5"></path>
@@ -43,11 +44,11 @@
                         <span>Login</span>
                     </button>
                     <div class="login-dropdown-content" id="loginMenu">
-                        <a href="javascript:void(0)" data-login-role="technician"
+                        <a href="#login-technician" data-login-role="technician"
                            onclick="openLogin('technician'); return false;">
                             Login sebagai TEKNISI
                         </a>
-                        <a href="javascript:void(0)" data-login-role="admin"
+                        <a href="#login-admin" data-login-role="admin"
                            onclick="openLogin('admin'); return false;">
                             Login sebagai ADMIN
                         </a>
@@ -72,14 +73,15 @@
                                     </g>
                                 </svg>
                 <div class="hero-content">
-                    <span class="hero-badge">Program Kolaborasi Daerah DIY</span>
+                    <span class="hero-badge">Aplikasi Perangkat Daerah</span>
                     <h1 class="hero-title">LERES SAE</h1>
                     <p class="hero-desc">
                         Layanan Reservasi Servis Panggilan alat/mesin Produksi Secara Elektronik
                     </p>
                     <div class="hero-actions">
                         <button onclick="navigateTo('page-pendaftaran')" class="btn-primary">Ajukan Layanan &rarr;</button>
-                        <button onclick="navigateTo('page-kontak')" class="btn-secondary">Konsultasi Teknis</button>
+                        <a href="https://forms.gle/7JexS4VjZNYuHMecA" class="btn-secondary" target="_blank" rel="noopener noreferrer">Konsultasi Teknis</a>
+                        <button onclick="navigateTo('page-status')" class="btn-secondary">Cek Status Layanan</button>
                     </div>
                 </div>
                 <div class="hero-slogan-card">
@@ -195,7 +197,7 @@
                             <span>→</span>
                         </div>
                     </a>
-                    <a class="tutorial-card" href="#" onclick="navigateTo('page-media-penanganan'); return false;">
+                    <a class="tutorial-card" href="#page-media-penanganan" onclick="navigateTo('page-media-penanganan'); return false;">
                         <span class="tutorial-tag">Media</span>
                         <h3>Penanganan Masalah Mesin</h3>
                         <p>Konten edukasi singkat untuk mengenali gejala awal kerusakan dan langkah awal sebelum servis teknis.</p>
@@ -204,7 +206,7 @@
                             <span>→</span>
                         </div>
                     </a>
-                    <a class="tutorial-card" onclick="navigateTo('page-media')" style="cursor:pointer;">
+                    <a class="tutorial-card" href="#page-media" onclick="navigateTo('page-media'); return false;">
                         <span class="tutorial-tag">Semua</span>
                         <h3>Semua Konten Tutorial & Media</h3>
                         <p>Semua materi panduan, edukasi, dan dokumentasi tersedia di halaman media untuk kebutuhan belajar lebih lengkap.</p>
@@ -223,8 +225,13 @@
                 Silakan isi formulir resmi ini untuk mengajukan permohonan servis, perawatan peralatan, atau konsultasi teknis. Data yang diserahkan menjadi dasar verifikasi dan penjadwalan tim lapangan.
             </p>
             <div style="margin-bottom: 24px;">
-                <a href="https://forms.gle/Y8VssPdKa77c1XM89" target="_blank" class="btn-primary">
-                    📝 Isi Formulir Pengajuan (Google Form) &rarr;
+                <a href="https://forms.gle/Y8VssPdKa77c1XM89" target="_blank" rel="noopener noreferrer" class="btn-primary">
+                    Isi Formulir Untuk Pengajuan Servis (Google Form) &rarr;
+                </a>
+            </div>
+             <div style="margin-bottom: 24px;">
+                <a href="https://forms.gle/7JexS4VjZNYuHMecA" target="_blank" rel="noopener noreferrer" class="btn-primary">
+                    Isi Formulir Untuk Konsultasi (Google Form) &rarr;
                 </a>
             </div>
             <p style="font-size: 13px; color: #0284c7; font-weight: 600;">
@@ -313,20 +320,22 @@
                 </div>
                 <div class="contact-card">
                     <strong>Kontak</strong>
-                    <p><a href="Telp : 0274387985">0274387985</a></p>
+                    <p><a href="tel:0274387985">0274387985</a></p>
                     <!-- <p><a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer">WhatsApp</a></p> -->
-                    <p><a href="admin.leressae@gmail.com">admin.leressae@gmail.com</a></p>
+                    <p><a href="mailto:admin.leressae@gmail.com">admin.leressae@gmail.com</a></p>
                 </div>
                 <div class="contact-card">
-                    <strong>Jam Operasional</strong>
-                    <p>Senin - Jumat</p>
-                    <p>08.00 - 16.00 WIB</p> 
+                    <strong>Jam Layanan</strong>
+                    <p>Senin - Kamis</p>
+                    <p>08.00 - 15.00 WIB</p> 
+                    <p>Jumat</p>
+                    <p>08.00 - 11.00 WIB</p>
                 </div>
             </div>
             <div style="margin-top: 22px; display: flex; flex-wrap: wrap; gap: 12px;">
                 <!-- <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer" class="btn-primary">Hubungi WhatsApp</a> -->
-                <a href="Telp : 0274387985" class="btn-secondary">Telepon</a>
-                <a href="admin.leressae@gmail.com" class="btn-secondary">Email</a>
+                <a href="tel:0274387985" class="btn-secondary">Telepon</a>
+                <a href="mailto:admin.leressae@gmail.com" class="btn-secondary">Email</a>
             </div>
         </section>
 
@@ -365,7 +374,7 @@
             </p>
             <div class="status-lookup-wrap">
                 <form id="statusForm" class="status-form">
-                    <input id="statusPhone" type="tel" inputmode="numeric" placeholder="Masukkan nomor WhatsApp, contoh: 0812 3456 7890" required>
+                    <input id="statusPhone" type="tel" inputmode="numeric" aria-label="Nomor WhatsApp pelanggan" placeholder="Masukkan nomor WhatsApp, contoh: 0812 3456 7890" required>
                     <button type="submit">Lihat Status</button>
                 </form>
             </div>
@@ -383,7 +392,7 @@
         <button id="lightboxClose" class="lightbox-close" aria-label="Tutup">✕</button>
         <button id="lightboxPrev" class="lightbox-nav prev" aria-label="Sebelumnya">‹</button>
         <div class="lightbox-content" role="dialog" aria-modal="true">
-            <img id="lightboxImg" class="lightbox-img" src="" alt="">
+            <img id="lightboxImg" class="lightbox-img" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Foto media">
             <div id="lightboxCaption" class="lightbox-caption"></div>
         </div>
         <button id="lightboxNext" class="lightbox-nav next" aria-label="Berikutnya">›</button>
@@ -398,10 +407,10 @@
             <div>
                 <h4>Quick Links</h4>
                 <ul>
-                    <li><a href="#" onclick="navigateTo('page-dashboard'); return false;">Beranda</a></li>
-                    <li><a href="#" onclick="navigateTo('page-status'); return false;">Cek Status</a></li>
-                    <li><a href="#" onclick="navigateTo('page-media'); return false;">Media</a></li>
-                    <li><a href="#" onclick="navigateTo('page-kontak'); return false;">Kontak</a></li>
+                    <li><a href="#page-dashboard" onclick="navigateTo('page-dashboard'); return false;">Beranda</a></li>
+                    <li><a href="#page-status" onclick="navigateTo('page-status'); return false;">Cek Status</a></li>
+                    <li><a href="#page-media" onclick="navigateTo('page-media'); return false;">Media</a></li>
+                    <li><a href="#page-kontak" onclick="navigateTo('page-kontak'); return false;">Kontak</a></li>
                 </ul>
             </div>
             <div>
@@ -414,11 +423,18 @@
                     <li>Edukasi</li>
                 </ul>
             </div>
-            <div>
+            <!-- <div>
+                <h4>Jam Layanan</h4>
+                <ul>
+                    <p>Senin - Jumat: 08:00 - 17:00</p>
+                    <p>Sabtu: 09:00 - 13:00</p>
+                    <p>Minggu: Tutup</p>
+                </ul>
+            </div> -->
+            <div class="site-footer-contact">
                 <h4>Kontak</h4>
                 <ul>
-                    <li><a href="Telp : 0274387985">0274387985</a></li>
-                    <!-- <li><a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer">WhatsApp</a></li> -->
+                    <li><a href="tel:0274387985">0274387985</a></li>
                     <li><a href="mailto:admin.leressae@gmail.com">admin.leressae@gmail.com</a></li>
                     <li>Yogyakarta, Indonesia</li>
                 </ul>
@@ -426,7 +442,7 @@
         </div>
         <div class="site-footer-bottom">© 2026 LERESSAE — BPTI Disperindag DIY. Semua hak dilindungi.</div>
     </footer>
-<script src="js/01-core-app.js"></script>
+<script src="js/01-core-app.js?v=20261012-final"></script>
 <script src="js/02-admin-operational-chart-filter.js"></script>
 <script src="js/03-role-navbar.js"></script>
 <script src="js/04-theme-toggle.js"></script>
