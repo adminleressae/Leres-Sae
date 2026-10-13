@@ -6,6 +6,8 @@ const CONFIG = {
             SERVICE_SPREADSHEET_ID: '1q5nXDOtpHZ588WoudqPqFSIxqUE6y9l7bdOuH0JyfeY',
             SERVICE_SPREADSHEET_URL: 'https://docs.google.com/spreadsheets/d/1q5nXDOtpHZ588WoudqPqFSIxqUE6y9l7bdOuH0JyfeY/edit?resourcekey=&gid=299653006#gid=299653006',
             SERVICE_SPREADSHEET_GID: '299653006',
+            CONSULTATION_SPREADSHEET_GID: '1998776970',
+            CONSULTATION_SPREADSHEET_URL: 'https://docs.google.com/spreadsheets/d/1q5nXDOtpHZ588WoudqPqFSIxqUE6y9l7bdOuH0JyfeY/edit?resourcekey=&gid=1998776970#gid=1998776970',
             TIMEZONE: 'Asia/Jakarta',
             GOOGLE_DRIVE_ROOT_FOLDER_ID: '1FKMEU6a7aukoWoN90cLJQYwpCAqGMwd9',
 
@@ -175,6 +177,62 @@ const CONFIG = {
             return '';
         }
 
+        function renderServiceProofAction(item, proof) {
+            const done = getServiceDisplayStatus(item.status) === 'Selesai';
+            if (done && proof) {
+                return `<a href="#" class="btn-secondary small admin-gmaps-link" data-service-proof-view="${escapeHtml(proof)}" data-service-proof-id="${escapeHtml(item.id || '')}">Lihat Foto</a>`;
+            }
+            return proof ? `<div class="status-proof-public"><strong>Bukti Foto Service</strong><img src="${escapeHtml(proof)}" alt="Bukti foto service"></div>` : '';
+        }
+
+        function openServiceProofImage(proof, serviceId) {
+            const imageUrl = getServiceProofUrl({ bukti_foto: proof });
+            if (!imageUrl) {
+                showToast('Foto hasil perbaikan tidak tersedia.', 'error');
+                return;
+            }
+            let modal = document.getElementById('serviceProofMediaModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'serviceProofMediaModal';
+                modal.className = 'tech-customer-media-overlay';
+                modal.innerHTML = '<section class="tech-customer-media-dialog" role="dialog" aria-modal="true" aria-labelledby="serviceProofMediaTitle"><header><h3 id="serviceProofMediaTitle">Foto Hasil Perbaikan</h3><button type="button" aria-label="Tutup" data-tech-media-close>×</button></header><div class="tech-customer-media-content"></div></section>';
+                modal.addEventListener('click', event => {
+                    if (event.target === modal || event.target.closest('[data-tech-media-close]')) modal.classList.remove('open');
+                });
+                document.body.appendChild(modal);
+            }
+            const content = modal.querySelector('.tech-customer-media-content');
+            const card = document.createElement('article');
+            card.className = 'tech-customer-media-item';
+            const preview = document.createElement('div');
+            const image = document.createElement('img');
+            image.src = imageUrl;
+            image.alt = `Foto hasil perbaikan servis ${serviceId || ''}`.trim();
+            image.loading = 'eager';
+            preview.appendChild(image);
+            const caption = document.createElement('small');
+            caption.textContent = serviceId ? `ID Servis: ${serviceId}` : 'Foto hasil perbaikan';
+            card.append(preview, caption);
+            content.replaceChildren(card);
+            modal.classList.add('open');
+            if (!window.__SERVICE_PROOF_MODAL_ESCAPE_BOUND__) {
+                document.addEventListener('keydown', event => {
+                    if (event.key === 'Escape') modal.classList.remove('open');
+                });
+                window.__SERVICE_PROOF_MODAL_ESCAPE_BOUND__ = true;
+            }
+            modal.querySelector('[data-tech-media-close]').focus();
+        }
+
+        document.addEventListener('click', event => {
+            const button = event.target.closest('[data-service-proof-view]');
+            if (button) {
+                event.preventDefault();
+                openServiceProofImage(button.dataset.serviceProofView, button.dataset.serviceProofId);
+            }
+        });
+
 
         function safeExternalUrl(value) {
             const v=String(value||'').trim();
@@ -258,6 +316,24 @@ const CONFIG = {
             const digits = normalizePhone(value);
             if (digits.startsWith('62')) return digits.slice(2).replace(/^0+/, '');
             return digits.replace(/^0+/, '');
+        }
+
+
+        function renderWhatsAppLink(value) {
+            const phone = String(value || '').trim();
+            const digits = normalizePhone(phone);
+            if (!digits || phone === '-') return escapeHtml(phone || '-');
+            const internationalNumber = digits.startsWith('62')
+                ? digits
+                : digits.startsWith('0')
+                    ? '62' + digits.slice(1)
+                    : digits.startsWith('8')
+                        ? '62' + digits
+                        : digits;
+            if (internationalNumber.length < 8 || internationalNumber.length > 15) {
+                return escapeHtml(phone);
+            }
+            return `<a class="tech-whatsapp-link" href="https://wa.me/${internationalNumber}" target="_blank" rel="noopener noreferrer" aria-label="Hubungi ${escapeHtml(phone)} melalui WhatsApp">${escapeHtml(phone)}</a>`;
         }
 
 
@@ -534,7 +610,7 @@ const CONFIG = {
                                 <div class="service-meta">
                                     <div><strong>ID Servis:</strong> ${escapeHtml(item.id || '-')}</div>
                                     <div><strong>Nama:</strong> ${escapeHtml(item.customer_name || '-')}</div>
-                                    <div><strong>WhatsApp:</strong> ${escapeHtml(item.phone || '-')}</div>
+                                    <div><strong>WhatsApp:</strong> ${renderWhatsAppLink(item.phone || '-')}</div>
                                     <div><strong>Jenis:</strong> ${escapeHtml(item.service_type || item.item_name || '-')}</div>
                                     <div><strong>Tanggal:</strong> ${escapeHtml(formatDate(item.created_at || item.tanggal_masuk))}</div>
                                     <div><strong>Teknisi:</strong> ${escapeHtml(item.technician || 'Data belum tersedia')}</div>
@@ -568,7 +644,8 @@ const CONFIG = {
                 'syncFormResponses', 'cleanupDuplicateServices', 'updateServiceStatus', 'assignServiceTechnician', 'saveTechnician', 'syncTechnicians',
                 'getTechnicians', 'addStock', 'stockIn', 'stockOut',
                 'addNews', 'updateNews', 'deleteNews',
-                'uploadFileToDrive', 'uploadMedia', 'addMedia', 'updateMedia', 'deleteMedia', 'syncMediaMetadata', 'migrateExistingMediaMetadata'
+                'uploadFileToDrive', 'uploadMedia', 'addMedia', 'updateMedia', 'deleteMedia', 'syncMediaMetadata', 'migrateExistingMediaMetadata',
+                'getConsultationAttachment'
             ];
             const requestPayload = { ...payload };
             if (protectedActions.includes(action) && !requestPayload.token) {
@@ -584,7 +661,7 @@ const CONFIG = {
                 }
             }
             const controller = new AbortController();
-            const requestTimeout = action === 'uploadFileToDrive' ? 120000 : 20000;
+            const requestTimeout = action === 'uploadFileToDrive' || action === 'updateServiceStatus' || action === 'getConsultationAttachment' ? 120000 : 20000;
             const timeout = window.setTimeout(() => controller.abort(), requestTimeout);
             let response;
             try {
@@ -1046,7 +1123,6 @@ const CONFIG = {
                 }
             } catch (e) {}
             window.__LERESSAE_TECH_HISTORY = ['dashboard'];
-            window.__TECH_CLIENT_FILTER__ = {period:'this_week',from:'',to:''};
             try {
                 const techPage = document.getElementById('page-technician');
                 if (techPage) {
@@ -1118,7 +1194,7 @@ const CONFIG = {
                     </div>
                     <div class="service-meta">
                         <div><strong>ID Servis:</strong> ${escapeHtml(item.id || '-')}</div>
-                        <div><strong>WhatsApp:</strong> ${escapeHtml(item.phone || '-')}</div>
+                        <div><strong>WhatsApp:</strong> ${renderWhatsAppLink(item.phone || '-')}</div>
                         <div><strong>Teknisi:</strong> ${escapeHtml(item.technician || 'Data belum tersedia')}</div>
                         <div><strong>Estimasi:</strong> ${escapeHtml(item.estimasi_selesai || 'Data belum tersedia')}</div>
                     </div>
@@ -1137,7 +1213,7 @@ const CONFIG = {
                         const form=getServiceFormFields(item),cost=normalizeServiceCost(item),proof=getServiceProofUrl(item),maps=safeExternalUrl(form.google_maps||item.google_maps||item.maps||'');
                         const done=getServiceDisplayStatus(item.status)==='Selesai';
                         return `<div class="service-status-card"><div class="service-status-header"><h3>${escapeHtml(form.barang||item.item_name||'-')}</h3><span class="status-badge ${getStatusClass(item.status)}">${escapeHtml(getServiceDisplayStatus(item.status))}</span></div>
-                            <div class="service-meta"><div><strong>ID Servis:</strong> ${escapeHtml(item.id||'-')}</div><div><strong>Tanggal:</strong> ${escapeHtml(form.tanggal||formatDate(item.created_at||item.tanggal_masuk))}</div><div><strong>Nama Customer:</strong> ${escapeHtml(form.nama||item.customer_name||'-')}</div><div><strong>No. WhatsApp:</strong> ${escapeHtml(form.whatsapp||item.phone||'-')}</div><div><strong>Alamat:</strong> ${escapeHtml(form.alamat||item.alamat||'-')}</div><div><strong>Google Maps:</strong> ${maps?`<a class="btn-secondary small admin-gmaps-link" href="${escapeHtml(maps)}" target="_blank" rel="noopener noreferrer">Lihat GMaps</a>`:'-'}</div><div><strong>Jenis Barang:</strong> ${escapeHtml(form.barang||item.item_name||'-')}</div><div><strong>Merek:</strong> ${escapeHtml(form.merk||item.merk||'-')}</div><div><strong>Tipe:</strong> ${escapeHtml(form.tipe||item.tipe||'-')}</div><div><strong>Keluhan:</strong> ${escapeHtml(form.keluhan||item.keluhan||'-')}</div><div><strong>Teknisi:</strong> ${escapeHtml(form.teknisi||item.technician||'-')}</div><div><strong>Catatan Teknisi:</strong> ${escapeHtml(item.catatan_teknisi||item.notes||'-')}</div>${done?`<div><strong>Keterangan Selesai:</strong> ${escapeHtml(item.keterangan_selesai||item.notes||'-')}</div><div><strong>Tanggal Selesai:</strong> ${escapeHtml(item.tanggal_selesai?formatDate(item.tanggal_selesai):'-')}</div>`:''}<div><strong>Biaya Service:</strong> ${escapeHtml(cost.label)}</div>${item.biaya_keterangan?`<div><strong>Keterangan Biaya:</strong> ${escapeHtml(item.biaya_keterangan)}</div>`:''}<div><strong>Waktu Update Terakhir:</strong> ${escapeHtml(formatDateTimeValue(item.timestamp_update||item.created_at))}</div></div>${proof?`<div class="status-proof-public"><strong>Bukti Foto Service</strong><img src="${escapeHtml(proof)}" alt="Bukti foto service"></div>`:''}</div>`;
+                            <div class="service-meta"><div><strong>ID Servis:</strong> ${escapeHtml(item.id||'-')}</div><div><strong>Tanggal:</strong> ${escapeHtml(form.tanggal||formatDate(item.created_at||item.tanggal_masuk))}</div><div><strong>Nama Customer:</strong> ${escapeHtml(form.nama||item.customer_name||'-')}</div><div><strong>No. WhatsApp:</strong> ${renderWhatsAppLink(form.whatsapp||item.phone||'-')}</div><div><strong>Alamat:</strong> ${escapeHtml(form.alamat||item.alamat||'-')}</div><div><strong>Google Maps:</strong> ${maps?`<a class="btn-secondary small admin-gmaps-link" href="${escapeHtml(maps)}" target="_blank" rel="noopener noreferrer">Lihat GMaps</a>`:'-'}</div><div><strong>Jenis Barang:</strong> ${escapeHtml(form.barang||item.item_name||'-')}</div><div><strong>Merek:</strong> ${escapeHtml(form.merk||item.merk||'-')}</div><div><strong>Tipe:</strong> ${escapeHtml(form.tipe||item.tipe||'-')}</div><div><strong>Keluhan:</strong> ${escapeHtml(form.keluhan||item.keluhan||'-')}</div><div><strong>Teknisi:</strong> ${escapeHtml(form.teknisi||item.technician||'-')}</div><div><strong>Catatan Teknisi:</strong> ${escapeHtml(item.catatan_teknisi||item.notes||'-')}</div>${done?`<div><strong>Keterangan Selesai:</strong> ${escapeHtml(item.keterangan_selesai||item.notes||'-')}</div><div><strong>Tanggal Selesai:</strong> ${escapeHtml(item.tanggal_selesai?formatDate(item.tanggal_selesai):'-')}</div>`:''}<div><strong>Biaya Service:</strong> ${escapeHtml(cost.label)}</div>${item.biaya_keterangan?`<div><strong>Keterangan Biaya:</strong> ${escapeHtml(item.biaya_keterangan)}</div>`:''}<div><strong>Waktu Update Terakhir:</strong> ${escapeHtml(formatDateTimeValue(item.timestamp_update||item.created_at))}</div></div>${renderServiceProofAction(item,proof)}</div>`;
                 }
 
 
@@ -1162,7 +1238,7 @@ function openServiceDetail(serviceId) {
             const done=getServiceDisplayStatus(item.status)==='Selesai';
             const detailHtml=`<div class="leressae-detail-back-row"><button type="button" class="leressae-back-btn" data-service-detail-back><span class="leressae-back-icon">←</span><span>Kembali</span></button></div>
               <div class="service-status-card"><div class="service-status-header"><h3>${escapeHtml(form.barang||item.item_name||'-')}</h3><span class="status-badge ${getStatusClass(item.status)}">${escapeHtml(getServiceDisplayStatus(item.status))}</span></div>
-              <div class="service-meta"><div><strong>ID Servis:</strong> ${escapeHtml(item.id||'-')}</div><div><strong>Tanggal:</strong> ${escapeHtml(form.tanggal||formatDate(item.created_at||item.tanggal_masuk))}</div><div><strong>Nama Customer:</strong> ${escapeHtml(form.nama||item.customer_name||'-')}</div><div><strong>No. WhatsApp:</strong> ${escapeHtml(form.whatsapp||item.phone||'-')}</div><div><strong>Alamat:</strong> ${escapeHtml(form.alamat||item.alamat||'-')}</div><div><strong>Google Maps:</strong> ${maps?`<a class="btn-secondary small admin-gmaps-link" href="${escapeHtml(maps)}" target="_blank" rel="noopener noreferrer">Lihat GMaps</a>`:'-'}</div><div><strong>Jenis Barang:</strong> ${escapeHtml(form.barang||item.item_name||'-')}</div><div><strong>Merek:</strong> ${escapeHtml(form.merk||item.merk||'-')}</div><div><strong>Tipe:</strong> ${escapeHtml(form.tipe||item.tipe||'-')}</div><div><strong>Keluhan:</strong> ${escapeHtml(form.keluhan||item.keluhan||'-')}</div><div><strong>Teknisi:</strong> ${escapeHtml(form.teknisi||item.technician||'-')}</div><div><strong>Catatan Teknisi:</strong> ${escapeHtml(item.catatan_teknisi||item.notes||'-')}</div>${done?`<div><strong>Keterangan Selesai:</strong> ${escapeHtml(item.keterangan_selesai||item.notes||'-')}</div><div><strong>Tanggal Selesai:</strong> ${escapeHtml(item.tanggal_selesai?formatDate(item.tanggal_selesai):'-')}</div>`:''}<div><strong>Biaya Service:</strong> ${escapeHtml(cost.label)}</div>${item.biaya_keterangan?`<div><strong>Keterangan Biaya:</strong> ${escapeHtml(item.biaya_keterangan)}</div>`:''}<div><strong>Waktu Update Terakhir:</strong> ${escapeHtml(formatDateTimeValue(item.timestamp_update||item.created_at))}</div></div>${proof?`<div class="status-proof-public"><strong>Bukti Foto Service</strong><img src="${escapeHtml(proof)}" alt="Bukti foto service"></div>`:''}</div>`;
+              <div class="service-meta"><div><strong>ID Servis:</strong> ${escapeHtml(item.id||'-')}</div><div><strong>Tanggal:</strong> ${escapeHtml(form.tanggal||formatDate(item.created_at||item.tanggal_masuk))}</div><div><strong>Nama Customer:</strong> ${escapeHtml(form.nama||item.customer_name||'-')}</div><div><strong>No. WhatsApp:</strong> ${renderWhatsAppLink(form.whatsapp||item.phone||'-')}</div><div><strong>Alamat:</strong> ${escapeHtml(form.alamat||item.alamat||'-')}</div><div><strong>Google Maps:</strong> ${maps?`<a class="btn-secondary small admin-gmaps-link" href="${escapeHtml(maps)}" target="_blank" rel="noopener noreferrer">Lihat GMaps</a>`:'-'}</div><div><strong>Jenis Barang:</strong> ${escapeHtml(form.barang||item.item_name||'-')}</div><div><strong>Merek:</strong> ${escapeHtml(form.merk||item.merk||'-')}</div><div><strong>Tipe:</strong> ${escapeHtml(form.tipe||item.tipe||'-')}</div><div><strong>Keluhan:</strong> ${escapeHtml(form.keluhan||item.keluhan||'-')}</div><div><strong>Teknisi:</strong> ${escapeHtml(form.teknisi||item.technician||'-')}</div><div><strong>Catatan Teknisi:</strong> ${escapeHtml(item.catatan_teknisi||item.notes||'-')}</div>${done?`<div><strong>Keterangan Selesai:</strong> ${escapeHtml(item.keterangan_selesai||item.notes||'-')}</div><div><strong>Tanggal Selesai:</strong> ${escapeHtml(item.tanggal_selesai?formatDate(item.tanggal_selesai):'-')}</div>`:''}<div><strong>Biaya Service:</strong> ${escapeHtml(cost.label)}</div>${item.biaya_keterangan?`<div><strong>Keterangan Biaya:</strong> ${escapeHtml(item.biaya_keterangan)}</div>`:''}<div><strong>Waktu Update Terakhir:</strong> ${escapeHtml(formatDateTimeValue(item.timestamp_update||item.created_at))}</div></div>${renderServiceProofAction(item,proof)}</div>`;
             if(returnKind==='admin'&&isAdminLoggedIn()){renderAdminAppShell(returnPage,detailHtml);document.querySelector('.admin-content')?.querySelectorAll(':scope > .leressae-back-row').forEach(el=>el.remove());requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'auto'}));return;}
             if(returnKind==='tech'&&isTechnicianLoggedIn()){const view=document.getElementById('technicianView');if(view)view.innerHTML=detailHtml;const shell=document.getElementById('technicianShell');if(shell)shell.dataset.techPage=returnPage;return;}
             const statusResult=document.getElementById('statusResult');if(statusResult)statusResult.innerHTML=detailHtml;navigateTo('page-status',{fromBack:true});
@@ -1578,9 +1654,9 @@ function openServiceDetail(serviceId) {
                 running: { label: 'Servis Berjalan', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h4.5A1.5 1.5 0 0 1 20 4.5v4.5"></path><path d="M14 20h6"></path><path d="M20 12v7.5A1.5 1.5 0 0 1 18.5 21H5.5A1.5 1.5 0 0 1 4 19.5V4.5A1.5 1.5 0 0 1 5.5 3H12"></path><path d="M12 8v4l3 2"></path></svg>' },
                 completed: { label: 'Servis Selesai', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12.5 2.2 2.2 4.8-5.2"></path></svg>' },
                 customers: { label: 'Pelanggan', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"></path><circle cx="9.5" cy="7" r="3.5"></circle><path d="M22 19v-1a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>' },
+                locations: { label: 'Konsultasi', iconSvg: '<span class="admin-nav-icon" aria-hidden="true">⌖</span>' },
                 technicians: { label: 'Teknisi', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 20a7 7 0 0 1 16 0"></path><path d="M18 8h4"></path><path d="M20 6v4"></path></svg>' },
                 stock: { label: 'Stock Flow', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5 12 3l9 4.5-9 4.5L3 7.5Z"></path><path d="M3 12l9 4.5 9-4.5"></path><path d="M3 16.5 12 21l9-4.5"></path></svg>' },
-                locations: { label: 'Lokasi Servis', iconSvg: '<span class="admin-nav-icon" aria-hidden="true">⌖</span>' },
                 media: { label: 'Update Media', iconSvg: '<span class="admin-nav-icon" aria-hidden="true">◫</span>' },
                 news: { label: 'Update Berita', iconSvg: '<span class="admin-nav-icon" aria-hidden="true">▤</span>' },
                 reports: { label: 'Laporan', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-8"></path><path d="M22 20v-12"></path></svg>' },
@@ -1606,7 +1682,7 @@ function openServiceDetail(serviceId) {
             const pageTitle = menu[page] ? menu[page].label : 'Dashboard';
             const dashboardContainer = document.getElementById('adminDashboardContent');
             if (!dashboardContainer) return;
-            const searchInputIds = ['adminSearchInput', 'runningSearchInput', 'completedSearchInput', 'reportSearch', 'techSearchInput', 'locationSearch'];
+            const searchInputIds = ['adminSearchInput', 'runningSearchInput', 'completedSearchInput', 'techSearchInput', 'consultationSearch'];
             const activeElement = document.activeElement;
             const focusedSearch = activeElement && activeElement.tagName === 'INPUT' && searchInputIds.includes(activeElement.id)
                 ? {
@@ -1803,7 +1879,7 @@ function openServiceDetail(serviceId) {
                                                 <td class="id-cell">${escapeHtml(item.id || '-')}</td>
                                                 <td>${escapeHtml(formatDate(f.tanggal && f.tanggal !== '-' ? f.tanggal : item.created_at || item.tanggal_masuk))}</td>
                                                 <td>${escapeHtml(f.nama || item.customer_name || '-')}</td>
-                                                <td>${escapeHtml(f.whatsapp || item.phone || '-')}</td>
+                                                <td>${renderWhatsAppLink(f.whatsapp || item.phone || '-')}</td>
                                                 <td class="admin-activity-address">${escapeHtml(f.alamat || item.alamat || '-')}</td>
                                                 <td>${maps ? `<a class="btn-secondary small admin-gmaps-link" href="${escapeHtml(maps)}" target="_blank" rel="noopener noreferrer">Lihat GMaps</a>` : '-'}</td>
                                                 <td>${f.media_customer.length ? `<button type="button" class="btn-secondary small" data-tech-customer-media="${escapeHtml(item.id || '')}">Lihat Media</button>` : 'Belum Ada'}</td>
@@ -1894,7 +1970,7 @@ function openServiceDetail(serviceId) {
                                         <td class="id-cell">${escapeHtml(item.id)}</td>
                                         <td>${escapeHtml(formatDate(f.tanggal))}</td>
                                         <td>${escapeHtml(f.nama)}</td>
-                                        <td>${escapeHtml(f.whatsapp)}</td>
+                                        <td>${renderWhatsAppLink(f.whatsapp || item.phone || '-')}</td>
                                         <td>${escapeHtml(f.alamat || item.alamat || '-')}</td>
                                         <td>${maps ? `<a class="btn-secondary small admin-gmaps-link" href="${escapeHtml(maps)}" target="_blank" rel="noopener noreferrer">Lihat GMaps</a>` : '-'}</td>
                                         <td>${f.media_customer.length ? `<button type="button" class="btn-secondary small" data-tech-customer-media="${escapeHtml(item.id || '')}">Lihat Media</button>` : 'Belum Ada'}</td>
@@ -2003,7 +2079,7 @@ function openServiceDetail(serviceId) {
                                         <td class="id-cell">${escapeHtml(item.id)}</td>
                                         <td>${escapeHtml(formatDate(f.tanggal))}</td>
                                         <td>${escapeHtml(f.nama)}</td>
-                                        <td>${escapeHtml(f.whatsapp)}</td>
+                                        <td>${renderWhatsAppLink(f.whatsapp || item.phone || '-')}</td>
                                         <td>${escapeHtml(f.alamat || item.alamat || '-')}</td>
                                         <td>${maps ? `<a class="btn-secondary small admin-gmaps-link" href="${escapeHtml(maps)}" target="_blank" rel="noopener noreferrer">Lihat GMaps</a>` : '-'}</td>
                                         <td>${f.media_customer.length ? `<button type="button" class="btn-secondary small" data-tech-customer-media="${escapeHtml(item.id || '')}">Lihat Media</button>` : 'Belum Ada'}</td>
@@ -2191,7 +2267,7 @@ function openServiceDetail(serviceId) {
             const table = customers.map(customer => `
                 <tr>
                     <td><strong>${escapeHtml(customer.name)}</strong></td>
-                    <td>${escapeHtml(customer.phone)}</td>
+                    <td>${renderWhatsAppLink(customer.phone)}</td>
                     <td>${customer.total}</td>
                     <td>${customer.active}</td>
                     <td>${customer.completed}</td>
@@ -2989,7 +3065,7 @@ const STOCK_SHEETS = [
 ];
 
 
-function parseStockSheetCsv(text) {
+function parseSpreadsheetCsvRows(text) {
     const rows = [];
     let row = [];
     let cell = '';
@@ -3020,6 +3096,12 @@ function parseStockSheetCsv(text) {
         row.push(cell.trim());
         if (row.some(value => value !== '')) rows.push(row);
     }
+    return rows;
+}
+
+
+function parseStockSheetCsv(text) {
+    const rows = parseSpreadsheetCsvRows(text);
     const normalized = value => String(value || '').trim().toLowerCase();
     const headerIndex = rows.findIndex(cells => {
         const values = cells.map(normalized);
@@ -3038,36 +3120,7 @@ function parseStockSheetCsv(text) {
 
 
 function parseServiceSpreadsheetCsv(text) {
-    const rows = [];
-    let row = [];
-    let cell = '';
-    let inQuotes = false;
-    for (let index = 0; index < text.length; index += 1) {
-        const character = text[index];
-        if (character === '"') {
-            if (inQuotes && text[index + 1] === '"') {
-                cell += '"';
-                index += 1;
-            } else {
-                inQuotes = !inQuotes;
-            }
-        } else if (character === ',' && !inQuotes) {
-            row.push(cell.trim());
-            cell = '';
-        } else if ((character === '\n' || character === '\r') && !inQuotes) {
-            if (character === '\r' && text[index + 1] === '\n') index += 1;
-            row.push(cell.trim());
-            if (row.some(value => value !== '')) rows.push(row);
-            row = [];
-            cell = '';
-        } else {
-            cell += character;
-        }
-    }
-    if (cell || row.length) {
-        row.push(cell.trim());
-        if (row.some(value => value !== '')) rows.push(row);
-    }
+    const rows = parseSpreadsheetCsvRows(text);
     const headerIndex = rows.findIndex(cells =>
         cells.some(value => /timestamp/i.test(value)) &&
         cells.some(value => /nama/i.test(value)) &&
@@ -3090,6 +3143,42 @@ function parseServiceSpreadsheetCsv(text) {
             maps: String(cells[mapsIndex] || '').trim()
         }))
         .filter(row => row.phone && row.maps && row.maps !== '-');
+}
+
+
+function parseConsultationSpreadsheetCsv(text) {
+    const rows = parseSpreadsheetCsvRows(text);
+    const normalize = value => String(value || '').replace(/^\uFEFF/, '').trim().toLowerCase().replace(/\s+/g, ' ');
+    const headerIndex = rows.findIndex(cells => {
+        const headers = cells.map(normalize);
+        return headers.includes('nama') &&
+            headers.includes('no whatsapp') &&
+            headers.includes('topik konsultasi') &&
+            headers.includes('deskripsi permasalahan') &&
+            headers.includes('tingkat prioritas');
+    });
+    if (headerIndex < 0) {
+        throw new Error('Kolom konsultasi pada Spreadsheet tidak ditemukan atau berubah.');
+    }
+
+    const headers = rows[headerIndex].map(normalize);
+    const findColumn = name => headers.indexOf(name);
+    const indices = {
+        timestamp: findColumn('timestamp'),
+        name: findColumn('nama'),
+        whatsapp: findColumn('no whatsapp'),
+        topic: findColumn('topik konsultasi'),
+        description: findColumn('deskripsi permasalahan'),
+        priority: findColumn('tingkat prioritas'),
+        attachment: findColumn('lampiran pendukung'),
+        business: findColumn('bidang usaha (optional)')
+    };
+    return rows.slice(headerIndex + 1)
+        .filter(cells => cells.some(value => String(value || '').trim() !== ''))
+        .map(cells => Object.fromEntries(Object.entries(indices).map(([key, index]) => [
+            key,
+            index < 0 ? '' : String(cells[index] || '').trim()
+        ])));
 }
 
 
@@ -3379,7 +3468,7 @@ function openReportServiceDetail(serviceId) {
             }
             modal.querySelector('#adminCustomerProfileTitle').textContent = fields.nama && fields.nama !== '-' ? fields.nama : (item.customer_name || 'Detail Servis');
             modal.querySelector('.admin-customer-profile-subtitle').textContent = `${item.id || '-'} · ${fields.whatsapp && fields.whatsapp !== '-' ? fields.whatsapp : item.phone || '-'}`;
-            modal.querySelector('.admin-customer-profile-body').innerHTML = `<article class="admin-customer-history-card"><div class="admin-customer-history-heading"><div><strong>${escapeHtml(item.id || '-')}</strong><span>${escapeHtml(formatDate(fields.tanggal && fields.tanggal !== '-' ? fields.tanggal : item.created_at || item.tanggal_masuk))}</span></div><span class="status-badge ${getStatusClass(item.status)}">${escapeHtml(getReportStatus(item))}</span></div><div class="admin-customer-history-grid"><div><small>No. WhatsApp</small><strong>${escapeHtml(fields.whatsapp || item.phone || '-')}</strong></div><div><small>Barang</small><strong>${escapeHtml(fields.barang || item.item_name || '-')}</strong></div><div><small>Keluhan</small><strong>${escapeHtml(fields.keluhan || item.keluhan || '-')}</strong></div><div><small>Alamat</small><strong>${escapeHtml(fields.alamat || item.alamat || '-')}</strong></div><div><small>Teknisi</small><strong>${escapeHtml(fields.teknisi && fields.teknisi !== '-' ? fields.teknisi : item.technician || 'Belum ada')}</strong></div><div><small>Biaya</small><strong>${escapeHtml(getReportCostLabel(item))}</strong></div><div><small>Google Maps</small><span>${maps ? `<a class="admin-customer-map-link" href="${escapeHtml(maps)}" target="_blank" rel="noopener noreferrer">Buka Maps</a>` : '<span class="admin-customer-muted">-</span>'}</span></div><div><small>Media Customer</small><span>${fields.media_customer.length ? `<button type="button" class="btn-secondary small" data-tech-customer-media="${escapeHtml(item.id || '')}">Lihat Media</button>` : '<span class="admin-customer-muted">Belum Ada</span>'}</span></div><div><small>Update Terakhir</small><strong>${escapeHtml(formatDateTimeValue(item.timestamp_update || item.updated_at || item.created_at || ''))}</strong></div></div></article>`;
+            modal.querySelector('.admin-customer-profile-body').innerHTML = `<article class="admin-customer-history-card"><div class="admin-customer-history-heading"><div><strong>${escapeHtml(item.id || '-')}</strong><span>${escapeHtml(formatDate(fields.tanggal && fields.tanggal !== '-' ? fields.tanggal : item.created_at || item.tanggal_masuk))}</span></div><span class="status-badge ${getStatusClass(item.status)}">${escapeHtml(getReportStatus(item))}</span></div><div class="admin-customer-history-grid"><div><small>No. WhatsApp</small><strong>${renderWhatsAppLink(fields.whatsapp || item.phone || '-')}</strong></div><div><small>Barang</small><strong>${escapeHtml(fields.barang || item.item_name || '-')}</strong></div><div><small>Keluhan</small><strong>${escapeHtml(fields.keluhan || item.keluhan || '-')}</strong></div><div><small>Alamat</small><strong>${escapeHtml(fields.alamat || item.alamat || '-')}</strong></div><div><small>Teknisi</small><strong>${escapeHtml(fields.teknisi && fields.teknisi !== '-' ? fields.teknisi : item.technician || 'Belum ada')}</strong></div><div><small>Biaya</small><strong>${escapeHtml(getReportCostLabel(item))}</strong></div><div><small>Google Maps</small><span>${maps ? `<a class="admin-customer-map-link" href="${escapeHtml(maps)}" target="_blank" rel="noopener noreferrer">Buka Maps</a>` : '<span class="admin-customer-muted">-</span>'}</span></div><div><small>Media Customer</small><span>${fields.media_customer.length ? `<button type="button" class="btn-secondary small" data-tech-customer-media="${escapeHtml(item.id || '')}">Lihat Media</button>` : '<span class="admin-customer-muted">Belum Ada</span>'}</span></div><div><small>Update Terakhir</small><strong>${escapeHtml(formatDateTimeValue(item.timestamp_update || item.updated_at || item.created_at || ''))}</strong></div></div></article>`;
             modal.classList.add('open');
         }
 
@@ -3643,7 +3732,7 @@ function renderReportsPage() {
                             <div class="settings-form-grid">
                                 <div class="settings-field">
                                     <label>Nama Sistem</label>
-                                    <input type="text" value="LERESSAE" readonly>
+                                    <input type="text" value="LERES SAE" readonly>
                                 </div>
                                 <div class="settings-field">
                                     <label>Instansi</label>
@@ -3737,6 +3826,14 @@ function renderReportsPage() {
                 renderAdminLoginGate();
                 return;
             }
+            if (page === 'locations' && !options.skipConsultationsRefresh) {
+                refreshConsultationsFromSpreadsheet().catch(error => {
+                    console.warn('Gagal menyinkronkan data konsultasi dari Spreadsheet:', error);
+                    if (window.__ADMIN_CURRENT_PAGE__ === 'locations') {
+                        showToast(error?.message || 'Data konsultasi gagal dimuat dari Spreadsheet.', 'error');
+                    }
+                });
+            }
             const pages = {
                 dashboard: renderAdminDashboardPage,
                 services: renderServicesPage,
@@ -3745,7 +3842,7 @@ function renderReportsPage() {
                 customers: renderCustomersPage,
                 technicians: renderTechniciansPage,
                 stock: renderStockPage,
-                locations: renderLocationsPage,
+                locations: renderConsultationsPage,
                 media: renderMediaPage,
                 news: renderNewsPage,
                 reports: renderReportsPage,
@@ -4109,7 +4206,6 @@ function renderReportsPage() {
                 if (navTarget && navTarget.dataset.adminPage) {
                     if (navTarget.dataset.adminPage === 'locations') {
                         showAdminPage('locations');
-                        refreshLocationsInBackground();
                         if (window.innerWidth <= 767) closeAdminMenu();
                         return;
                     }
@@ -4218,7 +4314,7 @@ function renderReportsPage() {
                                 <div class="service-meta">
                                     <div><strong>ID Servis:</strong> ${escapeHtml(item.id)}</div>
                                     <div><strong>Nama Pelanggan:</strong> ${escapeHtml(item.customer_name || '-')}</div>
-                                    <div><strong>No. WhatsApp:</strong> ${escapeHtml(item.phone || '-')}</div>
+                                    <div><strong>No. WhatsApp:</strong> ${renderWhatsAppLink(item.phone || '-')}</div>
                                     <div><strong>Barang:</strong> ${escapeHtml(item.item_name || '-')}</div>
                                     <div><strong>Merek:</strong> ${escapeHtml(item.merk || '-')}</div>
                                     <div><strong>Jenis:</strong> ${escapeHtml(item.jenis || item.tipe || '-')}</div>
@@ -5507,138 +5603,160 @@ function renderReportsPage() {
 
         function deprecatedGetAdminMenuMetaOverride() {
             const menu = {
-                dashboard: { label: 'Dashboard', iconSvg: '▦' }, services: { label: 'Data Servis', iconSvg: '☷' }, running: { label: 'Servis Berjalan', iconSvg: '◷' }, completed: { label: 'Servis Selesai', iconSvg: '✓' }, customers: { label: 'Pelanggan', iconSvg: '♙' }, stock: { label: 'Stock Flow', iconSvg: '▣' }, locations: { label: 'Lokasi Servis', iconSvg: '⌖' }, news: { label: 'Update Berita', iconSvg: '▤' }, reports: { label: 'Laporan', iconSvg: '▥' }, settings: { label: 'Pengaturan', iconSvg: '⚙' }
+                dashboard: { label: 'Dashboard', iconSvg: '▦' }, services: { label: 'Data Servis', iconSvg: '☷' }, running: { label: 'Servis Berjalan', iconSvg: '◷' }, completed: { label: 'Servis Selesai', iconSvg: '✓' }, customers: { label: 'Pelanggan', iconSvg: '♙' }, stock: { label: 'Stock Flow', iconSvg: '▣' }, locations: { label: 'Konsultasi', iconSvg: '⌖' }, news: { label: 'Update Berita', iconSvg: '▤' }, reports: { label: 'Laporan', iconSvg: '▥' }, settings: { label: 'Pengaturan', iconSvg: '⚙' }
             };
             Object.values(menu).forEach(item => item.iconSvg = '<span class="admin-nav-icon" aria-hidden="true">' + item.iconSvg + '</span>');
             return menu;
         }
 
 
-        function parseLocationDateValue(value) {
-            if (!value) return null;
-            const raw = String(value).trim();
-            if (!raw) return null;
-            const localMatch = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})(?:[ ,T]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
-            if (localMatch) {
-                const [, day, month, year, hour = '0', minute = '0', second = '0'] = localMatch;
-                return new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second));
+        function consultationAttachmentHtml(value) {
+            const attachment = String(value || '').trim();
+            if (!attachment) return '-';
+            const urls = attachment.match(/https?:\/\/[^\s,]+/gi) || [];
+            if (urls.length) {
+                return urls.map((url, index) => `<button class="tech-media-btn tech-media-button" type="button" data-consultation-media="${escapeHtml(url)}" title="Lihat lampiran pendukung ${index + 1}">
+                    <svg class="tech-media-btn-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect width="18" height="18" x="3" y="3" rx="3.5" ry="3.5"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <path d="m21 15-5-5L5 21"></path>
+                    </svg>
+                    <span>${urls.length > 1 ? `Lihat Media ${index + 1}` : 'Lihat Media'}</span>
+                </button>`).join(' ');
             }
-            const normalized = raw.includes('T') || raw.includes(' ') ? raw : raw + 'T00:00:00+07:00';
-            const date = new Date(normalized);
-            if (Number.isNaN(date.getTime())) return null;
-            return new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+            return escapeHtml(attachment).replace(/\r?\n/g, '<br>');
         }
 
 
-        function applyLocationDateFilter(records, period, customStart = '', customEnd = '') {
-            if (!Array.isArray(records)) return [];
-            if (!period || period === 'all') return records;
-            const nowJakarta = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
-            if (period === 'custom') {
-                const startDate = customStart ? new Date(customStart + 'T00:00:00+07:00') : null;
-                const endDate = customEnd ? new Date(customEnd + 'T23:59:59+07:00') : null;
-                return records.filter(item => {
-                    const itemDate = parseLocationDateValue(item.date || item.created_at || item.tanggal || item.timestamp || item.createdAt);
-                    if (!itemDate) return false;
-                    const meetsStart = !startDate || itemDate >= startDate;
-                    const meetsEnd = !endDate || itemDate <= endDate;
-                    return meetsStart && meetsEnd;
+        async function openConsultationMedia(url) {
+            const mediaUrl = safeExternalUrl(url);
+            if (!mediaUrl) {
+                showToast('Lampiran konsultasi tidak memiliki tautan yang valid.', 'error');
+                return;
+            }
+            const fileId = extractDriveFileIdFromUrl(mediaUrl);
+            if (!fileId) {
+                showToast('ID file lampiran Google Drive tidak ditemukan.', 'error');
+                return;
+            }
+            let modal = document.getElementById('consultationMediaModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'consultationMediaModal';
+                modal.className = 'tech-customer-media-overlay consultation-media-overlay';
+                modal.innerHTML = '<section class="tech-customer-media-dialog" role="dialog" aria-modal="true" aria-labelledby="consultationMediaTitle"><header><div class="tech-customer-media-header-info"><svg class="tech-media-dialog-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="3.5" ry="3.5"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="m21 15-5-5L5 21"></path></svg><div><h3 id="consultationMediaTitle">Lampiran Pendukung</h3><small class="tech-customer-media-subtitle">Pratinjau lampiran konsultasi</small></div></div><button type="button" class="tech-media-close-btn" aria-label="Tutup" data-consultation-media-close>×</button></header><div class="tech-customer-media-content"></div></section>';
+                modal.addEventListener('click', event => {
+                    if (event.target === modal || event.target.closest('[data-consultation-media-close]')) {
+                        modal.classList.remove('open');
+                    }
                 });
+                document.body.appendChild(modal);
             }
-            const start = new Date(nowJakarta);
-            if (period === 'today') {
-                start.setHours(0, 0, 0, 0);
-            } else if (period === 'this_week') {
-                const day = (nowJakarta.getDay() + 6) % 7;
-                start.setDate(nowJakarta.getDate() - day);
-                start.setHours(0, 0, 0, 0);
-            } else if (period === '1_month') {
-                start.setMonth(nowJakarta.getMonth() - 1);
-                start.setHours(0, 0, 0, 0);
-            } else if (period === '6_month') {
-                start.setMonth(nowJakarta.getMonth() - 6);
-                start.setHours(0, 0, 0, 0);
-            } else if (period === '1_year') {
-                start.setFullYear(nowJakarta.getFullYear() - 1);
-                start.setHours(0, 0, 0, 0);
-            } else {
-                return records;
+
+            const content = modal.querySelector('.tech-customer-media-content');
+            const loadId = String(Number(modal.dataset.loadId || 0) + 1);
+            modal.dataset.loadId = loadId;
+            const card = document.createElement('article');
+            card.className = 'tech-customer-media-item';
+            const preview = document.createElement('div');
+            preview.textContent = 'Memuat media…';
+            const caption = document.createElement('small');
+            caption.textContent = 'Lampiran konsultasi';
+            card.append(preview, caption);
+            content.replaceChildren(card);
+            modal.classList.add('open');
+            modal.querySelector('[data-consultation-media-close]').focus();
+
+            try {
+                const response = await apiRequest('getConsultationAttachment', { fileId });
+                if (modal.dataset.loadId !== loadId || !modal.isConnected) return;
+                const file = response?.data || {};
+                const dataUrl = String(file.dataUrl || '');
+                const mimeType = String(file.mimeType || '').toLowerCase();
+                if (!/^data:(image\/|video\/|application\/pdf)/i.test(dataUrl)) {
+                    throw new Error('Server tidak mengembalikan media yang dapat ditampilkan.');
+                }
+
+                preview.replaceChildren();
+                if (mimeType.startsWith('image/')) {
+                    const image = document.createElement('img');
+                    image.src = dataUrl;
+                    image.alt = file.name || 'Lampiran konsultasi';
+                    image.loading = 'eager';
+                    preview.appendChild(image);
+                } else if (mimeType.startsWith('video/')) {
+                    const video = document.createElement('video');
+                    video.src = dataUrl;
+                    video.controls = true;
+                    video.playsInline = true;
+                    video.preload = 'metadata';
+                    preview.appendChild(video);
+                } else {
+                    const frame = document.createElement('iframe');
+                    frame.src = dataUrl;
+                    frame.title = file.name || 'Pratinjau dokumen konsultasi';
+                    preview.appendChild(frame);
+                }
+                caption.textContent = file.name || 'Lampiran konsultasi';
+            } catch (error) {
+                if (modal.dataset.loadId !== loadId || !modal.isConnected) return;
+                preview.textContent = error?.message || 'Media gagal dimuat.';
+                showToast(error?.message || 'Media konsultasi gagal dimuat.', 'error');
             }
-            return records.filter(item => {
-                const itemDate = parseLocationDateValue(item.date || item.created_at || item.tanggal || item.timestamp || item.createdAt);
-                if (!itemDate) return false;
-                return itemDate >= start && itemDate <= nowJakarta;
-            });
         }
 
 
-        function renderLocationsPage() {
-            const all = Array.isArray(window.__LOCATIONS_CACHE__) ? window.__LOCATIONS_CACHE__ : [];
-            const isLoading = Boolean(window.__LOCATIONS_LOADING__);
-            const period = window.__LOCATION_FILTER_PERIOD__ || 'all';
-            const keyword = (window.__LOCATION_FILTER__ || '').trim().toLowerCase();
-            const customFrom = window.__LOCATION_FILTER_CUSTOM_FROM__ || '';
-            const customTo = window.__LOCATION_FILTER_CUSTOM_TO__ || '';
-            const filteredByPeriod = applyLocationDateFilter(all, period, customFrom, customTo);
-            const rows = filteredByPeriod.filter(x => !keyword || [x.name, x.address, x.phone].some(v => String(v || '').toLowerCase().includes(keyword)));
-            const customVisible = period === 'custom';
+        function renderConsultationsPage() {
+            const all = Array.isArray(window.__CONSULTATIONS_CACHE__) ? window.__CONSULTATIONS_CACHE__ : [];
+            const isLoading = Boolean(window.__CONSULTATIONS_LOADING__);
+            const loadError = window.__CONSULTATIONS_LOAD_ERROR__ || '';
+            const keyword = (window.__CONSULTATION_FILTER__ || '').trim().toLowerCase();
+            const rows = all.filter(item => !keyword || Object.values(item).some(value => String(value || '').toLowerCase().includes(keyword)));
             return `
-                <div class="admin-card">
+                <div class="admin-card admin-consultations-page">
                     <div class="admin-card-header">
-                        <h3>Lokasi Servis</h3>
-                        ${isLoading ? '<span class="admin-user-chip" aria-live="polite">Memuat lokasi…</span>' : ''}
-                    </div>
-                    <div class="admin-service-filter-bar" style="margin-bottom:12px;">
-                        <div class="admin-service-filter-group">
-                            <label style="font-weight:700; white-space:nowrap;">Periode:</label>
-                            <select id="locationDateFilter" class="admin-service-period-select" aria-label="Filter tanggal lokasi servis">
-                                <option value="all" ${period === 'all' ? 'selected' : ''}>Semua</option>
-                                <option value="today" ${period === 'today' ? 'selected' : ''}>Hari Ini</option>
-                                <option value="this_week" ${period === 'this_week' ? 'selected' : ''}>1 Minggu</option>
-                                <option value="1_month" ${period === '1_month' ? 'selected' : ''}>1 Bulan</option>
-                                <option value="6_month" ${period === '6_month' ? 'selected' : ''}>6 Bulan</option>
-                                <option value="1_year" ${period === '1_year' ? 'selected' : ''}>1 Tahun</option>
-                                <option value="custom" ${period === 'custom' ? 'selected' : ''}>Custom</option>
-                            </select>
+                        <div>
+                            <h3>Konsultasi</h3>
+                            <p class="section-sub-text">Data konsultasi disinkronkan langsung dari Google Spreadsheet.</p>
                         </div>
-                        <input id="locationSearch" class="admin-service-search-input" placeholder="Cari nama, alamat, WhatsApp" value="${escapeHtml(window.__LOCATION_FILTER__ || '')}" />
+                        <div class="admin-consultations-actions">
+                            <a class="btn-secondary" href="${CONFIG.CONSULTATION_SPREADSHEET_URL}" target="_blank" rel="noopener noreferrer">Buka Spreadsheet</a>
+                            <button class="btn-primary" type="button" data-refresh-consultations ${isLoading ? 'disabled' : ''}>${isLoading ? 'Menyinkronkan…' : 'Sinkronkan'}</button>
+                        </div>
+                    </div>
+                    <div class="admin-service-filter-bar admin-consultations-toolbar" style="margin-bottom:12px;">
+                        <input id="consultationSearch" class="admin-service-search-input" placeholder="Cari nama, WhatsApp, topik, atau prioritas" value="${escapeHtml(window.__CONSULTATION_FILTER__ || '')}" aria-label="Cari konsultasi" />
                         <span class="admin-user-chip admin-service-total">Total: ${rows.length}</span>
                     </div>
-                    ${customVisible ? `
-                        <div class="admin-service-filter-bar" style="margin-bottom:16px; gap:12px; flex-wrap:wrap;">
-                            <div class="admin-service-filter-group" style="flex:1 1 180px; min-width:180px;">
-                                <label style="font-weight:700; white-space:nowrap;">Dari:</label>
-                                <input id="locationDateFrom" type="date" class="admin-service-period-select" value="${escapeHtml(customFrom)}" style="width:100%; min-width:150px;" />
-                            </div>
-                            <div class="admin-service-filter-group" style="flex:1 1 180px; min-width:180px;">
-                                <label style="font-weight:700; white-space:nowrap;">Sampai:</label>
-                                <input id="locationDateTo" type="date" class="admin-service-period-select" value="${escapeHtml(customTo)}" style="width:100%; min-width:150px;" />
-                            </div>
-                        </div>
-                    ` : ''}
-                    <div class="admin-table-wrap" style="margin-top:16px">
-                        <table class="admin-table">
+                    ${loadError ? `<p class="admin-consultations-error" role="alert">${escapeHtml(loadError)}</p>` : ''}
+                    ${isLoading ? '<p class="section-sub-text" aria-live="polite">Memuat data konsultasi dari Spreadsheet…</p>' : ''}
+                    <div class="admin-table-wrap admin-consultations-table-wrap" style="margin-top:16px">
+                        <table class="admin-table admin-consultations-table">
                             <thead>
                                 <tr>
-                                    <th>Tanggal</th>
-                                    <th>WhatsApp</th>
+                                    <th>Waktu Pengajuan</th>
                                     <th>Nama</th>
-                                    <th>Alamat</th>
-                                    <th>Google Maps</th>
-                                    <th>Keterangan</th>
+                                    <th>No. WhatsApp</th>
+                                    <th>Topik Konsultasi</th>
+                                    <th>Deskripsi Permasalahan</th>
+                                    <th>Tingkat Prioritas</th>
+                                    <th>Lampiran Pendukung</th>
+                                    <th>Bidang Usaha</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${rows.length ? rows.map(x => `
+                                ${rows.length ? rows.map(item => `
                                     <tr>
-                                        <td>${escapeHtml(formatDate(x.date))}</td>
-                                        <td>${escapeHtml(x.phone)}</td>
-                                        <td>${escapeHtml(x.name)}</td>
-                                        <td>${escapeHtml(x.address)}</td>
-                                        <td>${x.mapsUrl ? `<a href="${escapeHtml(x.mapsUrl)}" target="_blank" rel="noopener noreferrer">Buka peta</a>` : '-'}</td>
-                                        <td>${escapeHtml(x.notes || '-')}</td>
+                                        <td>${escapeHtml(item.timestamp || '-')}</td>
+                                        <td>${escapeHtml(item.name || '-')}</td>
+                                        <td>${renderWhatsAppLink(item.whatsapp || '-')}</td>
+                                        <td>${escapeHtml(item.topic || '-')}</td>
+                                        <td class="admin-consultation-description">${escapeHtml(item.description || '-')}</td>
+                                        <td>${escapeHtml(item.priority || '-')}</td>
+                                        <td>${consultationAttachmentHtml(item.attachment)}</td>
+                                        <td>${escapeHtml(item.business || '-')}</td>
                                     </tr>
-                                `).join('') : `<tr><td colspan="6"><div class="admin-empty-state">${isLoading ? 'Memuat data lokasi servis…' : 'Belum ada data lokasi servis pada periode ini.'}</div></td></tr>`}
+                                `).join('') : `<tr><td colspan="8"><div class="admin-empty-state">${loadError ? 'Data konsultasi tidak dapat dimuat. Periksa koneksi Spreadsheet lalu coba sinkronkan kembali.' : isLoading ? 'Memuat data konsultasi dari Spreadsheet…' : 'Belum ada data konsultasi pada Spreadsheet.'}</div></td></tr>`}
                             </tbody>
                         </table>
                     </div>
@@ -6220,48 +6338,55 @@ function renderReportsPage() {
 
         function deprecatedShowAdminPageOverride(page) {
             if (!checkAdminSession()) { renderAdminLoginGate(); return; }
-            const pages = { dashboard: renderAdminDashboardPage, services: renderServicesPage, running: renderRunningServicesPage, completed: renderCompletedServicesPage, customers: renderCustomersPage, stock: renderStockPage, locations: renderLocationsPage, media: renderMediaPage, news: renderNewsPage, reports: renderReportsPage, settings: renderSettingsPage };
+            const pages = { dashboard: renderAdminDashboardPage, services: renderServicesPage, running: renderRunningServicesPage, completed: renderCompletedServicesPage, customers: renderCustomersPage, stock: renderStockPage, locations: renderConsultationsPage, media: renderMediaPage, news: renderNewsPage, reports: renderReportsPage, settings: renderSettingsPage };
             renderAdminAppShell(page, (pages[page] || pages.dashboard)());
         }
 
 
         async function refreshExtendedData() {
             if (!isAdminLoggedIn()) return;
-            const [locationsResult, newsResult] = await Promise.allSettled([
-                apiRequest('getLocations'),
-                apiRequest('getNews')
-            ]);
-            if (locationsResult.status === 'fulfilled') {
-                window.__LOCATIONS_CACHE__ = Array.isArray(locationsResult.value.data) ? locationsResult.value.data : [];
-            } else {
-                console.warn('Gagal memuat lokasi servis:', locationsResult.reason);
-                window.__LOCATIONS_CACHE__ = [];
-            }
+            const [newsResult] = await Promise.allSettled([apiRequest('getNews')]);
             if (newsResult.status === 'fulfilled') {
-                window.__NEWS_CACHE__ = Array.isArray(newsResult.value.data) ? newsResult.value.data : [];
+                window.__NEWS_CACHE__ = Array.isArray(newsResult.value?.data) ? newsResult.value.data : [];
+            } else {
+                console.warn('Gagal memuat berita:', newsResult.reason);
             }
         }
 
 
-        function refreshLocationsInBackground() {
-            if (window.__LOCATIONS_REQUEST__) return window.__LOCATIONS_REQUEST__;
-            window.__LOCATIONS_LOADING__ = true;
-            window.__LOCATIONS_REQUEST__ = apiRequest('getLocations')
+        function refreshConsultationsFromSpreadsheet(force = false) {
+            const cachedAt = Number(window.__CONSULTATIONS_CACHE_UPDATED_AT__ || 0);
+            if (window.__CONSULTATIONS_REQUEST__) return window.__CONSULTATIONS_REQUEST__;
+            if (!force && Date.now() - cachedAt < 60000) return Promise.resolve(window.__CONSULTATIONS_CACHE__ || []);
+
+            window.__CONSULTATIONS_LOADING__ = true;
+            window.__CONSULTATIONS_LOAD_ERROR__ = '';
+            const spreadsheetUrl = `https://docs.google.com/spreadsheets/d/${CONFIG.SERVICE_SPREADSHEET_ID}/export?format=csv&gid=${CONFIG.CONSULTATION_SPREADSHEET_GID}&_=${Date.now()}`;
+            const request = fetch(spreadsheetUrl, { cache: 'no-store' })
                 .then(response => {
-                    window.__LOCATIONS_CACHE__ = Array.isArray(response?.data) ? response.data : [];
+                    if (!response.ok) throw new Error(`Spreadsheet konsultasi gagal dimuat (${response.status}).`);
+                    return response.text();
+                })
+                .then(csv => {
+                    const consultations = parseConsultationSpreadsheetCsv(csv);
+                    window.__CONSULTATIONS_CACHE__ = consultations;
+                    window.__CONSULTATIONS_CACHE_UPDATED_AT__ = Date.now();
+                    return consultations;
                 })
                 .catch(error => {
-                    console.warn('Gagal memuat lokasi servis:', error);
-                    showToast(error?.message || 'Data lokasi servis gagal dimuat.', 'error');
+                    window.__CONSULTATIONS_LOAD_ERROR__ = error?.message || 'Data konsultasi gagal dimuat dari Spreadsheet.';
+                    window.__CONSULTATIONS_CACHE_UPDATED_AT__ = Date.now();
+                    throw error;
                 })
                 .finally(() => {
-                    window.__LOCATIONS_LOADING__ = false;
-                    window.__LOCATIONS_REQUEST__ = null;
+                    window.__CONSULTATIONS_LOADING__ = false;
+                    window.__CONSULTATIONS_REQUEST__ = null;
                     if (window.__ADMIN_CURRENT_PAGE__ === 'locations') {
-                        showAdminPage('locations');
+                        showAdminPage('locations', { fromBack: true, skipConsultationsRefresh: true });
                     }
                 });
-            return window.__LOCATIONS_REQUEST__;
+            window.__CONSULTATIONS_REQUEST__ = request;
+            return request;
         }
 
 
@@ -6323,7 +6448,7 @@ function renderReportsPage() {
                         const excerpt = String(x.content || '').replace(/\s+/g, ' ').trim();
                         return `<article class="home-news-slide" data-home-news-slide="${i}">
                             <div class="home-news-card">
-                                <div class="home-news-image-wrap">${getNewsImageUrl(x) ? `<img class="home-news-image" src="${escapeHtml(getNewsImageUrl(x))}" alt="${escapeHtml(x.title || 'Gambar berita')}" loading="lazy" onerror="this.onerror=null;this.style.display='none';this.closest('.home-news-image-wrap').classList.add('image-unavailable')">` : `<div class="home-news-image-placeholder"><span>LERESSAE</span><small>Berita Terbaru</small></div>`}<span class="home-news-category">${escapeHtml(x.category || 'Berita')}</span></div>
+                                <div class="home-news-image-wrap">${getNewsImageUrl(x) ? `<img class="home-news-image" src="${escapeHtml(getNewsImageUrl(x))}" alt="${escapeHtml(x.title || 'Gambar berita')}" loading="lazy" onerror="this.onerror=null;this.style.display='none';this.closest('.home-news-image-wrap').classList.add('image-unavailable')">` : `<div class="home-news-image-placeholder"><span>LERES SAE</span><small>Berita Terbaru</small></div>`}<span class="home-news-category">${escapeHtml(x.category || 'Berita')}</span></div>
                                 <div class="home-news-content">${date ? `<time class="home-news-date">${escapeHtml(date)}</time>` : ''}<h3>${escapeHtml(x.title || 'Tanpa judul')}</h3><p>${escapeHtml(excerpt.slice(0, 160))}${excerpt.length > 160 ? '…' : ''}</p><button type="button" class="btn-primary news-read-more" data-public-news="${escapeHtml(String(x.id ?? ''))}">Selengkapnya <span aria-hidden="true">→</span></button></div>
                             </div>
                         </article>`;
@@ -6482,7 +6607,7 @@ function renderReportsPage() {
 
         function setupNewsViews() {
             const nav = document.querySelector('.nav-links'); if (nav && !document.getElementById('nav-info')) nav.insertAdjacentHTML('beforeend', '<li><a href="#page-info" onclick="navigateTo(\'page-info\', {fromNavbar:true}); return false;" class="nav-item" id="nav-info">Berita</a></li>');
-            const wrapper = document.querySelector('.wrapper'); if (wrapper && !document.getElementById('page-info')) wrapper.insertAdjacentHTML('beforeend', '<section id="page-info" class="page-view card-container"><h1 class="page-header-title">Info / Berita</h1><p class="page-header-desc">Informasi terbaru LERESSAE BPTI Disperindag DIY.</p><div id="publicNewsList" class="tutorial-scroll" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));overflow:visible"></div></section>');
+            const wrapper = document.querySelector('.wrapper'); if (wrapper && !document.getElementById('page-info')) wrapper.insertAdjacentHTML('beforeend', '<section id="page-info" class="page-view card-container"><h1 class="page-header-title">Info / Berita</h1><p class="page-header-desc">Informasi terbaru LERES SAE BPTI Disperindag DIY.</p><div id="publicNewsList" class="tutorial-scroll" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));overflow:visible"></div></section>');
             const dashboard = document.getElementById('page-dashboard');
             if (dashboard && !document.getElementById('homeMediaSpotlight')) dashboard.insertAdjacentHTML('beforeend', '<section id="homeMediaSpotlight" class="home-media-spotlight" aria-label="Sorotan dokumentasi media"><div class="media-spotlight-head"><div><h2 class="media-spotlight-title">Sorotan Media</h2><p class="media-spotlight-subtitle">Momen kegiatan, praktik, dan kolaborasi terbaru BPTI Disperindag DIY.</p></div></div><div class="home-media-content"><div class="home-media-empty">Memuat dokumentasi foto…</div></div></section>');
             if (dashboard && !document.getElementById('homeNewsList')) {
@@ -6501,9 +6626,32 @@ function renderReportsPage() {
             }
             renderHomeMediaSlideshow();
         }
-        document.addEventListener('keydown', event => { if (event.key === 'Escape') { const modal = document.getElementById('publicNewsModal'); if (modal && modal.classList.contains('is-open')) modal.__closeNewsModal?.(); } });
+        document.addEventListener('keydown', event => {
+            if (event.key !== 'Escape') return;
+            const modal = document.getElementById('publicNewsModal');
+            if (modal && modal.classList.contains('is-open')) modal.__closeNewsModal?.();
+            document.getElementById('consultationMediaModal')?.classList.remove('open');
+        });
         document.addEventListener('click', async event => {
-            const loadLocations = event.target.closest('[data-load-locations]'); if (loadLocations) { showAdminPage('locations'); refreshLocationsInBackground(); }
+            const consultationMedia = event.target.closest('[data-consultation-media]');
+            if (consultationMedia) {
+                openConsultationMedia(consultationMedia.dataset.consultationMedia);
+                return;
+            }
+            const syncConsultations = event.target.closest('[data-refresh-consultations]');
+            if (syncConsultations) {
+                const request = refreshConsultationsFromSpreadsheet(true);
+                showAdminPage('locations', { fromBack: true, skipConsultationsRefresh: true });
+                try {
+                    await request;
+                    showToast('Data konsultasi berhasil disinkronkan dari Spreadsheet.', 'success');
+                } catch (error) {
+                    showToast(error?.message || 'Data konsultasi gagal disinkronkan.', 'error');
+                }
+                return;
+            }
+            const loadLocations = event.target.closest('[data-load-locations]');
+            if (loadLocations) { showAdminPage('locations'); return; }
             const editor = event.target.closest('[data-news-edit]'); if (editor) openNewsEditor(editor.dataset.newsEdit);
             const preview = event.target.closest('[data-news-preview]'); if (preview) { const n = (window.__NEWS_CACHE__ || []).find(x => String(x.id) === String(preview.dataset.newsPreview)); if (n) openPublicNewsModal(n); }
             const newsDelete = event.target.closest('[data-news-delete]');
@@ -6608,40 +6756,13 @@ function renderReportsPage() {
             const publicNews = event.target.closest('[data-public-news]'); if (publicNews) { const n = (window.__PUBLIC_NEWS_CACHE__ || []).find(x => String(x.id ?? '') === String(publicNews.dataset.publicNews ?? '')); if (n) openPublicNewsModal(n); }
         });
         document.addEventListener('input', event => {
-            if (event.target.id === 'locationSearch') {
-                window.__LOCATION_FILTER__ = event.target.value;
-                showAdminPage('locations');
-            }
-            if (event.target.id === 'locationDateFrom') {
-                window.__LOCATION_FILTER_CUSTOM_FROM__ = event.target.value || '';
-                if (window.__LOCATION_FILTER_PERIOD__ !== 'custom') {
-                    window.__LOCATION_FILTER_PERIOD__ = 'custom';
-                }
-                showAdminPage('locations');
-            }
-            if (event.target.id === 'locationDateTo') {
-                window.__LOCATION_FILTER_CUSTOM_TO__ = event.target.value || '';
-                if (window.__LOCATION_FILTER_PERIOD__ !== 'custom') {
-                    window.__LOCATION_FILTER_PERIOD__ = 'custom';
-                }
-                showAdminPage('locations');
-            }
-        });
-        document.addEventListener('change', event => {
-            if (event.target.id === 'locationDateFilter') {
-                window.__LOCATION_FILTER_PERIOD__ = event.target.value || 'all';
-                if (window.__LOCATION_FILTER_PERIOD__ !== 'custom') {
-                    window.__LOCATION_FILTER_CUSTOM_FROM__ = '';
-                    window.__LOCATION_FILTER_CUSTOM_TO__ = '';
-                }
+            if (event.target.id === 'consultationSearch') {
+                window.__CONSULTATION_FILTER__ = event.target.value;
                 showAdminPage('locations');
             }
         });
         if (typeof window !== 'undefined') {
-            window.__LOCATION_FILTER__ = window.__LOCATION_FILTER__ || '';
-            window.__LOCATION_FILTER_PERIOD__ = window.__LOCATION_FILTER_PERIOD__ || 'all';
-            window.__LOCATION_FILTER_CUSTOM_FROM__ = window.__LOCATION_FILTER_CUSTOM_FROM__ || '';
-            window.__LOCATION_FILTER_CUSTOM_TO__ = window.__LOCATION_FILTER_CUSTOM_TO__ || '';
+            window.__CONSULTATION_FILTER__ = window.__CONSULTATION_FILTER__ || '';
         }
         setupNewsViews();
         renderPublicMediaGallery();
@@ -6872,6 +6993,12 @@ function techSession(){
   }
 
 
+  function renderTechStatusCountBadge(){
+    const count=techAssigned().filter(record=>getServiceDisplayStatus(record.status)!=='Selesai').length;
+    return count>0?`<span class="tech-nav-count" aria-label="${count} pekerjaan belum selesai">${count>99?'99+':count}</span>`:'';
+  }
+
+
   function techStatusClass(s){
     return getServiceDisplayStatus(s)==='Selesai' ? 'done' : 'progress';
   }
@@ -6935,7 +7062,7 @@ function techSession(){
 
 
   function techPageShell(page='dashboard'){
-    const s=techSession(), u=techUser(), name=s.name||u?.NAMA||'Teknisi LERESSAE', username=s.username||u?.USERNAME||'teknisi';
+    const s=techSession(), u=techUser(), name=s.name||u?.NAMA||'Teknisi LERES SAE', username=s.username||u?.USERNAME||'teknisi';
     const initials=String(name).trim().charAt(0).toUpperCase()||'T';
     const nav=[
             ['dashboard','<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"></rect></svg>','Dashboard'],
@@ -6946,10 +7073,10 @@ function techSession(){
     return `<div class="technician-shell" id="technicianShell">
       <div class="technician-overlay" data-tech-close></div>
       <aside class="technician-sidebar" aria-label="Menu Teknisi">
-        <div class="technician-brand"><strong>LERESSAE</strong><span>PANEL TEKNISI</span></div>
+        <div class="technician-brand"><strong>LERES SAE</strong><span>PANEL TEKNISI</span></div>
         <div class="technician-user"><div class="technician-avatar">${escapeHtml(initials)}</div><div><strong>${escapeHtml(name)}</strong><small>${escapeHtml(username)}</small></div></div>
         <nav class="technician-nav">
-                    ${nav.map(([key,icon,label])=>`<button type="button" class="${page===key?'active':''}" data-tech-menu="${key}"><span class="tech-icon" aria-hidden="true">${icon}</span><span>${label}</span></button>`).join('')}
+                    ${nav.map(([key,icon,label])=>`<button type="button" class="${page===key?'active':''}" data-tech-menu="${key}"><span class="tech-icon" aria-hidden="true">${icon}</span><span>${label}</span>${key==='status'?renderTechStatusCountBadge():''}</button>`).join('')}
         </nav>
                 <button type="button" class="technician-nav technician-logout" data-tech-logout onclick="window.logoutTechnician(); return false;" aria-label="Keluar dari akun Teknisi"><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg></span><span>Logout</span></button>
       </aside>
@@ -6957,7 +7084,7 @@ function techSession(){
         <div class="technician-topbar">
           <div style="display:flex;align-items:center;gap:12px;min-width:0">
             <button class="technician-mobile-menu" type="button" data-tech-open aria-label="Buka menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
-            <div><h2 id="techPageTitle">Dashboard</h2><p id="techPageSubtitle">Operasional teknisi terhubung dengan data Admin LERESSAE.</p></div>
+            <div><h2 id="techPageTitle">Dashboard</h2><p id="techPageSubtitle">Operasional teknisi terhubung dengan data Admin LERES SAE.</p></div>
           </div>
         </div>
         <div id="technicianView"></div>
@@ -6972,7 +7099,7 @@ function techSession(){
     const latestJobs=active.sort((a,b)=>{const da=techClientDateValue(a),db=techClientDateValue(b);return (new Date(db).getTime()||0)-(new Date(da).getTime()||0);}).slice(0,5);
     const done=jobs.filter(x=>getServiceDisplayStatus(x.status)==='Selesai');
     const stock=getStockRecords(), low=stock.filter(x=>x.status==='MENIPIS'||Number(x.stokSaatIni||0)<=Number(x.minimum||0)).length;
-    const s=techSession(), u=techUser(), name=s.name||u?.NAMA||'Teknisi LERESSAE', accountStatus=s.status||u?.STATUS||'AKTIF';
+    const s=techSession(), u=techUser(), name=s.name||u?.NAMA||'Teknisi LERES SAE', accountStatus=s.status||u?.STATUS||'AKTIF';
     const accountStatusClass=String(accountStatus).trim().toUpperCase()==='AKTIF'?'safe':'low';
     const initials=String(name).trim().charAt(0).toUpperCase()||'T';
     return `<div class="tech-dashboard-page">
@@ -6984,13 +7111,13 @@ function techSession(){
         <div class="tech-stat is-done"><span class="tech-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.2 4.2L19 7"/></svg></span><div class="tech-stat-content"><span class="label">Selesai</span><span class="value">${done.length}</span></div></div>
       </div>
       <section class="tech-section tech-dashboard-jobs-card"><div class="tech-section-header"><div><h3>Pekerjaan Terbaru</h3><p>Servis yang ditugaskan kepada Anda dan masih dalam proses.</p></div><span class="tech-status-badge ${low?'low':'safe'}">${low} stok perlu perhatian</span></div>
-                <div class="tech-table-wrap"><table class="tech-table tech-client-table tech-dashboard-jobs-table"><thead><tr><th>ID SERVIS</th><th>TANGGAL</th><th>CUSTOMER</th><th>BARANG</th><th>STATUS</th><th>AKSI</th></tr></thead><tbody>${latestJobs.map(r=>{const form=getServiceFormFields(r),dateValue=form.tanggal&&form.tanggal!=='-'?form.tanggal:techClientDateValue(r),status=getServiceDisplayStatus(r.status);return `<tr><td><strong>${escapeHtml(r.id||'-')}</strong></td><td>${escapeHtml(formatDate(dateValue))}</td><td>${escapeHtml(form.nama||r.customer_name||'-')}</td><td>${escapeHtml(form.barang||r.item_name||'-')}</td><td>${techStatusBadge(status)}</td><td><button type="button" class="tech-btn tech-dashboard-action" data-tech-update="${escapeHtml(r.id||'')}">Update Status</button></td></tr>`;}).join('')||'<tr><td colspan="6"><div class="tech-empty">Tidak ada pekerjaan yang sedang diproses untuk akun Anda.</div></td></tr>'}</tbody></table></div></section></div>
+                <div class="tech-table-wrap"><table class="tech-table tech-client-table tech-dashboard-jobs-table"><thead><tr><th>ID SERVIS</th><th>TANGGAL</th><th>CUSTOMER</th><th>BARANG</th><th>STATUS</th></tr></thead><tbody>${latestJobs.map(r=>{const form=getServiceFormFields(r),dateValue=form.tanggal&&form.tanggal!=='-'?form.tanggal:techClientDateValue(r),status=getServiceDisplayStatus(r.status);return `<tr><td><strong>${escapeHtml(r.id||'-')}</strong></td><td>${escapeHtml(formatDate(dateValue))}</td><td>${escapeHtml(form.nama||r.customer_name||'-')}</td><td>${escapeHtml(form.barang||r.item_name||'-')}</td><td>${techStatusBadge(status)}</td></tr>`;}).join('')||'<tr><td colspan="5"><div class="tech-empty">Tidak ada pekerjaan yang sedang diproses untuk akun Anda.</div></td></tr>'}</tbody></table></div></section></div>
     </div>`;
   }
 
 
   function techProfile(){
-    const s=techSession(), u=techUser(), name=s.name||u?.NAMA||'Teknisi LERESSAE', username=s.username||u?.USERNAME||'-', id=s.id_teknisi||s.technicianId||u?.id_teknisi||u?.TECHNICIAN_ID||u?.USER_ID||'-', status=s.status||u?.STATUS||'AKTIF';
+    const s=techSession(), u=techUser(), name=s.name||u?.NAMA||'Teknisi LERES SAE', username=s.username||u?.USERNAME||'-', id=s.id_teknisi||s.technicianId||u?.id_teknisi||u?.TECHNICIAN_ID||u?.USER_ID||'-', status=s.status||u?.STATUS||'AKTIF';
     return `<div class="tech-section"><div class="tech-section-header"><div><h3>Profil Teknisi</h3><p style="margin:3px 0 0;color:#64748b;font-size:12px">Identitas akun yang sedang digunakan.</p></div></div><div class="tech-profile-grid"><div><span>Nama</span><strong>${escapeHtml(name)}</strong></div><div><span>ID Teknisi</span><strong>${escapeHtml(id)}</strong></div><div><span>Username</span><strong>${escapeHtml(username)}</strong></div><div><span>Role</span><strong>TEKNISI</strong></div><div><span>Status</span><strong>${escapeHtml(status)}</strong></div></div><div class="tech-action-row"><button class="tech-btn" type="button" data-tech-logout>Keluar</button></div></div>`;
   }
 
@@ -7000,82 +7127,21 @@ function techSession(){
   }
 
 
-  function techClientDate(row){
-    const raw=techClientDateValue(row);
-    if(!raw) return null;
-    const d=new Date(raw);
-    return Number.isNaN(d.getTime()) ? null : d;
-  }
-
-
-  function techClientMatchesPeriod(row, filter){
-    const mode=filter?.period || 'this_week';
-    const d=techClientDate(row);
-    if(!d) return mode==='custom' ? false : true;
-    const now=new Date();
-    const today=new Date(now);
-    today.setHours(0,0,0,0);
-    if(mode==='today'){
-      return d.getFullYear()===today.getFullYear()
-        && d.getMonth()===today.getMonth()
-        && d.getDate()===today.getDate();
-    }
-    if(mode==='this_week'){
-      const start=new Date(today);
-      const day=start.getDay();
-      start.setDate(start.getDate()+(day===0?-6:1-day));
-      const end=new Date(start);
-      end.setDate(end.getDate()+6);
-      end.setHours(23,59,59,999);
-      return d>=start && d<=end;
-    }
-    if(mode==='this_month'){
-      const start=new Date(today.getFullYear(),today.getMonth(),1);
-      const end=new Date(today.getFullYear(),today.getMonth()+1,0);
-      end.setHours(23,59,59,999);
-      return d>=start && d<=end;
-    }
-    if(mode==='custom'){
-      const from=filter?.from ? new Date(filter.from+'T00:00:00') : null;
-      const to=filter?.to ? new Date(filter.to+'T23:59:59.999') : null;
-      if(from && to) return d>=from && d<=to;
-      if(from) return d>=from;
-      if(to) return d<=to;
-      return true;
-    }
-    return true;
-  }
-
-
   function techClients(){
     const jobs=techAssigned();
-    const filter=window.__TECH_CLIENT_FILTER__ || {period:'this_week',from:'',to:''};
-    const filteredJobs=jobs.filter(r=>techClientMatchesPeriod(r,filter));
     return `<div class="tech-section tech-client-section">
       <div class="tech-section-header tech-client-toolbar-wrap">
         <div>
           <h3>Daftar Client</h3>
-          <p>Data client berdasarkan periode servis yang dipilih.</p>
+          <p>Semua client yang ditugaskan kepada akun teknisi ini.</p>
         </div>
         <div class="technician-toolbar tech-client-filters">
-          <label class="tech-filter-label" for="techClientPeriod">Periode</label>
-          <select id="techClientPeriod" class="tech-filter-select" aria-label="Filter periode client">
-            <option value="today" ${filter.period==='today'?'selected':''}>Hari Ini</option>
-            <option value="this_week" ${filter.period==='this_week'?'selected':''}>1 Minggu</option>
-            <option value="this_month" ${filter.period==='this_month'?'selected':''}>1 Bulan</option>
-            <option value="custom" ${filter.period==='custom'?'selected':''}>Custom</option>
-          </select>
-          <div id="techClientCustomDates" class="tech-custom-date-group" style="${filter.period==='custom'?'display:flex':'display:none'}">
-            <input id="techClientFrom" class="tech-filter-date" type="date" value="${escapeHtml(filter.from||'')}" aria-label="Tanggal mulai">
-            <span class="tech-date-separator">s/d</span>
-            <input id="techClientTo" class="tech-filter-date" type="date" value="${escapeHtml(filter.to||'')}" aria-label="Tanggal akhir">
-          </div>
           <input id="techClientSearch" class="tech-client-search" placeholder="Cari client / barang / ID servis" aria-label="Cari client">
         </div>
       </div>
       <div class="tech-client-period-summary">
-        <span>Periode: <strong>${filter.period==='today'?'Hari Ini':filter.period==='this_month'?'1 Bulan':filter.period==='custom'?'Custom':'1 Minggu'}</strong></span>
-        <span>Total: <strong>${filteredJobs.length}</strong></span>
+        <span>Periode: <strong>Semua Periode</strong></span>
+        <span>Total: <strong>${jobs.length}</strong></span>
       </div>
       <div class="tech-table-wrap tech-client-table-wrap">
         <table class="tech-table tech-client-table">
@@ -7093,21 +7159,21 @@ function techSession(){
             </tr>
           </thead>
           <tbody id="techClientRows">
-            ${filteredJobs.map(r=>{
+            ${jobs.map(r=>{
               const form=getServiceFormFields(r);
               const dateValue=form.tanggal||techClientDateValue(r)||'-';
               return `<tr data-search="${escapeHtml([r.id,r.customer_name,r.phone,r.alamat,r.item_name,r.keluhan].join(' ').toLowerCase())}">
-                <td><strong>${escapeHtml(r.id||'-')}</strong></td>
-                <td>${escapeHtml(dateValue)}</td>
-                <td>${escapeHtml(form.nama||r.customer_name||'-')}</td>
-                <td>${escapeHtml(form.whatsapp||r.phone||'-')}</td>
-                <td class="tech-cell-address">${escapeHtml(form.alamat||r.alamat||'-')}</td>
-                <td>${(form.google_maps||r.google_maps||r.maps)?`<a class="tech-map-link" href="${escapeHtml(form.google_maps||r.google_maps||r.maps)}" target="_blank" rel="noopener">Buka Maps</a>`:'-'}</td>
-                <td>${escapeHtml(form.barang||r.item_name||'-')}</td>
-                <td class="tech-cell-complaint">${escapeHtml(form.keluhan||r.keluhan||'-')}</td>
-                <td class="tech-media-cell">${renderCustomerMediaAction(r, form)}</td>
+                <td data-label="ID Servis"><strong>${escapeHtml(r.id||'-')}</strong></td>
+                <td data-label="Tanggal">${escapeHtml(dateValue)}</td>
+                <td data-label="Customer">${escapeHtml(form.nama||r.customer_name||'-')}</td>
+                <td data-label="No. WhatsApp">${renderWhatsAppLink(form.whatsapp||r.phone||'-')}</td>
+                <td class="tech-cell-address" data-label="Alamat">${escapeHtml(form.alamat||r.alamat||'-')}</td>
+                <td data-label="Google Maps">${(form.google_maps||r.google_maps||r.maps)?`<a class="tech-map-link" href="${escapeHtml(form.google_maps||r.google_maps||r.maps)}" target="_blank" rel="noopener">Buka Maps</a>`:'-'}</td>
+                <td data-label="Barang">${escapeHtml(form.barang||r.item_name||'-')}</td>
+                <td class="tech-cell-complaint" data-label="Keluhan">${escapeHtml(form.keluhan||r.keluhan||'-')}</td>
+                <td class="tech-media-cell" data-label="Media Customer">${renderCustomerMediaAction(r, form)}</td>
               </tr>`;
-            }).join('')||'<tr><td colspan="9"><div class="tech-empty">Tidak ada client pada periode yang dipilih.</div></td></tr>'}
+            }).join('')||'<tr><td colspan="9"><div class="tech-empty">Tidak ada client yang ditugaskan kepada akun Anda.</div></td></tr>'}
           </tbody>
         </table>
       </div>
@@ -7117,32 +7183,19 @@ function techSession(){
 
   function techStatusPage(){
     const jobs=techAssigned();
-    const filter=window.__TECH_CLIENT_FILTER__ || {period:'this_week',from:'',to:''};
-    const active=jobs.filter(r=>getServiceDisplayStatus(r.status)!=='Selesai' && techClientMatchesPeriod(r,filter));
+    const active=jobs.filter(r=>getServiceDisplayStatus(r.status)!=='Selesai');
     return `<div class="tech-section tech-status-page">
       <div class="tech-section-header tech-client-toolbar-wrap">
         <div>
           <h3>Update Status Pekerjaan</h3>
-          <p>Data pekerjaan menggunakan tampilan yang sama dengan Lihat Client. Tombol Update Status berada di kolom paling akhir.</p>
+          <p>Semua pekerjaan yang belum selesai ditampilkan tanpa batasan periode. Gunakan tombol Update Status untuk memperbarui pekerjaan.</p>
         </div>
         <div class="technician-toolbar tech-client-filters">
-          <label class="tech-filter-label" for="techClientPeriod">Periode</label>
-          <select id="techClientPeriod" class="tech-filter-select" aria-label="Filter periode update status">
-            <option value="today" ${filter.period==='today'?'selected':''}>Hari Ini</option>
-            <option value="this_week" ${filter.period==='this_week'?'selected':''}>1 Minggu</option>
-            <option value="this_month" ${filter.period==='this_month'?'selected':''}>1 Bulan</option>
-            <option value="custom" ${filter.period==='custom'?'selected':''}>Custom</option>
-          </select>
-          <div id="techClientCustomDates" class="tech-custom-date-group" style="${filter.period==='custom'?'display:flex':'display:none'}">
-            <input id="techClientFrom" class="tech-filter-date" type="date" value="${escapeHtml(filter.from||'')}" aria-label="Tanggal mulai">
-            <span class="tech-date-separator">s/d</span>
-            <input id="techClientTo" class="tech-filter-date" type="date" value="${escapeHtml(filter.to||'')}" aria-label="Tanggal akhir">
-          </div>
           <input id="techClientSearch" class="tech-client-search" placeholder="Cari client / barang / ID servis" aria-label="Cari pekerjaan">
         </div>
       </div>
       <div class="tech-client-period-summary">
-        <span>Periode: <strong>${filter.period==='today'?'Hari Ini':filter.period==='this_month'?'1 Bulan':filter.period==='custom'?'Custom':'1 Minggu'}</strong></span>
+        <span>Periode: <strong>Semua Periode</strong></span>
         <span>Belum Selesai: <strong>${active.length}</strong></span>
       </div>
       <div class="tech-table-wrap tech-client-table-wrap">
@@ -7244,7 +7297,7 @@ function techSession(){
         <section class="tech-update-section"><div class="tech-update-section-title"><span>1</span><div><strong>Data Customer</strong><small>Data Google Form / Spreadsheet. Read only.</small></div></div>
           <div class="tech-readonly-grid">
             <label>ID Servis<input readonly value="${escapeHtml(item.id||'-')}"></label><label>Tanggal<input readonly value="${escapeHtml(form.tanggal||'-')}"></label>
-            <label>Nama Customer<input readonly value="${escapeHtml(form.nama||item.customer_name||'-')}"></label><label>No. WhatsApp<input readonly value="${escapeHtml(form.whatsapp||item.phone||'-')}"></label>
+            <label>Nama Customer<input readonly value="${escapeHtml(form.nama||item.customer_name||'-')}"></label><label>No. WhatsApp<div class="tech-readonly-action">${renderWhatsAppLink(form.whatsapp||item.phone||'-')}</div></label>
             <label>Alamat<textarea readonly>${escapeHtml(form.alamat||'-')}</textarea></label><label>Google Maps<div class="tech-readonly-action">${customerMap?`<a class="tech-map-link" href="${escapeHtml(customerMap)}" target="_blank" rel="noopener noreferrer">Buka Maps</a>`:'-'}</div></label>
             <label>Media Customer<div class="tech-readonly-action">${renderCustomerMediaAction(item, form)}</div></label>
             <label>Jenis Barang<input readonly value="${escapeHtml(form.barang||item.item_name||'-')}"></label><label>Merek<input readonly value="${escapeHtml(form.merk||item.merk||'-')}"></label>
@@ -7386,28 +7439,6 @@ function techSession(){
     if(detail){openTechJob(detail.dataset.techDetailJob,false);return;}
     if(update){openTechJob(update.dataset.techUpdate,true);return;}
     if(refresh){refreshTechData();return;}
-  });
-  document.addEventListener('change',function(e){
-    if(e.target.id==='techClientPeriod'){
-      const value=e.target.value || 'this_week';
-      const current=window.__TECH_CLIENT_FILTER__ || {};
-      window.__TECH_CLIENT_FILTER__={
-        period:value,
-        from:value==='custom' ? (current.from||'') : '',
-        to:value==='custom' ? (current.to||'') : ''
-      };
-      renderTechView('clients');
-      return;
-    }
-    if(e.target.id==='techClientFrom' || e.target.id==='techClientTo'){
-      const current=window.__TECH_CLIENT_FILTER__ || {period:'custom',from:'',to:''};
-      current.period='custom';
-      current.from=document.getElementById('techClientFrom')?.value || '';
-      current.to=document.getElementById('techClientTo')?.value || '';
-      window.__TECH_CLIENT_FILTER__=current;
-      renderTechView('clients');
-      return;
-    }
   });
   document.addEventListener('input',function(e){
     if(e.target.id==='techClientSearch'){

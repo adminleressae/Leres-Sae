@@ -56,6 +56,7 @@ const SERVICE_HEADERS = [
   'admin_update',
   'timestamp_update',
   'tanggal_selesai',
+  'bukti_foto',
   'form_row',
   'raw_form_data'
 ];
@@ -150,7 +151,7 @@ const SETTINGS_HEADERS = ['key', 'value'];
 function doGet(e) {
   return json_({
     success: true,
-    message: 'LERESSAE API aktif',
+    message: 'LERES SAE API aktif',
     version: 'FINAL-1.4-MEDIA-TITLE-DESCRIPTION-SYNC',
     time: new Date().toISOString()
   });
@@ -245,6 +246,10 @@ function doPost(e) {
       case 'getMedia':
         return json_(getMedia_());
 
+      case 'getConsultationAttachment':
+        requireToken_(body.token, ['admin']);
+        return json_(getConsultationAttachment_(body.fileId));
+
       case 'diagnoseMediaSync':
         requireToken_(body.token, ['admin']);
         return json_(diagnoseMediaSync_());
@@ -328,7 +333,7 @@ function setupSystem() {
 
   return {
     success: true,
-    message: 'Setup LERESSAE selesai.',
+    message: 'Setup LERES SAE selesai.',
     spreadsheet: 'https://docs.google.com/spreadsheets/d/' + CONFIG.SPREADSHEET_ID + '/edit',
     form: CONFIG.FORM_URL,
     sync: syncResult
@@ -593,16 +598,16 @@ function onFormSubmit(e) {
         'no whatsapp', 'nomor whatsapp', 'whatsapp', 'nomor wa', 'no wa'
       ]) || '-';
       const body =
-        'Terdapat permohonan layanan baru pada LERESSAE.\n\n' +
+        'Terdapat permohonan layanan baru pada LERES SAE.\n\n' +
         'Nama          : ' + nama + '\n' +
         'Jenis Layanan : ' + layanan + '\n' +
         'No. WhatsApp  : ' + whatsapp + '\n\n' +
-        'Silakan buka dashboard LERESSAE untuk memproses permohonan.\n' +
-        'Login Admin LERESSAE: https://adminleressae.github.io/Leres-Sae/';
+        'Silakan buka dashboard LERES SAE untuk memproses permohonan.\n' +
+        'Login Admin LERES SAE: https://adminleressae.github.io/Leres-Sae/';
 
       MailApp.sendEmail({
         to: 'admin.leressae@gmail.com',
-        subject: '🔔 LERESSAE - Permohonan Layanan Baru',
+        subject: '🔔 LERES SAE - Permohonan Layanan Baru',
         body: body
       });
     }
@@ -1166,7 +1171,9 @@ function updateServiceStatus_(body) {
   const token = String(body.token || '').trim();
   const session = requireToken_(token, ['admin', 'teknisi']);
 
-  const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEETS.SERVICES);
+  const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  ensureSheet_(spreadsheet, CONFIG.SHEETS.SERVICES, SERVICE_HEADERS);
+  const sheet = spreadsheet.getSheetByName(CONFIG.SHEETS.SERVICES);
   if (!sheet) throw new Error('Sheet SERVICES tidak ditemukan.');
 
   const values = sheet.getDataRange().getValues();
@@ -1218,6 +1225,20 @@ function updateServiceStatus_(body) {
     if (!isFinite(amount) || amount < 0) throw new Error('Nominal biaya tidak valid.');
     serviceCost = 'Rp ' + Math.round(amount).toLocaleString('id-ID');
   }
+  let proofUrl = String(data.bukti_foto || data.BUKTI_FOTO || oldRecord.bukti_foto || oldRecord.BUKTI_FOTO || '').trim();
+  if (/^data:/i.test(proofUrl)) {
+    const image = proofUrl.match(/^data:(image\/(?:jpeg|png|webp));base64,[\s\S]+$/i);
+    if (!image) throw new Error('Bukti foto harus berupa gambar JPG, PNG, atau WebP yang valid.');
+    const upload = uploadFileToDrive_({
+      purpose: 'BUKTI_SERVICE',
+      mediaType: 'FOTO',
+      fileName: 'bukti-servis-' + serviceId + '-' + Date.now() + (image[1].toLowerCase() === 'image/png' ? '.png' : image[1].toLowerCase() === 'image/webp' ? '.webp' : '.jpg'),
+      mimeType: image[1].toLowerCase(),
+      dataUrl: proofUrl
+    });
+    proofUrl = String(upload.data && (upload.data.thumbnailUrl || upload.data.fileUrl) || '').trim();
+    if (!proofUrl) throw new Error('Foto berhasil diunggah, tetapi URL foto tidak diterima.');
+  }
   const updated = Object.assign({}, oldRecord, {
     status: newStatus,
     technician: String(session.role || '').trim().toLowerCase() === 'teknisi'
@@ -1229,7 +1250,8 @@ function updateServiceStatus_(body) {
     notes: String(data.notes !== undefined ? data.notes : oldRecord.notes || ''),
     admin_update: String(data.admin_update || data.updated_by || session.username || 'ADMIN_1'),
     timestamp_update: now,
-    tanggal_selesai: (newStatus === 'Selesai' || newStatus === 'Sudah Diambil') ? (data.tanggal_selesai || now.slice(0, 10)) : (oldRecord.tanggal_selesai || '')
+    tanggal_selesai: (newStatus === 'Selesai' || newStatus === 'Sudah Diambil') ? (data.tanggal_selesai || now.slice(0, 10)) : (oldRecord.tanggal_selesai || ''),
+    bukti_foto: proofUrl
   });
 
   writeObjectToRow_(sheet, rowNumber, headers, updated);
@@ -1273,7 +1295,15 @@ function upsertService_(record) {
   }
 
   if (existingRow > 0) {
-    writeObjectToRow_(sheet, existingRow, headers, record);
+    const existingRecord = objectFromRow_(
+      headers,
+      sheet.getRange(existingRow, 1, 1, headers.length).getValues()[0]
+    );
+    const updatedRecord = Object.assign({}, record);
+    if (updatedRecord.bukti_foto === undefined) {
+      updatedRecord.bukti_foto = existingRecord.bukti_foto || existingRecord.BUKTI_FOTO || '';
+    }
+    writeObjectToRow_(sheet, existingRow, headers, updatedRecord);
   } else {
     ensureSheet_(SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID), CONFIG.SHEETS.SERVICES, SERVICE_HEADERS);
     const refreshed = sheet.getDataRange().getValues();
@@ -2319,6 +2349,39 @@ function driveDirectUrl_(fileId) {
 /* ==========================================================
    LOCATIONS
    ========================================================== */
+
+function getConsultationAttachment_(fileId) {
+  const id = String(fileId || '').trim();
+  if (!/^[a-zA-Z0-9_-]{10,}$/.test(id)) {
+    throw new Error('ID file lampiran tidak valid.');
+  }
+
+  const file = DriveApp.getFileById(id);
+  const maxSize = 20 * 1024 * 1024;
+  if (file.getSize() > maxSize) {
+    throw new Error('Lampiran terlalu besar untuk pratinjau di aplikasi (maksimal 20 MB).');
+  }
+
+  const blob = file.getBlob();
+  const bytes = blob.getBytes();
+  if (bytes.length > maxSize) {
+    throw new Error('Lampiran terlalu besar untuk pratinjau di aplikasi (maksimal 20 MB).');
+  }
+
+  const mimeType = blob.getContentType() || 'application/octet-stream';
+  if (!/^(image\/|video\/|application\/pdf$)/i.test(mimeType)) {
+    throw new Error('Jenis file ini belum didukung untuk pratinjau langsung.');
+  }
+
+  return {
+    success: true,
+    data: {
+      name: file.getName(),
+      mimeType: mimeType,
+      dataUrl: 'data:' + mimeType + ';base64,' + Utilities.base64Encode(bytes)
+    }
+  };
+}
 
 function getLocations_() {
   // Tabel lokasi admin bersumber langsung dari jawaban Google Form.

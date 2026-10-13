@@ -13,7 +13,9 @@
     function getSavedPreference() {
         try {
             const value = localStorage.getItem(STORAGE_KEY);
-            return value === 'dark' || value === 'light' ? value : 'system';
+            // A new visit must always start in light mode and must not inherit
+            // the operating system color preference.
+            return value === 'dark' || value === 'light' ? value : 'light';
         } catch (error) {
             return 'system';
         }
@@ -24,7 +26,7 @@
     function setSavedPreference(value) {
         try {
             if (value === 'system') {
-                localStorage.removeItem(STORAGE_KEY);
+                localStorage.setItem(STORAGE_KEY, 'light');
             } else {
                 localStorage.setItem(STORAGE_KEY, value);
             }
@@ -106,8 +108,8 @@
 
         button.addEventListener('dblclick', function (event) {
             event.preventDefault();
-            setSavedPreference('system');
-            applyTheme('system');
+            setSavedPreference('light');
+            applyTheme('light');
         });
 
         document.body.appendChild(button);
@@ -117,7 +119,13 @@
 
 
     function boot() {
-        applyTheme(currentPreference());
+        // Every page load starts in the public default theme. A previous
+        // manual dark-mode choice must not affect the next visit.
+        try {
+            localStorage.removeItem(STORAGE_KEY);
+        } catch (error) {
+        }
+        applyTheme('light');
         ensureToggle();
     }
 
