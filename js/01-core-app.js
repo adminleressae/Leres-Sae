@@ -5944,6 +5944,8 @@ function renderReportsPage() {
 
         function mediaDrivePreviewUrl(item) {
             const fileUrl = item && (item.FILE_URL || item.fileUrl || item.file_url || item.URL || item.url || item.LINK || item.link) || '';
+            const youtube = String(fileUrl).match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([\w-]{6,})/i);
+            if (youtube) return 'https://www.youtube.com/embed/' + encodeURIComponent(youtube[1]);
             const fileId = String(item && (item.FILE_ID || item.fileId || item.file_id || item.ID_FILE || item.idFile) || extractDriveFileIdFromUrl(fileUrl) || '').trim();
             return fileId
                 ? 'https://drive.google.com/file/d/' + encodeURIComponent(fileId) + '/preview'
@@ -6290,7 +6292,7 @@ function renderReportsPage() {
                             </div>
                             <form id="mediaVideoForm" class="media-admin-form" data-media-type="VIDEO" style="display:none;">
                                 <div class="media-modal-header"><h3 class="media-modal-title">Tambah Video</h3><button type="button" class="media-modal-close" data-media-cancel="VIDEO" aria-label="Tutup">×</button></div>
-                                <div class="field-row"><label>Upload Video</label><input type="file" accept="video/*" name="file" /></div>
+                                <div class="field-row"><label>Link URL YouTube</label><input type="url" name="youtube_url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off" /></div>
                                 <div class="field-row"><label>Judul</label><input type="text" name="judul" placeholder="Judul video" autocomplete="off" /></div>
                                 <div class="field-row"><label>Deskripsi</label><textarea name="deskripsi" rows="3" placeholder="Deskripsi video"></textarea></div>
                                 <div class="field-row"><label>Status</label><select name="status"><option value="AKTIF">Aktif</option><option value="NONAKTIF">Nonaktif</option></select></div>
@@ -6730,10 +6732,12 @@ function renderReportsPage() {
                         document.body.classList.add('media-modal-open');
                         const fileInput = form.querySelector('input[name="file"]');
                         const judul = form.querySelector('input[name="judul"]');
+                        const youtubeUrl = form.querySelector('input[name="youtube_url"]');
                         const deskripsi = form.querySelector('textarea[name="deskripsi"]');
                         const status = form.querySelector('select[name="status"]');
                         if (fileInput) fileInput.value = '';
                         if (judul) judul.value = target.JUDUL || '';
+                        if (youtubeUrl) youtubeUrl.value = String(target.FILE_URL || '').match(/youtube\.com|youtu\.be/i) ? (target.FILE_URL || '') : '';
                         if (deskripsi) deskripsi.value = target.DESKRIPSI || target.KETERANGAN || '';
                         if (status) status.value = String(target.STATUS || 'AKTIF').toUpperCase();
                     }
@@ -6776,6 +6780,7 @@ function renderReportsPage() {
             const mediaId = form.dataset.mediaId || '';
             const judul = form.querySelector('input[name="judul"]')?.value.trim() || '';
             const deskripsi = form.querySelector('textarea[name="deskripsi"]')?.value.trim() || '';
+            const youtubeUrl = form.querySelector('input[name="youtube_url"]')?.value.trim() || '';
             const status = String(form.querySelector('select[name="status"]')?.value || 'AKTIF').toUpperCase();
             const fileElement = form.querySelector('input[name="file"]');
             const file = fileElement && fileElement.files ? fileElement.files[0] : null;
@@ -6791,7 +6796,11 @@ function renderReportsPage() {
                 showToast('Deskripsi media wajib diisi.', 'error');
                 return;
             }
-            if (mode !== 'edit' && !file) {
+            if (mediaType === 'VIDEO' && !youtubeUrl && !file) {
+                showToast('Link URL YouTube wajib diisi.', 'error');
+                return;
+            }
+            if (mediaType === 'FOTO' && mode !== 'edit' && !file) {
                 showToast('Pilih file media terlebih dahulu.', 'error');
                 return;
             }
@@ -6834,6 +6843,12 @@ function renderReportsPage() {
                     basePayload.FILE_NAME = uploaded.fileName;
                     basePayload.MIME_TYPE = uploaded.mimeType;
                 }
+                if (mediaType === 'VIDEO' && youtubeUrl) {
+                    basePayload.FILE_URL = youtubeUrl;
+                    basePayload.THUMBNAIL_URL = youtubeUrl;
+                    basePayload.FILE_NAME = judul;
+                    basePayload.MIME_TYPE = 'video/youtube';
+                }
                 const action = mode === 'edit' ? 'updateMedia' : 'addMedia';
                 const saveResponse = await apiRequest(action, basePayload);
                 const responseRecords = extractMediaRecordsFromResponse(saveResponse);
@@ -6846,10 +6861,10 @@ function renderReportsPage() {
                     ID_MEDIA: fallbackId,
                     TYPE: mediaType,
                     FILE_ID: uploaded?.fileId || '',
-                    FILE_URL: uploaded?.fileUrl || '',
-                    THUMBNAIL_URL: uploaded?.thumbnailUrl || uploaded?.fileUrl || '',
+                    FILE_URL: youtubeUrl || uploaded?.fileUrl || '',
+                    THUMBNAIL_URL: youtubeUrl || uploaded?.thumbnailUrl || uploaded?.fileUrl || '',
                     FILE_NAME: uploaded?.fileName || file?.name || '',
-                    MIME_TYPE: uploaded?.mimeType || file?.type || '',
+                    MIME_TYPE: youtubeUrl ? 'video/youtube' : (uploaded?.mimeType || file?.type || ''),
                     JUDUL: judul,
                     DESKRIPSI: deskripsi,
                     KETERANGAN: encodeMediaLegacyMetadata(judul, deskripsi),

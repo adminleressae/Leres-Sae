@@ -2048,8 +2048,11 @@ function saveMedia_(payload, isUpdate) {
 
   const mediaId = String(payload.ID_MEDIA || payload.id || '').trim();
   const fileId = String(payload.FILE_ID || payload.fileId || '').trim();
+  const externalUrl = String(payload.FILE_URL || payload.fileUrl || '').trim();
+  const isYoutubeVideo = String(payload.TYPE || payload.type || '').toUpperCase() === 'VIDEO' &&
+    /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(externalUrl);
 
-  if (!isUpdate && !fileId) throw new Error('File Drive belum dipilih.');
+  if (!isUpdate && !fileId && !isYoutubeVideo) throw new Error('File Drive atau link YouTube belum diisi.');
   if (isUpdate && !mediaId) throw new Error('ID media wajib diisi.');
 
   const values = sheet.getDataRange().getValues();
@@ -2074,21 +2077,22 @@ function saveMedia_(payload, isUpdate) {
   }
 
   const effectiveFileId = fileId || String(existing.FILE_ID || existing.file_id || '').trim();
-  if (!effectiveFileId) throw new Error('ID file Google Drive tidak tersedia.');
+  const isExternal = isYoutubeVideo || (!effectiveFileId && externalUrl);
+  const file = isExternal ? null : DriveApp.getFileById(effectiveFileId);
 
-  const file = DriveApp.getFileById(effectiveFileId);
-
-  try {
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  } catch (sharingError) {
-    throw new Error('Akses publik file Drive gagal diatur: ' + sharingError.message);
+  if (file) {
+    try {
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    } catch (sharingError) {
+      throw new Error('Akses publik file Drive gagal diatur: ' + sharingError.message);
+    }
   }
 
   const now = new Date().toISOString();
 
   // Metadata baru disimpan di kolom terpisah.
   // KETERANGAN tetap diisi sebagai deskripsi untuk kompatibilitas versi lama.
-  const existingLegacy = decodeLegacyMediaMetadata_(existing.KETERANGAN || existing.DESKRIPSI || file.getDescription() || '');
+  const existingLegacy = decodeLegacyMediaMetadata_(existing.KETERANGAN || existing.DESKRIPSI || (file ? file.getDescription() : '') || '');
 
   const judul = String(
     payload.JUDUL !== undefined ? payload.JUDUL :
@@ -2114,22 +2118,22 @@ function saveMedia_(payload, isUpdate) {
     JUDUL: judul,
     DESKRIPSI: deskripsi,
 
-    FILE_ID: effectiveFileId,
-    FILE_URL: driveDirectUrl_(effectiveFileId),
-    THUMBNAIL_URL: 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(effectiveFileId) + '&sz=w1200',
+    FILE_ID: isExternal ? '' : effectiveFileId,
+    FILE_URL: isExternal ? externalUrl : driveDirectUrl_(effectiveFileId),
+    THUMBNAIL_URL: isExternal ? externalUrl : 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(effectiveFileId) + '&sz=w1200',
 
     KETERANGAN: deskripsi,
 
     STATUS: String(payload.STATUS || payload.status || existing.STATUS || 'AKTIF').toUpperCase(),
     CREATED_AT: existing.CREATED_AT || now,
     UPDATED_AT: now,
-    FILE_NAME: file.getName(),
-    MIME_TYPE: file.getMimeType()
+    FILE_NAME: isExternal ? judul : file.getName(),
+    MIME_TYPE: isExternal ? 'video/youtube' : file.getMimeType()
   };
 
   // Simpan metadata juga di Drive sebagai cadangan. Ini berguna bila
   // sheet pernah dibuat dari versi lama atau metadata perlu dipulihkan.
-  file.setDescription(
+  if (file) file.setDescription(
     '[[LERESSAE_MEDIA_V2]]' +
     JSON.stringify({
       judul: judul,

@@ -5080,6 +5080,82 @@ body.dark-mode .tech-whatsapp-link {
   border: 0 !important;
 }
 
+/* Video khusus YouTube: tampilkan sebagai satu layar lebar seperti channel. */
+#publicMediaVideoGrid {
+  display: block !important;
+  max-width: 100% !important;
+}
+#publicMediaVideoGrid .media-video {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 auto !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+#publicMediaVideoGrid .media-video .video-player {
+  width: 100% !important;
+  aspect-ratio: 16 / 9 !important;
+  background: #111827 !important;
+  border-radius: 0 !important;
+  overflow: hidden !important;
+}
+#publicMediaVideoGrid .media-video .video-player iframe {
+  width: 100% !important;
+  height: 100% !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+#publicMediaVideoGrid .media-video figcaption {
+  padding: 14px 4px 0 !important;
+  text-align: center !important;
+}
+#publicMediaVideoGrid .media-video figcaption .title {
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+}
+
+/* Responsive video layout: desktop, tablet, and mobile. */
+#publicMediaVideoGrid .media-video .video-player {
+  max-height: min(72vh, 720px) !important;
+}
+@media (max-width: 900px) {
+  #publicMediaVideoGrid .media-video .video-player {
+    max-height: none !important;
+    aspect-ratio: 16 / 9 !important;
+  }
+}
+@media (max-width: 600px) {
+  #publicMediaVideoGrid {
+    margin-left: -4px !important;
+    margin-right: -4px !important;
+  }
+  #publicMediaVideoGrid .media-video .video-player {
+    width: 100% !important;
+    aspect-ratio: 16 / 9 !important;
+    border-radius: 10px !important;
+  }
+  #publicMediaVideoGrid .media-video figcaption {
+    padding: 10px 8px 0 !important;
+  }
+  #publicMediaVideoGrid .media-video figcaption .title {
+    font-size: .95rem !important;
+    line-height: 1.35 !important;
+  }
+  #publicMediaVideoGrid .media-video figcaption .desc {
+    font-size: .8rem !important;
+    line-height: 1.45 !important;
+  }
+}
+@media (max-width: 380px) {
+  #publicMediaVideoGrid .media-video figcaption .title {
+    font-size: .88rem !important;
+  }
+  #publicMediaVideoGrid .media-video figcaption .desc {
+    font-size: .75rem !important;
+  }
+}
+
 :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-status .service-status-card .status-customer-update-summary,
 :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-status .service-status-card .status-customer-update-summary > div {
   background: #1e293b !important;
