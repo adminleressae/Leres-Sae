@@ -1,6 +1,9 @@
 const CONFIG = {
   SPREADSHEET_ID: '1q5nXDOtpHZ588WoudqPqFSIxqUE6y9l7bdOuH0JyfeY',
   FORM_URL: 'https://forms.gle/11gDFYxD5HDBCaU9A',
+  // Isi dengan URL EDIT Google Form konsultasi yang berbeda dari form reservasi.
+  // Contoh: https://docs.google.com/forms/d/FORM_ID/edit
+  CONSULTATION_FORM_URL: 'https://docs.google.com/forms/d/13kjG4EAIZ-n5bhVpOOeVfqkIIG85eHBUNbkD9JZdngI/edit#settings',
   // Folder MEDIA yang dipakai bersama oleh upload dan getMedia.
   MEDIA_FOLDER_ID: '1FKMEU6a7aukoWoN90cLJQYwpCAqGMwd9',
   NEWS_FOLDER_ID: '1J2P3hpb7XoRkv_pRw8hhEf-OUtVVFeTS',
@@ -14,6 +17,7 @@ const CONFIG = {
     NEWS: 'NEWS',
     MEDIA: 'MEDIA',
     LOCATIONS: 'LOCATIONS',
+    CONSULTATION_STATUS: 'CONSULTATION_STATUS',
     SETTINGS: 'SETTINGS'
   },
 
@@ -71,6 +75,8 @@ const HISTORY_HEADERS = [
   'updated_by',
   'timestamp'
 ];
+
+const CONSULTATION_STATUS_HEADERS = ['consultation_key', 'completed_at', 'completed_by'];
 
 const USER_HEADERS = [
   'USERNAME',
@@ -250,6 +256,13 @@ function doPost(e) {
         requireToken_(body.token, ['admin']);
         return json_(getConsultationAttachment_(body.fileId));
 
+      case 'getCompletedConsultations':
+        requireToken_(body.token, ['admin']);
+        return json_(getCompletedConsultations_());
+
+      case 'completeConsultation':
+        return json_(completeConsultation_(body, requireToken_(body.token, ['admin'])));
+
       case 'diagnoseMediaSync':
         requireToken_(body.token, ['admin']);
         return json_(diagnoseMediaSync_());
@@ -327,6 +340,7 @@ function setupSystem() {
   }
 
   installFormSubmitTrigger_();
+  installConsultationFormSubmitTrigger_();
 
   const syncResult = syncAllFormResponses_({ force: true });
   SpreadsheetApp.flush();
@@ -344,6 +358,7 @@ function setupInitialSheets() {
   ensureProjectSheets_();
   ensureDefaultAdmin_();
   installFormSubmitTrigger_();
+  installConsultationFormSubmitTrigger_();
 
   return {
     success: true,
@@ -362,6 +377,7 @@ function ensureProjectSheets_() {
   ensureSheet_(ss, CONFIG.SHEETS.NEWS, NEWS_HEADERS);
   ensureSheet_(ss, CONFIG.SHEETS.MEDIA, MEDIA_HEADERS);
   ensureSheet_(ss, CONFIG.SHEETS.LOCATIONS, LOCATION_HEADERS);
+  ensureSheet_(ss, CONFIG.SHEETS.CONSULTATION_STATUS, CONSULTATION_STATUS_HEADERS);
   ensureSheet_(ss, CONFIG.SHEETS.SETTINGS, SETTINGS_HEADERS);
   PropertiesService.getScriptProperties().setProperty('PROJECT_SHEETS_READY', 'true');
 }
@@ -457,6 +473,98 @@ function ensureDefaultAdmin_() {
 /* ==========================================================
    FORM TRIGGER
    ========================================================== */
+
+/**
+ * Memasang trigger terpisah untuk Google Form konsultasi.
+ * Trigger ini TIDAK mengubah trigger reservasi/onFormSubmit.
+ * Isi CONFIG.CONSULTATION_FORM_URL terlebih dahulu.
+ */
+function installConsultationFormSubmitTrigger_() {
+  const formUrl = String(CONFIG.CONSULTATION_FORM_URL || '').trim();
+
+  if (!formUrl) {
+    console.log('Trigger konsultasi dilewati: CONFIG.CONSULTATION_FORM_URL belum diisi.');
+    return false;
+  }
+
+  const form = FormApp.openByUrl(formUrl);
+
+  // Hapus hanya trigger konsultasi agar tidak mengganggu trigger reservasi.
+  ScriptApp.getProjectTriggers().forEach(function(trigger) {
+    if (trigger.getHandlerFunction() === 'onConsultationFormSubmit') {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
+
+  ScriptApp.newTrigger('onConsultationFormSubmit')
+    .forForm(form)
+    .onFormSubmit()
+    .create();
+
+  console.log('Trigger email konsultasi berhasil dipasang untuk: ' + form.getTitle());
+  return true;
+}
+
+/**
+ * Jalankan fungsi ini sekali secara manual setelah URL Form konsultasi diisi.
+ * Fungsi hanya memasang trigger email admin untuk form konsultasi.
+ */
+function setupConsultationEmailTrigger() {
+  const installed = installConsultationFormSubmitTrigger_();
+  if (!installed) {
+    throw new Error('Isi CONFIG.CONSULTATION_FORM_URL dengan URL edit Google Form konsultasi terlebih dahulu.');
+  }
+  return 'Trigger email konsultasi berhasil dipasang.';
+}
+
+/**
+ * Dipanggil ketika ada respons baru pada Google Form konsultasi yang terpisah.
+ * Mengirim email notifikasi kepada admin dan tidak mengubah data servis.
+ */
+function onConsultationFormSubmit(e) {
+  if (!e || !e.response) {
+    throw new Error('Event respons Google Form konsultasi tidak tersedia.');
+  }
+
+  const response = e.response;
+  const itemResponses = response.getItemResponses();
+  const timestamp = response.getTimestamp();
+  const lines = [
+    'Terdapat permohonan konsultasi baru pada LERES SAE.',
+    '',
+    'Waktu pengiriman: ' + (timestamp ? timestamp.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) : '-'),
+    ''
+  ];
+
+  itemResponses.forEach(function(itemResponse) {
+    const question = itemResponse.getItem().getTitle();
+    const answer = itemResponse.getResponse();
+    let answerText;
+
+    if (Array.isArray(answer)) {
+      answerText = answer.join(', ');
+    } else if (answer === null || answer === undefined || answer === '') {
+      answerText = '-';
+    } else {
+      answerText = String(answer);
+    }
+
+    lines.push(question + ': ' + answerText);
+  });
+
+  lines.push('');
+  lines.push('Silakan buka dashboard admin LERES SAE untuk menindaklanjuti konsultasi.');
+  lines.push('Login Admin LERES SAE: https://adminleressae.github.io/Leres-Sae/');
+
+  MailApp.sendEmail({
+    to: 'admin.leressae@gmail.com',
+    subject: '🔔 LERES SAE - Permohonan Konsultasi Baru',
+    body: lines.join('\n')
+  });
+
+  console.log('Email notifikasi konsultasi berhasil dikirim ke admin.');
+  return { success: true, message: 'Notifikasi konsultasi dikirim.' };
+}
 
 function installFormSubmitTrigger_() {
   const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
@@ -2350,6 +2458,50 @@ function driveDirectUrl_(fileId) {
   return 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(fileId);
 }
 
+function getCompletedConsultations_() {
+  const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  const sheet = ensureSheet_(spreadsheet, CONFIG.SHEETS.CONSULTATION_STATUS, CONSULTATION_STATUS_HEADERS);
+  const values = sheet.getDataRange().getValues();
+  const headers = values[0].map(String);
+  const keyColumn = findHeaderIndex_(headers, ['consultation_key']);
+  if (keyColumn < 0) throw new Error('Kolom consultation_key tidak ditemukan.');
+  const completedKeys = values.slice(1).map(function(row) {
+    return String(row[keyColumn] || '');
+  }).filter(function(key) {
+    return key !== '';
+  });
+  return { success: true, data: { completedKeys: completedKeys } };
+}
+
+function completeConsultation_(body, session) {
+  const key = String(body.consultationKey || '').trim();
+  if (!/^[a-f0-9]{64}$/i.test(key)) {
+    throw new Error('Identitas konsultasi tidak valid.');
+  }
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    const sheet = ensureSheet_(spreadsheet, CONFIG.SHEETS.CONSULTATION_STATUS, CONSULTATION_STATUS_HEADERS);
+    const values = sheet.getDataRange().getValues();
+    const headers = values[0].map(String);
+    const keyColumn = findHeaderIndex_(headers, ['consultation_key']);
+    if (keyColumn < 0) throw new Error('Kolom consultation_key tidak ditemukan.');
+
+    for (let rowIndex = 1; rowIndex < values.length; rowIndex++) {
+      if (String(values[rowIndex][keyColumn] || '') === key) {
+        return { success: true, alreadyCompleted: true };
+      }
+    }
+
+    sheet.appendRow([key, new Date().toISOString(), String(session.username || 'ADMIN')]);
+    return { success: true, alreadyCompleted: false };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 /* ==========================================================
    LOCATIONS
    ========================================================== */
@@ -2617,7 +2769,27 @@ function objectFromRow_(headers, row) {
     obj[header] = serializeValue_(row[index]);
   });
   obj.id = obj.ID || obj.id || '';
+  obj.bukti_foto = getServiceProofValue_(obj);
   return obj;
+}
+
+function getServiceProofValue_(record) {
+  const proofKeys = ['buktifoto', 'buktiphoto', 'proofphoto', 'fototeknisi', 'fotoservice',
+    'servicephoto', 'buktifotoservice', 'fotohasilservice', 'fotohasilperbaikan', 'fotoperbaikan'];
+  const keys = Object.keys(record || {}).filter(function(name) {
+    return proofKeys.indexOf(String(name).replace(/[^a-z0-9]/gi, '').toLowerCase()) >= 0;
+  });
+  const canonicalKey = keys.find(function(name) {
+    return String(name).replace(/[^a-z0-9]/gi, '').toLowerCase() === 'buktifoto';
+  });
+  if (canonicalKey && record[canonicalKey] !== null && record[canonicalKey] !== undefined
+      && String(record[canonicalKey]).trim() !== '') {
+    return record[canonicalKey];
+  }
+  const populatedKey = keys.find(function(name) {
+    return record[name] !== null && record[name] !== undefined && String(record[name]).trim() !== '';
+  });
+  return populatedKey === undefined ? '' : record[populatedKey];
 }
 
 function writeObjectToRow_(sheet, rowNumber, headers, object) {

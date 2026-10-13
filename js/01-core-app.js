@@ -164,25 +164,50 @@ const CONFIG = {
 
         function normalizeServiceCost(item) {
             const tipe = String(item?.biaya_tipe || item?.BIAYA_TIPE || '').trim();
-            const n = Number(item?.biaya_nominal ?? item?.BIAYA_NOMINAL);
+            const parseAmount = value => {
+                if (typeof value === 'number') return Number.isFinite(value) ? value : NaN;
+                const text = String(value ?? '').trim();
+                if (!text || text.startsWith('-')) return NaN;
+                const digits = text.replace(/\D/g, '');
+                return digits ? Number(digits) : NaN;
+            };
+            const rawNominal = item?.biaya_nominal ?? item?.BIAYA_NOMINAL;
+            const nominal = parseAmount(rawNominal);
             if (tipe.toLowerCase() === 'gratis') return {tipe:'Gratis',nominal:0,label:'Gratis'};
-            if (tipe.toLowerCase() === 'custom' && Number.isFinite(n)) return {tipe:'Custom',nominal:Math.max(0,Math.round(n)),label:formatRupiah(n)};
+            if (tipe.toLowerCase() === 'custom' && Number.isFinite(nominal) && nominal >= 0) {
+                return {tipe:'Custom',nominal:Math.round(nominal),label:formatRupiah(nominal)};
+            }
+
+            const storedCost = item?.biaya ?? item?.BIAYA ?? item?.total_biaya ?? item?.TOTAL_BIAYA;
+            const storedLabel = String(storedCost ?? '').trim();
+            if (!storedLabel || /belum(?:\s+ditentukan)?/i.test(storedLabel)) {
+                return {tipe:'',nominal:null,label:'Belum ditentukan'};
+            }
+            if (/gratis/i.test(storedLabel)) return {tipe:'Gratis',nominal:0,label:'Gratis'};
+            const storedNominal = parseAmount(storedLabel);
+            if (Number.isFinite(storedNominal) && storedNominal >= 0) {
+                return {tipe:tipe || 'Custom',nominal:Math.round(storedNominal),label:formatRupiah(storedNominal)};
+            }
             return {tipe:'',nominal:null,label:'Belum ditentukan'};
         }
 
 
         function getServiceProofUrl(item) {
-            const value = String(item?.bukti_foto ?? item?.BUKTI_FOTO ?? item?.proof_photo ?? '').trim();
+            const directValue = item?.bukti_foto || item?.BUKTI_FOTO || item?.proof_photo
+                || item?.proofPhoto || item?.foto_teknisi || item?.foto_service || '';
+            const value = String(directValue || Object.entries(item || {}).find(([key, entry]) =>
+                /^(buktifoto|buktiphoto|proofphoto|fototeknisi|fotoservice|servicephoto|buktifotoservice|fotohasilservice|fotohasilperbaikan|fotoperbaikan)$/i.test(
+                    key.replace(/[^a-z0-9]/gi, '')
+                ) && entry
+            )?.[1] || '').trim();
             if (/^https?:\/\//i.test(value) || /^data:image\/(png|jpe?g|webp);/i.test(value)) return value;
             return '';
         }
 
         function renderServiceProofAction(item, proof) {
-            const done = getServiceDisplayStatus(item.status) === 'Selesai';
-            if (done && proof) {
-                return `<a href="#" class="btn-secondary small admin-gmaps-link" data-service-proof-view="${escapeHtml(proof)}" data-service-proof-id="${escapeHtml(item.id || '')}">Lihat Foto</a>`;
-            }
-            return proof ? `<div class="status-proof-public"><strong>Bukti Foto Service</strong><img src="${escapeHtml(proof)}" alt="Bukti foto service"></div>` : '';
+            return proof
+                ? `<a href="#" class="btn-secondary small admin-gmaps-link" data-service-proof-view="${escapeHtml(proof)}" data-service-proof-id="${escapeHtml(item.id || '')}">Lihat Foto Teknisi</a>`
+                : '<span>Belum tersedia</span>';
         }
 
         function openServiceProofImage(proof, serviceId) {
@@ -645,7 +670,7 @@ const CONFIG = {
                 'getTechnicians', 'addStock', 'stockIn', 'stockOut',
                 'addNews', 'updateNews', 'deleteNews',
                 'uploadFileToDrive', 'uploadMedia', 'addMedia', 'updateMedia', 'deleteMedia', 'syncMediaMetadata', 'migrateExistingMediaMetadata',
-                'getConsultationAttachment'
+                'getConsultationAttachment', 'getCompletedConsultations', 'completeConsultation'
             ];
             const requestPayload = { ...payload };
             if (protectedActions.includes(action) && !requestPayload.token) {
@@ -1213,7 +1238,7 @@ const CONFIG = {
                         const form=getServiceFormFields(item),cost=normalizeServiceCost(item),proof=getServiceProofUrl(item),maps=safeExternalUrl(form.google_maps||item.google_maps||item.maps||'');
                         const done=getServiceDisplayStatus(item.status)==='Selesai';
                         return `<div class="service-status-card"><div class="service-status-header"><h3>${escapeHtml(form.barang||item.item_name||'-')}</h3><span class="status-badge ${getStatusClass(item.status)}">${escapeHtml(getServiceDisplayStatus(item.status))}</span></div>
-                            <div class="service-meta"><div><strong>ID Servis:</strong> ${escapeHtml(item.id||'-')}</div><div><strong>Tanggal:</strong> ${escapeHtml(form.tanggal||formatDate(item.created_at||item.tanggal_masuk))}</div><div><strong>Nama Customer:</strong> ${escapeHtml(form.nama||item.customer_name||'-')}</div><div><strong>No. WhatsApp:</strong> ${renderWhatsAppLink(form.whatsapp||item.phone||'-')}</div><div><strong>Alamat:</strong> ${escapeHtml(form.alamat||item.alamat||'-')}</div><div><strong>Google Maps:</strong> ${maps?`<a class="btn-secondary small admin-gmaps-link" href="${escapeHtml(maps)}" target="_blank" rel="noopener noreferrer">Lihat GMaps</a>`:'-'}</div><div><strong>Jenis Barang:</strong> ${escapeHtml(form.barang||item.item_name||'-')}</div><div><strong>Merek:</strong> ${escapeHtml(form.merk||item.merk||'-')}</div><div><strong>Tipe:</strong> ${escapeHtml(form.tipe||item.tipe||'-')}</div><div><strong>Keluhan:</strong> ${escapeHtml(form.keluhan||item.keluhan||'-')}</div><div><strong>Teknisi:</strong> ${escapeHtml(form.teknisi||item.technician||'-')}</div><div><strong>Catatan Teknisi:</strong> ${escapeHtml(item.catatan_teknisi||item.notes||'-')}</div>${done?`<div><strong>Keterangan Selesai:</strong> ${escapeHtml(item.keterangan_selesai||item.notes||'-')}</div><div><strong>Tanggal Selesai:</strong> ${escapeHtml(item.tanggal_selesai?formatDate(item.tanggal_selesai):'-')}</div>`:''}<div><strong>Biaya Service:</strong> ${escapeHtml(cost.label)}</div>${item.biaya_keterangan?`<div><strong>Keterangan Biaya:</strong> ${escapeHtml(item.biaya_keterangan)}</div>`:''}<div><strong>Waktu Update Terakhir:</strong> ${escapeHtml(formatDateTimeValue(item.timestamp_update||item.created_at))}</div></div>${renderServiceProofAction(item,proof)}</div>`;
+                            <div class="service-meta"><div><strong>ID Servis:</strong> ${escapeHtml(item.id||'-')}</div><div><strong>Tanggal:</strong> ${escapeHtml(form.tanggal||formatDate(item.created_at||item.tanggal_masuk))}</div><div><strong>Nama Customer:</strong> ${escapeHtml(form.nama||item.customer_name||'-')}</div><div><strong>No. WhatsApp:</strong> ${renderWhatsAppLink(form.whatsapp||item.phone||'-')}</div><div><strong>Alamat:</strong> ${escapeHtml(form.alamat||item.alamat||'-')}</div><div><strong>Google Maps:</strong> ${maps?`<a class="btn-secondary small admin-gmaps-link" href="${escapeHtml(maps)}" target="_blank" rel="noopener noreferrer">Lihat GMaps</a>`:'-'}</div><div><strong>Foto Teknisi:</strong> ${renderServiceProofAction(item,proof)}</div><div><strong>Jenis Barang:</strong> ${escapeHtml(form.barang||item.item_name||'-')}</div><div><strong>Keluhan:</strong> ${escapeHtml(form.keluhan||item.keluhan||'-')}</div><div><strong>Teknisi:</strong> ${escapeHtml(form.teknisi||item.technician||'-')}</div><div><strong>Catatan Teknisi:</strong> ${escapeHtml(item.catatan_teknisi||item.notes||'-')}</div>${done?`<div><strong>Keterangan Selesai:</strong> ${escapeHtml(item.keterangan_selesai||item.notes||'-')}</div><div><strong>Tanggal Selesai:</strong> ${escapeHtml(item.tanggal_selesai?formatDate(item.tanggal_selesai):'-')}</div>`:''}<div><strong>Biaya Service:</strong> ${escapeHtml(cost.label)}</div>${item.biaya_keterangan?`<div><strong>Keterangan Biaya:</strong> ${escapeHtml(item.biaya_keterangan)}</div>`:''}<div><strong>Waktu Update Terakhir:</strong> ${escapeHtml(formatDateTimeValue(item.timestamp_update||item.created_at))}</div></div></div>`;
                 }
 
 
@@ -1238,7 +1263,7 @@ function openServiceDetail(serviceId) {
             const done=getServiceDisplayStatus(item.status)==='Selesai';
             const detailHtml=`<div class="leressae-detail-back-row"><button type="button" class="leressae-back-btn" data-service-detail-back><span class="leressae-back-icon">←</span><span>Kembali</span></button></div>
               <div class="service-status-card"><div class="service-status-header"><h3>${escapeHtml(form.barang||item.item_name||'-')}</h3><span class="status-badge ${getStatusClass(item.status)}">${escapeHtml(getServiceDisplayStatus(item.status))}</span></div>
-              <div class="service-meta"><div><strong>ID Servis:</strong> ${escapeHtml(item.id||'-')}</div><div><strong>Tanggal:</strong> ${escapeHtml(form.tanggal||formatDate(item.created_at||item.tanggal_masuk))}</div><div><strong>Nama Customer:</strong> ${escapeHtml(form.nama||item.customer_name||'-')}</div><div><strong>No. WhatsApp:</strong> ${renderWhatsAppLink(form.whatsapp||item.phone||'-')}</div><div><strong>Alamat:</strong> ${escapeHtml(form.alamat||item.alamat||'-')}</div><div><strong>Google Maps:</strong> ${maps?`<a class="btn-secondary small admin-gmaps-link" href="${escapeHtml(maps)}" target="_blank" rel="noopener noreferrer">Lihat GMaps</a>`:'-'}</div><div><strong>Jenis Barang:</strong> ${escapeHtml(form.barang||item.item_name||'-')}</div><div><strong>Merek:</strong> ${escapeHtml(form.merk||item.merk||'-')}</div><div><strong>Tipe:</strong> ${escapeHtml(form.tipe||item.tipe||'-')}</div><div><strong>Keluhan:</strong> ${escapeHtml(form.keluhan||item.keluhan||'-')}</div><div><strong>Teknisi:</strong> ${escapeHtml(form.teknisi||item.technician||'-')}</div><div><strong>Catatan Teknisi:</strong> ${escapeHtml(item.catatan_teknisi||item.notes||'-')}</div>${done?`<div><strong>Keterangan Selesai:</strong> ${escapeHtml(item.keterangan_selesai||item.notes||'-')}</div><div><strong>Tanggal Selesai:</strong> ${escapeHtml(item.tanggal_selesai?formatDate(item.tanggal_selesai):'-')}</div>`:''}<div><strong>Biaya Service:</strong> ${escapeHtml(cost.label)}</div>${item.biaya_keterangan?`<div><strong>Keterangan Biaya:</strong> ${escapeHtml(item.biaya_keterangan)}</div>`:''}<div><strong>Waktu Update Terakhir:</strong> ${escapeHtml(formatDateTimeValue(item.timestamp_update||item.created_at))}</div></div>${renderServiceProofAction(item,proof)}</div>`;
+              <div class="service-meta"><div><strong>ID Servis:</strong> ${escapeHtml(item.id||'-')}</div><div><strong>Tanggal:</strong> ${escapeHtml(form.tanggal||formatDate(item.created_at||item.tanggal_masuk))}</div><div><strong>Nama Customer:</strong> ${escapeHtml(form.nama||item.customer_name||'-')}</div><div><strong>No. WhatsApp:</strong> ${renderWhatsAppLink(form.whatsapp||item.phone||'-')}</div><div><strong>Alamat:</strong> ${escapeHtml(form.alamat||item.alamat||'-')}</div><div><strong>Google Maps:</strong> ${maps?`<a class="btn-secondary small admin-gmaps-link" href="${escapeHtml(maps)}" target="_blank" rel="noopener noreferrer">Lihat GMaps</a>`:'-'}</div><div><strong>Foto Teknisi:</strong> ${renderServiceProofAction(item,proof)}</div><div><strong>Jenis Barang:</strong> ${escapeHtml(form.barang||item.item_name||'-')}</div><div><strong>Keluhan:</strong> ${escapeHtml(form.keluhan||item.keluhan||'-')}</div><div><strong>Teknisi:</strong> ${escapeHtml(form.teknisi||item.technician||'-')}</div><div><strong>Catatan Teknisi:</strong> ${escapeHtml(item.catatan_teknisi||item.notes||'-')}</div>${done?`<div><strong>Keterangan Selesai:</strong> ${escapeHtml(item.keterangan_selesai||item.notes||'-')}</div><div><strong>Tanggal Selesai:</strong> ${escapeHtml(item.tanggal_selesai?formatDate(item.tanggal_selesai):'-')}</div>`:''}<div><strong>Biaya Service:</strong> ${escapeHtml(cost.label)}</div>${item.biaya_keterangan?`<div><strong>Keterangan Biaya:</strong> ${escapeHtml(item.biaya_keterangan)}</div>`:''}<div><strong>Waktu Update Terakhir:</strong> ${escapeHtml(formatDateTimeValue(item.timestamp_update||item.created_at))}</div></div></div>`;
             if(returnKind==='admin'&&isAdminLoggedIn()){renderAdminAppShell(returnPage,detailHtml);document.querySelector('.admin-content')?.querySelectorAll(':scope > .leressae-back-row').forEach(el=>el.remove());requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'auto'}));return;}
             if(returnKind==='tech'&&isTechnicianLoggedIn()){const view=document.getElementById('technicianView');if(view)view.innerHTML=detailHtml;const shell=document.getElementById('technicianShell');if(shell)shell.dataset.techPage=returnPage;return;}
             const statusResult=document.getElementById('statusResult');if(statusResult)statusResult.innerHTML=detailHtml;navigateTo('page-status',{fromBack:true});
@@ -1639,7 +1664,8 @@ function openServiceDetail(serviceId) {
             const newRequests = records.filter(item => !isAssigned(item) && !isCompletedStatus(item) && !isAdminCompleted(item)).length;
             // Servis Berjalan: menunggu konfirmasi/update akhir oleh admin setelah teknisi menyelesaikan servis.
             const awaitingAdmin = records.filter(item => isCompletedStatus(item) && !isAdminCompleted(item)).length;
-            return { services: newRequests, running: awaitingAdmin };
+            const consultations = (window.__CONSULTATIONS_CACHE__ || []).filter(item => !item.completed).length;
+            return { services: newRequests, running: awaitingAdmin, locations: consultations };
         }
 
         function formatAdminNavBadge(count) {
@@ -1709,7 +1735,7 @@ function openServiceDetail(serviceId) {
                             ${Object.entries(menu).map(([key, value]) => `
                                 <li>
                                     <button class="admin-nav-item ${page === key ? 'active' : ''}" data-admin-page="${key}" type="button">
-                                        ${value.iconSvg || '<span>' + (value.icon || '') + '</span>'} <span>${value.label}</span>${key === 'services' ? formatAdminNavBadge(navNotifications.services) : key === 'running' ? formatAdminNavBadge(navNotifications.running) : ''}
+                                        ${value.iconSvg || '<span>' + (value.icon || '') + '</span>'} <span>${value.label}</span>${key === 'services' ? formatAdminNavBadge(navNotifications.services) : key === 'running' ? formatAdminNavBadge(navNotifications.running) : key === 'locations' ? formatAdminNavBadge(navNotifications.locations) : ''}
                                     </button>
                                 </li>
                             `).join('')}
@@ -3175,10 +3201,28 @@ function parseConsultationSpreadsheetCsv(text) {
     };
     return rows.slice(headerIndex + 1)
         .filter(cells => cells.some(value => String(value || '').trim() !== ''))
-        .map(cells => Object.fromEntries(Object.entries(indices).map(([key, index]) => [
-            key,
-            index < 0 ? '' : String(cells[index] || '').trim()
-        ])));
+        .map(cells => {
+            const item = Object.fromEntries(Object.entries(indices).map(([key, index]) => [
+                key,
+                index < 0 ? '' : String(cells[index] || '').trim()
+            ]));
+            return item;
+        });
+}
+
+async function consultationIdentityKey(item) {
+    if (!window.crypto?.subtle || typeof TextEncoder === 'undefined') {
+        throw new Error('Browser harus menggunakan koneksi aman untuk menandai konsultasi selesai.');
+    }
+    const identity = JSON.stringify([
+        item.timestamp || '',
+        item.name || '',
+        item.whatsapp || '',
+        item.topic || '',
+        item.description || ''
+    ]);
+    const digest = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(identity));
+    return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
 
@@ -5365,6 +5409,11 @@ function renderReportsPage() {
                 }
                 await window.__SERVICE_DUPLICATE_CLEANUP_REQUEST__;
                 await refreshServiceCacheFromApi();
+                try {
+                    await refreshConsultationsFromSpreadsheet();
+                } catch (consultationError) {
+                    console.warn('Sinkronisasi konsultasi admin gagal:', consultationError);
+                }
                 window.__ADMIN_SYNC_STATE__ = window.__SERVICE_CACHE_ERROR__
                     ? { label: 'Connection Error', text: 'Gagal mengambil data terbaru' }
                     : { label: 'Connected', text: 'Data tersinkronisasi' };
@@ -5711,7 +5760,8 @@ function renderReportsPage() {
             const isLoading = Boolean(window.__CONSULTATIONS_LOADING__);
             const loadError = window.__CONSULTATIONS_LOAD_ERROR__ || '';
             const keyword = (window.__CONSULTATION_FILTER__ || '').trim().toLowerCase();
-            const rows = all.filter(item => !keyword || Object.values(item).some(value => String(value || '').toLowerCase().includes(keyword)));
+            const active = all.filter(item => !item.completed);
+            const rows = active.filter(item => !keyword || Object.values(item).some(value => String(value || '').toLowerCase().includes(keyword)));
             return `
                 <div class="admin-card admin-consultations-page">
                     <div class="admin-card-header">
@@ -5742,6 +5792,7 @@ function renderReportsPage() {
                                     <th>Tingkat Prioritas</th>
                                     <th>Lampiran Pendukung</th>
                                     <th>Bidang Usaha</th>
+                                    <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -5755,8 +5806,9 @@ function renderReportsPage() {
                                         <td>${escapeHtml(item.priority || '-')}</td>
                                         <td>${consultationAttachmentHtml(item.attachment)}</td>
                                         <td>${escapeHtml(item.business || '-')}</td>
+                                        <td><button class="btn-primary small" type="button" data-consultation-done="${escapeHtml(item.key)}">Selesai</button></td>
                                     </tr>
-                                `).join('') : `<tr><td colspan="8"><div class="admin-empty-state">${loadError ? 'Data konsultasi tidak dapat dimuat. Periksa koneksi Spreadsheet lalu coba sinkronkan kembali.' : isLoading ? 'Memuat data konsultasi dari Spreadsheet…' : 'Belum ada data konsultasi pada Spreadsheet.'}</div></td></tr>`}
+                                `).join('') : `<tr><td colspan="9"><div class="admin-empty-state">${loadError ? 'Data konsultasi tidak dapat dimuat. Periksa koneksi Spreadsheet lalu coba sinkronkan kembali.' : isLoading ? 'Memuat data konsultasi dari Spreadsheet…' : 'Belum ada konsultasi yang perlu ditangani.'}</div></td></tr>`}
                             </tbody>
                         </table>
                     </div>
@@ -6364,13 +6416,22 @@ function renderReportsPage() {
             window.__CONSULTATIONS_LOADING__ = true;
             window.__CONSULTATIONS_LOAD_ERROR__ = '';
             const spreadsheetUrl = `https://docs.google.com/spreadsheets/d/${CONFIG.SERVICE_SPREADSHEET_ID}/export?format=csv&gid=${CONFIG.CONSULTATION_SPREADSHEET_GID}&_=${Date.now()}`;
-            const request = fetch(spreadsheetUrl, { cache: 'no-store' })
-                .then(response => {
+            const request = Promise.all([
+                fetch(spreadsheetUrl, { cache: 'no-store' }),
+                apiRequest('getCompletedConsultations', { token: getAdminToken() })
+            ])
+                .then(async ([response, completedResponse]) => {
                     if (!response.ok) throw new Error(`Spreadsheet konsultasi gagal dimuat (${response.status}).`);
-                    return response.text();
-                })
-                .then(csv => {
-                    const consultations = parseConsultationSpreadsheetCsv(csv);
+                    const csv = await response.text();
+                    const completedKeys = completedResponse && completedResponse.data && completedResponse.data.completedKeys;
+                    if (!Array.isArray(completedKeys)) {
+                        throw new Error('Status konsultasi selesai tidak valid dari server.');
+                    }
+                    const completedSet = new Set(completedKeys.map(String));
+                    const consultations = await Promise.all(parseConsultationSpreadsheetCsv(csv).map(async item => {
+                        const key = await consultationIdentityKey(item);
+                        return { ...item, key, completed: completedSet.has(key) };
+                    }));
                     window.__CONSULTATIONS_CACHE__ = consultations;
                     window.__CONSULTATIONS_CACHE_UPDATED_AT__ = Date.now();
                     return consultations;
@@ -6649,6 +6710,33 @@ function renderReportsPage() {
                     showToast('Data konsultasi berhasil disinkronkan dari Spreadsheet.', 'success');
                 } catch (error) {
                     showToast(error?.message || 'Data konsultasi gagal disinkronkan.', 'error');
+                }
+                return;
+            }
+            const completeConsultation = event.target.closest('[data-consultation-done]');
+            if (completeConsultation) {
+                const consultationKey = completeConsultation.dataset.consultationDone;
+                if (!consultationKey) {
+                    showToast('Identitas konsultasi tidak valid.', 'error');
+                    return;
+                }
+                completeConsultation.disabled = true;
+                try {
+                    const response = await apiRequest('completeConsultation', {
+                        consultationKey,
+                        token: getAdminToken()
+                    });
+                    if (!response || response.success === false) {
+                        throw new Error(response?.message || 'Status konsultasi gagal disimpan.');
+                    }
+                    const item = (window.__CONSULTATIONS_CACHE__ || []).find(row => row.key === consultationKey);
+                    if (item) item.completed = true;
+                    showAdminPage('locations', { fromBack: true, skipConsultationsRefresh: true });
+                    showToast('Konsultasi ditandai selesai.', 'success');
+                } catch (error) {
+                    console.error('Gagal menyelesaikan konsultasi:', error);
+                    completeConsultation.disabled = false;
+                    showToast(error?.message || 'Konsultasi gagal ditandai selesai.', 'error');
                 }
                 return;
             }
