@@ -5462,6 +5462,25 @@ body.dark-mode .tech-whatsapp-link {
   #page-dashboard .slogan-card-topline { align-items: flex-start; }
   #page-dashboard .slogan-brandline { font-size: .63rem; }
 }
+
+/* Perbesar logo header tanpa mengubah proporsi teks brand. */
+.navbar .brand .logo-img {
+    width: 112px !important;
+    height: 112px !important;
+    max-width: 112px !important;
+    transform: none !important;
+    object-fit: contain !important;
+}
+.navbar .brand { gap: 24px !important; }
+@media (max-width: 768px) {
+    .navbar .brand .logo-img {
+        width: 96px !important;
+        height: 96px !important;
+        max-width: 96px !important;
+        transform: none !important;
+    }
+    .navbar .brand { gap: 16px !important; }
+}
 @media (prefers-reduced-motion: reduce) {
   #page-dashboard .hero-slogan-card,
   #page-dashboard .slogan-document-badge {
@@ -16597,6 +16616,15 @@ body.dark-mode {
 }
 
 .navbar .logo-img { transform: none !important; max-width: 86px; height: 68px; }
+.navbar { min-height: 104px !important; height: 104px !important; padding: 8px 18px 8px 24px !important; overflow: visible !important; }
+.navbar .brand .logo-img { width: 82px !important; height: 82px !important; max-width: 82px !important; transform: none !important; }
+.navbar .brand { gap: 18px !important; height: 88px !important; align-items: center !important; }
+@media (max-width: 768px) {
+  .navbar { min-height: 84px !important; height: 84px !important; padding: 6px 12px !important; }
+  .navbar .brand .logo-img { width: 68px !important; height: 68px !important; max-width: 68px !important; }
+  .navbar .brand { height: 72px !important; }
+  .navbar .brand { gap: 16px !important; }
+}
 .navbar .brand { gap: 12px; }
 .navbar .brand-title { color: #10243a; font-size: clamp(1.28rem, 1.6vw, 1.75rem); }
 .navbar .brand-sub { color: #397064; font-size: .78rem; }

@@ -6247,8 +6247,8 @@ function renderReportsPage() {
 
         function renderPublicMediaGallery() {
             const all = getMediaRecords();
-            const photos = all.filter(item => String(item.TYPE || '').toUpperCase() === 'FOTO' && String(item.STATUS || '').toUpperCase() === 'AKTIF');
-            const videos = all.filter(item => String(item.TYPE || '').toUpperCase() === 'VIDEO' && String(item.STATUS || '').toUpperCase() === 'AKTIF');
+            const photos = sortPublicByNewest(all.filter(item => String(item.TYPE || '').toUpperCase() === 'FOTO' && String(item.STATUS || '').toUpperCase() === 'AKTIF'));
+            const videos = sortPublicByNewest(all.filter(item => String(item.TYPE || '').toUpperCase() === 'VIDEO' && String(item.STATUS || '').toUpperCase() === 'AKTIF'));
             const photoHost = document.getElementById('publicMediaPhotoGrid');
             const videoHost = document.getElementById('publicMediaVideoGrid');
             if (photoHost) {
@@ -6287,7 +6287,7 @@ function renderReportsPage() {
             if (homeMediaTimer) { clearInterval(homeMediaTimer); homeMediaTimer = null; }
             if (section.__cleanupMedia) { section.__cleanupMedia(); section.__cleanupMedia = null; }
             let photos = [];
-            try { photos = getMediaRecords().filter(item => String(item.TYPE || '').toUpperCase() === 'FOTO' && String(item.STATUS || '').toUpperCase() === 'AKTIF' && mediaImageViewUrl(item)); } catch (e) { console.warn('Gagal memuat sorotan media:', e); }
+            try { photos = sortPublicByNewest(getMediaRecords().filter(item => String(item.TYPE || '').toUpperCase() === 'FOTO' && String(item.STATUS || '').toUpperCase() === 'AKTIF' && mediaImageViewUrl(item))); } catch (e) { console.warn('Gagal memuat sorotan media:', e); }
             if (!photos.length) { host.innerHTML = '<div class="home-media-empty"><div><strong>Dokumentasi foto belum tersedia.</strong><br><span>Foto yang berstatus aktif akan tampil otomatis di sini.</span></div></div>'; return; }
             host.innerHTML = `<div class="home-media-stage" aria-roledescription="carousel" aria-label="Sorotan foto dokumentasi"><div class="home-media-track">${photos.map((item, i) => `<article class="home-media-slide" aria-hidden="${i < 3 ? 'false' : 'true'}"><img src="${escapeHtml(mediaImageViewUrl(item))}" alt="${escapeHtml(item.JUDUL || 'Dokumentasi kegiatan LERESSAE')}" loading="${i < 3 ? 'eager' : 'lazy'}" onerror="this.onerror=null;this.closest('.home-media-slide')?.classList.add('image-unavailable');this.alt='Gambar tidak dapat dimuat. Periksa URL dan izin akses Google Drive.'"><div class="home-media-caption"><h3>${escapeHtml(item.JUDUL || 'Dokumentasi kegiatan')}</h3><p>${escapeHtml(item.DESKRIPSI || 'Dokumentasi kegiatan praktik dan kolaborasi LERESSAE.')}</p></div></article>`).join('')}</div></div><div class="home-media-tools"><div class="home-media-dots" aria-label="Pilih foto">${photos.map((_,i)=>`<button type="button" class="home-media-dot${i===0?' is-active':''}" data-home-media-go="${i}" aria-label="Tampilkan foto ${i+1}" aria-current="${i===0?'true':'false'}"></button>`).join('')}</div><div class="home-media-actions"><button type="button" class="home-media-arrow" data-home-media-step="-1" aria-label="Foto sebelumnya">‹</button><button type="button" class="home-media-arrow" data-home-media-step="1" aria-label="Foto berikutnya">›</button></div></div>`;
             const slides = Array.from(host.querySelectorAll('.home-media-slide'));
@@ -6555,9 +6555,17 @@ function renderReportsPage() {
         }
 
 
+        function sortPublicByNewest(records) {
+            return [...records].sort((a, b) => {
+                const dateOf = item => item.createdAt || item.created_at || item.CREATED_AT || item.updatedAt || item.updated_at || item.UPDATED_AT || item.date || item.tanggal || item.publishedAt || '';
+                const timeOf = item => { const time = new Date(dateOf(item)).getTime(); return Number.isNaN(time) ? 0 : time; };
+                return timeOf(b) - timeOf(a);
+            });
+        }
+
         function renderPublicNews(error) {
             const allRecords = Array.isArray(window.__PUBLIC_NEWS_CACHE__) ? window.__PUBLIC_NEWS_CACHE__ : [];
-            const records = allRecords.filter(x => String(x.status || 'PUBLISHED').trim().toUpperCase() === 'PUBLISHED');
+            const records = sortPublicByNewest(allRecords.filter(x => String(x.status || 'PUBLISHED').trim().toUpperCase() === 'PUBLISHED'));
             const host = document.getElementById('publicNewsList');
             const home = document.getElementById('homeNewsList');
             const makeCard = (x, compact = false) => `<article class="tutorial-card news-card">
@@ -6750,7 +6758,7 @@ function renderReportsPage() {
             if (!detail) return;
             const image = mediaImageViewUrl(media);
             detail.querySelector('.media-detail-main').innerHTML = `<span class="tutorial-tag">Foto</span><h1>${escapeHtml(media.JUDUL || 'Dokumentasi foto')}</h1><div class="media-detail-meta">Dokumentasi Media LERES SAE</div>${image ? `<img class="media-detail-image" src="${escapeHtml(image)}" alt="${escapeHtml(media.JUDUL || 'Dokumentasi foto')}">` : ''}<div class="media-detail-content"><p>${escapeHtml(media.DESKRIPSI || 'Tidak ada deskripsi media.')}</p></div>`;
-            const latest = getMediaRecords().filter(x => String(x.TYPE || '').toUpperCase() === 'FOTO' && String(x.STATUS || '').toUpperCase() === 'AKTIF' && String(x.ID_MEDIA) !== String(media.ID_MEDIA));
+            const latest = sortPublicByNewest(getMediaRecords().filter(x => String(x.TYPE || '').toUpperCase() === 'FOTO' && String(x.STATUS || '').toUpperCase() === 'AKTIF' && String(x.ID_MEDIA) !== String(media.ID_MEDIA)));
             detail.querySelector('.media-detail-latest-list').innerHTML = latest.map(x => `<button type="button" class="media-latest-item" data-public-media="${escapeHtml(String(x.ID_MEDIA || ''))}"><img src="${escapeHtml(mediaImageViewUrl(x))}" alt=""><span><strong>${escapeHtml(x.JUDUL || 'Dokumentasi foto')}</strong><small>Foto</small></span></button>`).join('') || '<p class="news-detail-empty">Belum ada media lainnya.</p>';
             navigateTo('page-media-detail');
         }
