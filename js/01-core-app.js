@@ -453,7 +453,7 @@ const CONFIG = {
         }
 
         function getServiceDamageDescription(item) {
-            return String(getServiceFormField(item, [
+            const keys = [
                 'Deskripsi Kerusakan',
                 'deskripsi kerusakan',
                 'deskripsi_kerusakan',
@@ -461,8 +461,29 @@ const CONFIG = {
                 'DESKRIPSI_KERUSAKAN',
                 'Deskripsi Kerusakan Mesin',
                 'Deskripsi Kerusakan yang Dialami',
-                'Rincian Kerusakan'
-            ], '') || '').trim();
+                'Rincian Kerusakan',
+                'Detail Kerusakan',
+                'Kerusakan yang Dialami',
+                'damage_description',
+                'damageDescription',
+                'description'
+            ];
+            const description = String(getServiceFormField(item, keys, '') || '').trim();
+            if (description) return description;
+
+            const raw = getRawFormData(item);
+            if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return '';
+            const normalizeKey = value => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            const entry = Object.entries(raw).find(([key, value]) => {
+                const normalizedKey = normalizeKey(key);
+                return normalizedKey.includes('kerusakan') &&
+                    (normalizedKey.includes('deskripsi') ||
+                        normalizedKey.includes('rincian') ||
+                        normalizedKey.includes('detail')) &&
+                    value !== undefined && value !== null && String(value).trim() !== '';
+            });
+            const value = Array.isArray(entry?.[1]) ? entry[1].join(', ') : entry?.[1];
+            return String(value || '').trim();
         }
 
 
@@ -485,64 +506,6 @@ const CONFIG = {
                 ${countBadge}
             </button>`;
         }
-
-        function openAdminDamageDescription(serviceId) {
-            const item = loadServiceRecords().find(record =>
-                String(record.id || record.ID || '') === String(serviceId)
-            );
-            if (!item) {
-                console.warn('Data servis untuk deskripsi kerusakan tidak ditemukan:', serviceId);
-                return;
-            }
-
-            let modal = document.getElementById('adminDamageDescriptionModal');
-            if (!modal) {
-                modal = document.createElement('div');
-                modal.id = 'adminDamageDescriptionModal';
-                modal.className = 'admin-damage-description-overlay';
-                modal.innerHTML = `
-                    <section class="admin-damage-description-dialog" role="dialog" aria-modal="true" aria-labelledby="adminDamageDescriptionTitle">
-                        <header>
-                            <div>
-                                <h3 id="adminDamageDescriptionTitle">Deskripsi Kerusakan</h3>
-                                <small class="admin-damage-description-service-id"></small>
-                            </div>
-                            <button type="button" class="admin-damage-description-close" aria-label="Tutup">×</button>
-                        </header>
-                        <p class="admin-damage-description-text"></p>
-                    </section>
-                `;
-                modal.addEventListener('click', event => {
-                    if (event.target === modal || event.target.closest('.admin-damage-description-close')) {
-                        closeAdminDamageDescription();
-                    }
-                });
-                document.body.appendChild(modal);
-            }
-
-            modal.querySelector('.admin-damage-description-service-id').textContent = item.id || item.ID || '-';
-            modal.querySelector('.admin-damage-description-text').textContent =
-                getServiceDamageDescription(item) || 'Deskripsi kerusakan belum tersedia untuk servis ini.';
-            modal.classList.add('open');
-
-            if (modal._handleEscape) document.removeEventListener('keydown', modal._handleEscape);
-            modal._handleEscape = event => {
-                if (event.key === 'Escape') closeAdminDamageDescription();
-            };
-            document.addEventListener('keydown', modal._handleEscape);
-            modal.querySelector('.admin-damage-description-close').focus();
-        }
-
-        function closeAdminDamageDescription() {
-            const modal = document.getElementById('adminDamageDescriptionModal');
-            if (!modal) return;
-            modal.classList.remove('open');
-            if (modal._handleEscape) {
-                document.removeEventListener('keydown', modal._handleEscape);
-                modal._handleEscape = null;
-            }
-        }
-
 
         function setServiceCache(records) {
             const normalized = (Array.isArray(records) ? records : []).map(record => {
@@ -2069,6 +2032,7 @@ function openServiceDetail(serviceId) {
                                 ${filtered.length ? filtered.map(item => {
                                     const f = getServiceFormFields(item);
                                     const maps = safeExternalUrl(f.google_maps || item.google_maps || item.maps || '');
+                                    const damageDescription = getServiceDamageDescription(item) || '-';
                                     return `
                                     <tr>
                                         <td class="id-cell">${escapeHtml(item.id)}</td>
@@ -2080,7 +2044,7 @@ function openServiceDetail(serviceId) {
                                         <td>${f.media_customer.length ? `<button type="button" class="btn-secondary small" data-tech-customer-media="${escapeHtml(item.id || '')}">Lihat Media</button>` : 'Belum Ada'}</td>
                                         <td>${escapeHtml(f.barang)}</td>
                                         <td title="${escapeHtml(f.keluhan)}">${escapeHtml(f.keluhan)}</td>
-                                        <td><button type="button" class="btn-secondary small admin-damage-description-button" data-admin-damage-description="${escapeHtml(item.id || '')}" aria-label="Lihat deskripsi kerusakan servis ${escapeHtml(item.id || '')}">Lihat Deskripsi</button></td>
+                                        <td class="admin-damage-description-cell"><span class="service-damage-description">${escapeHtml(damageDescription)}</span></td>
                                         <td><span class="status-badge ${getStatusClass(item.status)}">${escapeHtml(getServiceDisplayStatus(item.status))}</span></td>
                                         <td>
                                             ${(() => {
@@ -7446,7 +7410,7 @@ function techSession(){
       <div class="tech-section-header tech-client-toolbar-wrap">
         <div>
           <h3>Daftar Client</h3>
-          <p>Semua client yang ditugaskan kepada akun teknisi ini.</p>
+          <p>Data pelanggan dan servis yang ditugaskan kepada akun Anda, termasuk kontak, alamat, barang, keluhan, dan media pendukung.</p>
         </div>
         <div class="technician-toolbar tech-client-filters">
           <input id="techClientSearch" class="tech-client-search" placeholder="Cari client / barang / ID servis" aria-label="Cari client">
@@ -7468,6 +7432,7 @@ function techSession(){
               <th>GOOGLE MAPS</th>
               <th>BARANG</th>
               <th>KELUHAN</th>
+              <th>DESKRIPSI KERUSAKAN</th>
               <th>MEDIA CUSTOMER</th>
             </tr>
           </thead>
@@ -7475,7 +7440,8 @@ function techSession(){
             ${jobs.map(r=>{
               const form=getServiceFormFields(r);
               const dateValue=form.tanggal||techClientDateValue(r)||'-';
-              return `<tr data-search="${escapeHtml([r.id,r.customer_name,r.phone,r.alamat,r.item_name,r.keluhan].join(' ').toLowerCase())}">
+              const damageDescription=getServiceDamageDescription(r)||'-';
+              return `<tr data-search="${escapeHtml([r.id,r.customer_name,r.phone,r.alamat,r.item_name,r.keluhan,getServiceDamageDescription(r)].join(' ').toLowerCase())}">
                 <td data-label="ID Servis"><strong>${escapeHtml(r.id||'-')}</strong></td>
                 <td data-label="Tanggal">${escapeHtml(dateValue)}</td>
                 <td data-label="Customer">${escapeHtml(form.nama||r.customer_name||'-')}</td>
@@ -7484,9 +7450,10 @@ function techSession(){
                 <td data-label="Google Maps">${(form.google_maps||r.google_maps||r.maps)?`<a class="tech-map-link" href="${escapeHtml(form.google_maps||r.google_maps||r.maps)}" target="_blank" rel="noopener">Buka Maps</a>`:'-'}</td>
                 <td data-label="Barang">${escapeHtml(form.barang||r.item_name||'-')}</td>
                 <td class="tech-cell-complaint" data-label="Keluhan">${escapeHtml(form.keluhan||r.keluhan||'-')}</td>
+                <td class="tech-cell-description" data-label="Deskripsi Kerusakan"><span class="service-damage-description">${escapeHtml(damageDescription)}</span></td>
                 <td class="tech-media-cell" data-label="Media Customer">${renderCustomerMediaAction(r, form)}</td>
               </tr>`;
-            }).join('')||'<tr><td colspan="9"><div class="tech-empty">Tidak ada client yang ditugaskan kepada akun Anda.</div></td></tr>'}
+            }).join('')||'<tr><td colspan="10"><div class="tech-empty">Tidak ada client yang ditugaskan kepada akun Anda.</div></td></tr>'}
           </tbody>
         </table>
       </div>
@@ -7501,7 +7468,7 @@ function techSession(){
       <div class="tech-section-header tech-client-toolbar-wrap">
         <div>
           <h3>Update Status Pekerjaan</h3>
-          <p>Semua pekerjaan yang belum selesai ditampilkan tanpa batasan periode. Gunakan tombol Update Status untuk memperbarui pekerjaan.</p>
+          <p>Menampilkan pekerjaan yang ditugaskan kepada Anda dan belum selesai, tanpa batasan periode. Periksa data pelanggan dan keluhan, lalu gunakan tombol Update Status untuk mencatat progres serta hasil pekerjaan.</p>
         </div>
         <div class="technician-toolbar tech-client-filters">
           <input id="techClientSearch" class="tech-client-search" placeholder="Cari client / barang / ID servis" aria-label="Cari pekerjaan">
@@ -7523,6 +7490,7 @@ function techSession(){
               <th>GOOGLE MAPS</th>
               <th>BARANG</th>
               <th>KELUHAN</th>
+              <th>DESKRIPSI KERUSAKAN</th>
               <th>MEDIA CUSTOMER</th>
               <th>UPDATE STATUS</th>
             </tr>
@@ -7531,7 +7499,8 @@ function techSession(){
             ${active.map(r=>{
               const form=getServiceFormFields(r);
               const dateValue=form.tanggal||techClientDateValue(r)||'-';
-              return `<tr data-search="${escapeHtml([r.id,r.customer_name,r.phone,r.alamat,r.item_name,r.keluhan].join(' ').toLowerCase())}">
+              const damageDescription=getServiceDamageDescription(r)||'-';
+              return `<tr data-search="${escapeHtml([r.id,r.customer_name,r.phone,r.alamat,r.item_name,r.keluhan,getServiceDamageDescription(r)].join(' ').toLowerCase())}">
                 <td><strong>${escapeHtml(r.id||'-')}</strong></td>
                 <td>${escapeHtml(dateValue)}</td>
                 <td>${escapeHtml(form.nama||r.customer_name||'-')}</td>
@@ -7540,10 +7509,11 @@ function techSession(){
                 <td>${(form.google_maps||r.google_maps||r.maps)?`<a class="tech-map-link" href="${escapeHtml(form.google_maps||r.google_maps||r.maps)}" target="_blank" rel="noopener">Buka Maps</a>`:'-'}</td>
                 <td>${escapeHtml(form.barang||r.item_name||'-')}</td>
                 <td class="tech-cell-complaint">${escapeHtml(form.keluhan||r.keluhan||'-')}</td>
+                <td class="tech-cell-description"><span class="service-damage-description">${escapeHtml(damageDescription)}</span></td>
                 <td class="tech-media-cell">${renderCustomerMediaAction(r, form)}</td>
                 <td><button type="button" class="tech-btn tech-update-action-btn" data-tech-update="${escapeHtml(r.id)}">Update Status</button></td>
               </tr>`;
-            }).join('')||'<tr><td colspan="10"><div class="tech-empty">Tidak ada pekerjaan yang belum selesai pada periode yang dipilih.</div></td></tr>'}
+            }).join('')||'<tr><td colspan="11"><div class="tech-empty">Tidak ada pekerjaan yang belum selesai pada periode yang dipilih.</div></td></tr>'}
           </tbody>
         </table>
       </div>
@@ -7570,7 +7540,7 @@ function techSession(){
   function techStockPage(){
     const stock=getStockRecords();
     const safe=stock.filter(x=>x.status==='AMAN').length, low=stock.filter(x=>x.status==='MENIPIS').length, empty=stock.filter(x=>x.status==='HABIS').length;
-    return `<div class="tech-section"><div class="tech-section-header"><h3>Cek Stok</h3><span style="font-size:12px;color:#64748b">Data stok disinkronkan otomatis setiap 1 menit.</span></div>
+    return `<div class="tech-section"><div class="tech-section-header"><div><h3>Cek Stok</h3><p style="margin:3px 0 0;color:#64748b;font-size:12px">Informasi jumlah stok dan batas minimum untuk membantu teknisi memeriksa ketersediaan barang. Data ini hanya untuk dilihat dan disinkronkan otomatis setiap 1 menit.</p></div><span style="font-size:12px;color:#64748b">Sinkronisasi otomatis setiap 1 menit</span></div>
       <div class="tech-stock-summary"><div class="tech-stock-pill"><strong>${stock.length}</strong><span>Total Item</span></div><div class="tech-stock-pill"><strong>${safe}</strong><span>Aman</span></div><div class="tech-stock-pill"><strong>${low}</strong><span>Menipis</span></div><div class="tech-stock-pill"><strong>${empty}</strong><span>Habis</span></div></div>
       <div class="tech-table-wrap"><table class="tech-table"><thead><tr><th>Kode</th><th>Nama</th><th>Kategori</th><th>Satuan</th><th>Stok</th><th>Minimum</th><th>Status</th></tr></thead><tbody>
       ${stock.map(x=>{const cls=x.status==='AMAN'?'safe':x.status==='MENIPIS'?'low':'empty';return `<tr><td>${escapeHtml(x.code||'-')}</td><td>${escapeHtml(x.name||'-')}</td><td>${escapeHtml(x.category||'Umum')}</td><td>${escapeHtml(x.satuan||'pcs')}</td><td><strong>${Number(x.stokSaatIni||0)}</strong></td><td>${Number(x.minimum||0)}</td><td><span class="tech-status-badge ${cls}">${escapeHtml(x.status||'-')}</span></td></tr>`}).join('')||'<tr><td colspan="7"><div class="tech-empty">Belum ada data stok.</div></td></tr>'}
@@ -7587,7 +7557,14 @@ function techSession(){
     view.querySelectorAll(':scope > .leressae-back-row').forEach(el=>el.remove());
     const titles={dashboard:'Dashboard Teknisi',clients:'Lihat Client',status:'Update Status',stock:'Cek Stok',profile:'Profil Teknisi'};
     if(title) title.textContent=titles[page]||'Dashboard';
-    const subtitle=document.getElementById('techPageSubtitle'); if(subtitle) subtitle.textContent=page==='dashboard'?'Ringkasan tugas dan servis yang ditangani hari ini.':'Operasional teknisi terhubung dengan data Admin LERESSAE.';
+    const subtitles={
+      dashboard:'Ringkasan servis yang ditugaskan kepada akun teknisi ini, termasuk pekerjaan aktif dan yang telah selesai.',
+      clients:'Data pelanggan dan servis yang ditugaskan kepada Anda, beserta informasi kontak, lokasi, barang, keluhan, dan media.',
+      status:'Daftar pekerjaan yang belum selesai. Perbarui progres, keterangan pekerjaan, bukti foto, dan biaya servis melalui detail pekerjaan.',
+      stock:'Informasi stok barang untuk membantu pemeriksaan ketersediaan dan status jumlah stok.',
+      profile:'Informasi identitas dan status akun teknisi yang sedang digunakan.'
+    };
+    const subtitle=document.getElementById('techPageSubtitle'); if(subtitle) subtitle.textContent=subtitles[page]||'Operasional teknisi terhubung dengan data Admin LERES SAE.';
     view.innerHTML=page==='clients'?techClients():page==='status'?techStatusPage():page==='profile'?techProfile():page==='stock'?techStockPage():techDashboard();
     view.querySelectorAll(':scope > .leressae-back-row').forEach(el=>el.remove());
     document.querySelectorAll('[data-tech-menu]').forEach(b=>b.classList.toggle('active',b.dataset.techMenu===page));
@@ -7765,8 +7742,6 @@ function techSession(){
     const update=e.target.closest('[data-tech-update]');
     const refresh=e.target.closest('[data-tech-refresh]');
     const customerMedia=e.target.closest('[data-tech-customer-media]');
-    const damageDescription=e.target.closest('[data-admin-damage-description]');
-    if(damageDescription){openAdminDamageDescription(damageDescription.dataset.adminDamageDescription);return;}
     if(customerMedia){openTechCustomerMedia(customerMedia.dataset.techCustomerMedia);return;}
     if(open){document.getElementById('technicianShell')?.classList.add('tech-menu-open');return;}
     if(close){document.getElementById('technicianShell')?.classList.remove('tech-menu-open');return;}
