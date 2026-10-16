@@ -19883,3 +19883,24 @@ body.dark-mode #page-dashboard .hero-actions button.btn-secondary.btn-history:fo
   background:linear-gradient(145deg,#ffe080,#f4bc31) !important;
   border-color:#ffe080 !important;
 }
+
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body #page-admin .admin-tech-management-table thead th {
+  color:#315b4b !important;
+  -webkit-text-fill-color:#315b4b !important;
+  background:linear-gradient(180deg,#f0f7f2,#e8f2eb) !important;
+}
+
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body #page-admin .admin-tech-management-table .admin-tech-sort-button {
+  color:#315b4b !important;
+  -webkit-text-fill-color:#315b4b !important;
+}
+
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body #page-admin .admin-tech-management-table .admin-tech-sort-button span {
+  color:#498466 !important;
+  -webkit-text-fill-color:#498466 !important;
+}
+
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body #page-admin .admin-tech-management-table .admin-tech-sort-button:is(:hover,:focus-visible) {
+  color:#174b38 !important;
+  -webkit-text-fill-color:#174b38 !important;
+}
