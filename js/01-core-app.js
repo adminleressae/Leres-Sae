@@ -1930,9 +1930,23 @@ function openServiceDetail(serviceId) {
             const current = window.__ADMIN_SERVICE_FILTERS__ || {};
             return {
                 keyword: String(current.keyword || document.getElementById('adminSearchInput')?.value || '').trim(),
-                status: current.status || document.getElementById('adminFilterStatus')?.value || 'all',
-                date: current.date || document.getElementById('adminFilterDate')?.value || 'all'
+                // Halaman Data Servis admin memang khusus untuk permohonan yang
+                // belum ditugaskan, sehingga status dan rentangnya sengaja dikunci.
+                status: 'Sedang Diproses',
+                date: 'all'
             };
+        }
+
+        function getAdminServicesForExport() {
+            const filters = getAdminServiceFilters();
+            return getFilteredServices(
+                loadServiceRecords().filter(item => !isServiceTechnicianAssigned(item)),
+                filters
+            ).sort((a, b) => {
+                const dateA = new Date(a.created_at || a.timestamp || a.tanggal_masuk || a.form_tanggal || 0).getTime() || 0;
+                const dateB = new Date(b.created_at || b.timestamp || b.tanggal_masuk || b.form_tanggal || 0).getTime() || 0;
+                return dateB - dateA;
+            });
         }
 
         function renderServicesPage() {
@@ -1962,22 +1976,16 @@ function openServiceDetail(serviceId) {
                             <h3>Data Servis</h3>
                             <p class="section-sub-text">Daftar ini hanya menampilkan servis yang belum ditugaskan. Setelah teknisi disimpan, servis berpindah ke Servis Berjalan.</p>
                         </div>
+                        <button class="btn-primary admin-report-export-button" type="button" data-export-admin-services="true" title="Ekspor data IKM yang sudah diurutkan berdasarkan tanggal. Gunakan file ini untuk melihat jumlah orang dan lokasi pada setiap tanggal." aria-label="Ekspor Excel data IKM terurut berdasarkan tanggal">Export Excel</button>
+                        <p class="section-sub-text admin-export-hint">Klik tombol ini untuk mengunduh data IKM ke Excel. Data sudah diurutkan berdasarkan tanggal, sehingga admin dapat melihat jumlah orang dan lokasinya setiap hari.</p>
                     </div>
                     <div class="filter-grid">
                         <input id="adminSearchInput" type="text" placeholder="Cari nama, WhatsApp, ID" value="${escapeHtml(filters.keyword)}">
-                        <select id="adminFilterStatus">
-                            <option value="all" ${filters.status === 'all' ? 'selected' : ''}>Semua status</option>
-                            ${APP_CONFIG.statusOptions.map(status => `<option value="${status}" ${filters.status === status ? 'selected' : ''}>${status}</option>`).join('')}
+                        <select id="adminFilterStatus" disabled aria-label="Status terkunci: Sedang Diproses">
+                            <option value="Sedang Diproses" selected>Sedang Diproses</option>
                         </select>
-                        <select id="adminFilterDate">
-                            <option value="all" ${filters.date === 'all' ? 'selected' : ''}>Semua rentang</option>
-                            <option value="today" ${filters.date === 'today' ? 'selected' : ''}>Hari ini</option>
-                            <option value="yesterday" ${filters.date === 'yesterday' ? 'selected' : ''}>Kemarin</option>
-                            <option value="7" ${filters.date === '7' ? 'selected' : ''}>7 hari</option>
-                            <option value="30" ${filters.date === '30' ? 'selected' : ''}>30 hari</option>
-                            <option value="90" ${filters.date === '90' ? 'selected' : ''}>3 bulan</option>
-                            <option value="180" ${filters.date === '180' ? 'selected' : ''}>6 bulan</option>
-                            <option value="365" ${filters.date === '365' ? 'selected' : ''}>1 tahun</option>
+                        <select id="adminFilterDate" disabled aria-label="Rentang terkunci: Semua rentang">
+                            <option value="all" selected>Semua rentang</option>
                         </select>
                     </div>
                     <div class="admin-table-wrap">
@@ -3437,19 +3445,77 @@ function getReportCostLabel(item) {
         }
 
 
-function exportFilteredReportExcel(records) {
-            const headers = ['Tanggal', 'ID Servis', 'Customer', 'No. WhatsApp', 'Barang', 'Keluhan', 'Teknisi', 'Status', 'Biaya'];
-            const rows = records.map(item => {
+function exportFilteredReportExcel(records, options = {}) {
+            const isAdminServices = options.adminServices === true;
+            const getServiceDate = item => {
                 const fields = getServiceFormFields(item);
-                const date = fields.tanggal && fields.tanggal !== '-' ? fields.tanggal : item.created_at || item.tanggal_masuk || '';
+                return fields.tanggal && fields.tanggal !== '-' ? fields.tanggal : item.created_at || item.tanggal_masuk || '';
+            };
+            const getServiceDateKey = item => {
+                const value = String(getServiceDate(item) || '').trim();
+                const isoDate = value.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+                if (isoDate) return `${isoDate[1]}-${isoDate[2].padStart(2, '0')}-${isoDate[3].padStart(2, '0')}`;
+                const localDate = value.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})/);
+                if (localDate) return `${localDate[3]}-${localDate[2].padStart(2, '0')}-${localDate[1].padStart(2, '0')}`;
+                const parsed = new Date(value);
+                return Number.isNaN(parsed.getTime())
+                    ? ''
+                    : new Intl.DateTimeFormat('sv-SE', { timeZone: APP_CONFIG.TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit' }).format(parsed);
+            };
+            const sortedRecords = isAdminServices
+                ? [...records].sort((a, b) => {
+                    const dateA = getServiceDateKey(a);
+                    const dateB = getServiceDateKey(b);
+                    if (!dateA) return dateB ? 1 : 0;
+                    if (!dateB) return -1;
+                    return dateB.localeCompare(dateA);
+                })
+                : records;
+            const dailyCounts = new Map();
+            if (isAdminServices) {
+                sortedRecords.forEach(item => {
+                    const dateKey = getServiceDateKey(item) || '-';
+                    dailyCounts.set(dateKey, (dailyCounts.get(dateKey) || 0) + 1);
+                });
+            }
+            const displayedDates = new Set();
+            const headers = isAdminServices
+                ? ['Tanggal Masuk', 'Jumlah Masuk Tanggal Ini', 'ID Servis', 'Customer', 'No. WhatsApp', 'Alamat', 'Barang', 'Keluhan', 'Status']
+                : ['Tanggal', 'ID Servis', 'Customer', 'No. WhatsApp', 'Barang', 'Keluhan', 'Teknisi', 'Status', 'Biaya'];
+            const rows = sortedRecords.map(item => {
+                const fields = getServiceFormFields(item);
+                const date = getServiceDate(item);
+                if (isAdminServices) {
+                    const dateKey = getServiceDateKey(item) || '-';
+                    const isFirstForDate = !displayedDates.has(dateKey);
+                    displayedDates.add(dateKey);
+                    return [
+                        isFirstForDate ? formatDate(date) : '',
+                        isFirstForDate ? dailyCounts.get(dateKey) || 0 : '',
+                        item.id || '',
+                        fields.nama && fields.nama !== '-' ? fields.nama : item.customer_name || '',
+                        fields.whatsapp && fields.whatsapp !== '-' ? fields.whatsapp : item.phone || '',
+                        fields.alamat && fields.alamat !== '-' ? fields.alamat : item.alamat || '',
+                        fields.barang && fields.barang !== '-' ? fields.barang : item.item_name || '',
+                        fields.keluhan || item.keluhan || '',
+                        getReportStatus(item)
+                    ];
+                }
                 return [formatDate(date), item.id || '', fields.nama && fields.nama !== '-' ? fields.nama : item.customer_name || '', fields.whatsapp && fields.whatsapp !== '-' ? fields.whatsapp : item.phone || '', fields.barang && fields.barang !== '-' ? fields.barang : item.item_name || '', fields.keluhan || item.keluhan || '', fields.teknisi && fields.teknisi !== '-' ? fields.teknisi : item.technician || 'Belum ada', getReportStatus(item), getReportCostLabel(item)];
             });
             const columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+            const workbookTitle = isAdminServices ? 'Data Servis' : 'Laporan Servis';
+            const tableName = isAdminServices ? 'DataServis' : 'LaporanServis';
+            const columnWidths = isAdminServices
+                ? '<col min="1" max="1" width="18" customWidth="1"/><col min="2" max="2" width="24" customWidth="1"/><col min="3" max="3" width="22" customWidth="1"/><col min="4" max="4" width="27" customWidth="1"/><col min="5" max="5" width="20" customWidth="1"/><col min="6" max="6" width="38" customWidth="1"/><col min="7" max="7" width="25" customWidth="1"/><col min="8" max="8" width="42" customWidth="1"/><col min="9" max="9" width="22" customWidth="1"/>'
+                : '<col min="1" max="1" width="17" customWidth="1"/><col min="2" max="2" width="23" customWidth="1"/><col min="3" max="3" width="27" customWidth="1"/><col min="4" max="4" width="20" customWidth="1"/><col min="5" max="5" width="25" customWidth="1"/><col min="6" max="6" width="42" customWidth="1"/><col min="7" max="7" width="24" customWidth="1"/><col min="8" max="8" width="22" customWidth="1"/><col min="9" max="9" width="20" customWidth="1"/>';
             const escapeXml = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[character]));
-            const inlineStringCell = (reference, value, style) => `<c r="${reference}" s="${style}" t="inlineStr"><is><t xml:space="preserve">${escapeXml(value)}</t></is></c>`;
+            const inlineStringCell = (reference, value, style) => isAdminServices && typeof value === 'number' && Number.isFinite(value)
+                ? `<c r="${reference}" s="${style}"><v>${value}</v></c>`
+                : `<c r="${reference}" s="${style}" t="inlineStr"><is><t xml:space="preserve">${escapeXml(value)}</t></is></c>`;
             const worksheetRows = [
-                `<row r="1" ht="32" customHeight="1">${inlineStringCell('A1', 'LAPORAN SERVIS', 1)}</row>`,
-                `<row r="2" ht="22" customHeight="1">${inlineStringCell('A2', `Rincian servis terfilter · ${rows.length} data · Diekspor ${new Date().toLocaleString('id-ID')}`, 2)}</row>`,
+                `<row r="1" ht="32" customHeight="1">${inlineStringCell('A1', workbookTitle.toUpperCase(), 1)}</row>`,
+                `<row r="2" ht="22" customHeight="1">${inlineStringCell('A2', `${isAdminServices ? 'Data servis sesuai filter' : 'Rincian servis terfilter'} · ${rows.length} data · Diekspor ${new Date().toLocaleString('id-ID')}`, 2)}</row>`,
                 '<row r="3"/>',
                 `<row r="4" ht="30" customHeight="1">${headers.map((header, index) => inlineStringCell(`${columns[index]}4`, header, 3)).join('')}</row>`,
                 ...rows.map((row, rowIndex) => `<row r="${rowIndex + 5}" ht="24" customHeight="1">${row.map((value, columnIndex) => inlineStringCell(`${columns[columnIndex]}${rowIndex + 5}`, value, rowIndex % 2 === 0 ? 4 : 5)).join('')}</row>`)
@@ -3467,7 +3533,7 @@ function exportFilteredReportExcel(records) {
                 },
                 {
                     name: 'xl/workbook.xml',
-                    content: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Laporan Servis" sheetId="1" r:id="rId1"/></sheets></workbook>'
+                    content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${workbookTitle}" sheetId="1" r:id="rId1"/></sheets></workbook>`
                 },
                 {
                     name: 'xl/_rels/workbook.xml.rels',
@@ -3479,7 +3545,7 @@ function exportFilteredReportExcel(records) {
                 },
                 {
                     name: 'xl/worksheets/sheet1.xml',
-                    content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><dimension ref="A1:I${lastRow}"/><sheetViews><sheetView showGridLines="0" workbookViewId="0"><pane ySplit="4" topLeftCell="A5" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A5" sqref="A5"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="21"/><cols><col min="1" max="1" width="17" customWidth="1"/><col min="2" max="2" width="23" customWidth="1"/><col min="3" max="3" width="27" customWidth="1"/><col min="4" max="4" width="20" customWidth="1"/><col min="5" max="5" width="25" customWidth="1"/><col min="6" max="6" width="42" customWidth="1"/><col min="7" max="7" width="24" customWidth="1"/><col min="8" max="8" width="22" customWidth="1"/><col min="9" max="9" width="20" customWidth="1"/></cols><sheetData>${worksheetRows}</sheetData><mergeCells count="2"><mergeCell ref="A1:I1"/><mergeCell ref="A2:I2"/></mergeCells><pageMargins left="0.3" right="0.3" top="0.5" bottom="0.5" header="0.2" footer="0.2"/><pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/><tableParts count="1"><tablePart r:id="rId1"/></tableParts></worksheet>`
+                    content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><dimension ref="A1:I${lastRow}"/><sheetViews><sheetView showGridLines="0" workbookViewId="0"><pane ySplit="4" topLeftCell="A5" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A5" sqref="A5"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="21"/><cols>${columnWidths}</cols><sheetData>${worksheetRows}</sheetData><mergeCells count="2"><mergeCell ref="A1:I1"/><mergeCell ref="A2:I2"/></mergeCells><pageMargins left="0.3" right="0.3" top="0.5" bottom="0.5" header="0.2" footer="0.2"/><pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/><tableParts count="1"><tablePart r:id="rId1"/></tableParts></worksheet>`
                 },
                 {
                     name: 'xl/worksheets/_rels/sheet1.xml.rels',
@@ -3487,11 +3553,11 @@ function exportFilteredReportExcel(records) {
                 },
                 {
                     name: 'xl/tables/table1.xml',
-                    content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><table xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" id="1" name="LaporanServis" displayName="LaporanServis" ref="A4:I${lastRow}" totalsRowShown="0"><autoFilter ref="A4:I${lastRow}"/><tableColumns count="${headers.length}">${tableColumns}</tableColumns><tableStyleInfo name="TableStyleMedium2" showFirstColumn="0" showLastColumn="0" showRowStripes="1" showColumnStripes="0"/></table>`
+                    content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><table xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" id="1" name="${tableName}" displayName="${tableName}" ref="A4:I${lastRow}" totalsRowShown="0"><autoFilter ref="A4:I${lastRow}"/><tableColumns count="${headers.length}">${tableColumns}</tableColumns><tableStyleInfo name="TableStyleMedium2" showFirstColumn="0" showLastColumn="0" showRowStripes="1" showColumnStripes="0"/></table>`
                 }
             ];
-            downloadXlsxWorkbook(workbookFiles, 'laporan-servis.xlsx');
-            showToast('File Excel laporan berhasil diunduh.', 'success');
+            downloadXlsxWorkbook(workbookFiles, isAdminServices ? 'data-servis.xlsx' : 'laporan-servis.xlsx');
+            showToast(isAdminServices ? 'File Excel Data Servis berhasil diunduh.' : 'File Excel laporan berhasil diunduh.', 'success');
         }
 
 
@@ -4629,6 +4695,11 @@ function renderReportsPage() {
                     exportFilteredReportExcel(getReportFilteredRecords());
                     return;
                 }
+                const exportAdminServicesButton = target.closest('[data-export-admin-services]');
+                if (exportAdminServicesButton) {
+                    exportFilteredReportExcel(getAdminServicesForExport(), { adminServices: true });
+                    return;
+                }
             }, true);
             document.addEventListener('input', function (event) {
                 const target = event.target;
@@ -5577,6 +5648,8 @@ function renderReportsPage() {
                 document.addEventListener('click', function(event){
                     const card = event.target.closest && event.target.closest('.media-item');
                     if (!card || !card.querySelector('img, video')) return;
+                    // Public media now uses the same detail page as news; do not open the legacy lightbox.
+                    if (card.closest('#page-media, #page-media-detail, #page-dashboard')) return;
                     if (event.target.closest('video') && !event.target.closest('video').paused) return;
                     const currentItems = getMediaItems();
                     const index = currentItems.findIndex(item => item.element === card);
@@ -6180,7 +6253,7 @@ function renderReportsPage() {
             const videoHost = document.getElementById('publicMediaVideoGrid');
             if (photoHost) {
                 photoHost.innerHTML = photos.length ? photos.map(item => `
-                    <figure class="media-item" data-full-desc="${escapeHtml(item.DESKRIPSI || '')}">
+                    <figure class="media-item" data-public-media="${escapeHtml(item.ID_MEDIA || '')}" data-full-desc="${escapeHtml(item.DESKRIPSI || '')}">
                         <img src="${escapeHtml(mediaImageViewUrl(item))}" data-fallback="${escapeHtml(item.THUMBNAIL_URL || '')}" alt="${escapeHtml(item.JUDUL || 'Dokumentasi foto')}" onerror="if(this.dataset.fallback&&this.src!==this.dataset.fallback){this.src=this.dataset.fallback}else{this.style.display='none'}" />
                         <figcaption>
                             <div class="title">${escapeHtml(item.JUDUL || 'Judul belum diisi')}</div>
@@ -6303,7 +6376,8 @@ function renderReportsPage() {
                             </div>
                             <form id="mediaPhotoForm" class="media-admin-form" data-media-type="FOTO" style="display:none;">
                                 <div class="media-modal-header"><h3 class="media-modal-title">Tambah Foto</h3><button type="button" class="media-modal-close" data-media-cancel="FOTO" aria-label="Tutup">×</button></div>
-                                <div class="field-row"><label>Upload Foto</label><input type="file" accept="image/*" name="file" /></div>
+                                <div class="field-row"><label>Upload Foto</label><input type="file" accept="image/*" name="file" /><small class="field-help">Pilih file atau gunakan URL gambar di bawah.</small></div>
+                                <div class="field-row"><label>URL Gambar</label><input type="url" name="image_url" placeholder="https://contoh.com/gambar.jpg" autocomplete="off" /></div>
                                 <div class="field-row"><label>Judul</label><input type="text" name="judul" placeholder="Judul foto" autocomplete="off" /></div>
                                 <div class="field-row"><label>Deskripsi</label><textarea name="deskripsi" rows="3" placeholder="Deskripsi foto"></textarea></div>
                                 <div class="field-row"><label>Status</label><select name="status"><option value="AKTIF">Aktif</option><option value="NONAKTIF">Nonaktif</option></select></div>
@@ -6632,6 +6706,18 @@ function renderReportsPage() {
 
         function openPublicNewsModal(news) {
             if (!news) return;
+            const detail = document.getElementById('page-news-detail');
+            if (detail) {
+                const date = news.createdAt || news.created_at || news.date || news.tanggal || news.publishedAt || '';
+                const formattedDate = date ? new Date(date).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '';
+                const paragraphs = String(news.content || 'Tidak ada isi berita.').split(/\n\s*\n|\r?\n/).filter(Boolean).map(p => `<p>${escapeHtml(p.trim())}</p>`).join('');
+                const image = getNewsImageUrl(news);
+                detail.querySelector('.news-detail-main').innerHTML = `<span class="tutorial-tag">${escapeHtml(news.category || 'Berita')}</span><h1>${escapeHtml(news.title || 'Tanpa judul')}</h1><div class="news-detail-meta">${formattedDate ? escapeHtml(formattedDate) : ''}</div>${image ? `<img class="news-detail-image" src="${escapeHtml(image)}" alt="${escapeHtml(news.title || 'Gambar berita')}" loading="lazy">` : ''}<div class="news-detail-content">${paragraphs}</div>`;
+                const latest = (window.__PUBLIC_NEWS_CACHE__ || []).filter(x => String(x.id) !== String(news.id));
+                detail.querySelector('.news-detail-latest-list').innerHTML = latest.map(x => `<button type="button" class="news-latest-item" data-public-news="${escapeHtml(String(x.id ?? ''))}">${getNewsImageUrl(x) ? `<img src="${escapeHtml(getNewsImageUrl(x))}" alt="">` : '<span class="news-latest-placeholder"></span>'}<span><strong>${escapeHtml(x.title || 'Tanpa judul')}</strong><small>${escapeHtml(x.category || 'Berita')}</small></span></button>`).join('') || '<p class="news-detail-empty">Belum ada berita lainnya.</p>';
+                navigateTo('page-news-detail');
+                return;
+            }
             let modal = document.getElementById('publicNewsModal');
             if (!modal) {
                 modal = document.createElement('div');
@@ -6658,6 +6744,17 @@ function renderReportsPage() {
             modal.querySelector('.public-news-close').focus();
         }
 
+        function openPublicMediaDetail(media) {
+            if (!media) return;
+            const detail = document.getElementById('page-media-detail');
+            if (!detail) return;
+            const image = mediaImageViewUrl(media);
+            detail.querySelector('.media-detail-main').innerHTML = `<span class="tutorial-tag">Foto</span><h1>${escapeHtml(media.JUDUL || 'Dokumentasi foto')}</h1><div class="media-detail-meta">Dokumentasi Media LERES SAE</div>${image ? `<img class="media-detail-image" src="${escapeHtml(image)}" alt="${escapeHtml(media.JUDUL || 'Dokumentasi foto')}">` : ''}<div class="media-detail-content"><p>${escapeHtml(media.DESKRIPSI || 'Tidak ada deskripsi media.')}</p></div>`;
+            const latest = getMediaRecords().filter(x => String(x.TYPE || '').toUpperCase() === 'FOTO' && String(x.STATUS || '').toUpperCase() === 'AKTIF' && String(x.ID_MEDIA) !== String(media.ID_MEDIA));
+            detail.querySelector('.media-detail-latest-list').innerHTML = latest.map(x => `<button type="button" class="media-latest-item" data-public-media="${escapeHtml(String(x.ID_MEDIA || ''))}"><img src="${escapeHtml(mediaImageViewUrl(x))}" alt=""><span><strong>${escapeHtml(x.JUDUL || 'Dokumentasi foto')}</strong><small>Foto</small></span></button>`).join('') || '<p class="news-detail-empty">Belum ada media lainnya.</p>';
+            navigateTo('page-media-detail');
+        }
+
 
         function openNewsEditor(id) {
             const current = (window.__NEWS_CACHE__ || []).find(x => x.id === id) || { status: 'DRAFT' };
@@ -6671,6 +6768,8 @@ function renderReportsPage() {
         function setupNewsViews() {
             const nav = document.querySelector('.nav-links'); if (nav && !document.getElementById('nav-info')) nav.insertAdjacentHTML('beforeend', '<li><a href="#page-info" onclick="navigateTo(\'page-info\', {fromNavbar:true}); return false;" class="nav-item" id="nav-info">Berita</a></li>');
             const wrapper = document.querySelector('.wrapper'); if (wrapper && !document.getElementById('page-info')) wrapper.insertAdjacentHTML('beforeend', '<section id="page-info" class="page-view card-container"><h1 class="page-header-title">Info / Berita</h1><p class="page-header-desc">Informasi terbaru LERES SAE BPTI Disperindag DIY.</p><div id="publicNewsList" class="tutorial-scroll" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));overflow:visible"></div></section>');
+            if (wrapper && !document.getElementById('page-news-detail')) wrapper.insertAdjacentHTML('beforeend', '<section id="page-news-detail" class="page-view news-detail-page"><div class="news-detail-layout"><main class="news-detail-main"></main><aside class="news-detail-sidebar"><h2>Berita Terbaru</h2><div class="news-detail-latest-list"></div></aside></div></section>');
+            if (wrapper && !document.getElementById('page-media-detail')) wrapper.insertAdjacentHTML('beforeend', '<section id="page-media-detail" class="page-view news-detail-page media-detail-page"><div class="news-detail-layout media-detail-layout"><main class="media-detail-main"></main><aside class="news-detail-sidebar media-detail-sidebar"><h2>Media Terbaru</h2><div class="media-detail-latest-list"></div></aside></div></section>');
             const dashboard = document.getElementById('page-dashboard');
             if (dashboard && !document.getElementById('homeMediaSpotlight')) dashboard.insertAdjacentHTML('beforeend', '<section id="homeMediaSpotlight" class="home-media-spotlight" aria-label="Sorotan dokumentasi media"><div class="media-spotlight-head"><div><h2 class="media-spotlight-title">Sorotan Media</h2><p class="media-spotlight-subtitle">Momen kegiatan, praktik, dan kolaborasi terbaru BPTI Disperindag DIY.</p></div></div><div class="home-media-content"><div class="home-media-empty">Memuat dokumentasi foto…</div></div></section>');
             if (dashboard && !document.getElementById('homeNewsList')) {
@@ -6821,11 +6920,13 @@ function renderReportsPage() {
                         const fileInput = form.querySelector('input[name="file"]');
                         const judul = form.querySelector('input[name="judul"]');
                         const youtubeUrl = form.querySelector('input[name="youtube_url"]');
+                        const imageUrl = form.querySelector('input[name="image_url"]');
                         const deskripsi = form.querySelector('textarea[name="deskripsi"]');
                         const status = form.querySelector('select[name="status"]');
                         if (fileInput) fileInput.value = '';
                         if (judul) judul.value = target.JUDUL || '';
                         if (youtubeUrl) youtubeUrl.value = String(target.FILE_URL || '').match(/youtube\.com|youtu\.be/i) ? (target.FILE_URL || '') : '';
+                        if (imageUrl) imageUrl.value = type === 'FOTO' && !String(target.FILE_URL || '').match(/drive\.google\.com|googleusercontent\.com/i) ? (target.FILE_URL || '') : '';
                         if (deskripsi) deskripsi.value = target.DESKRIPSI || target.KETERANGAN || '';
                         if (status) status.value = String(target.STATUS || 'AKTIF').toUpperCase();
                     }
@@ -6846,6 +6947,12 @@ function renderReportsPage() {
                 window.__ADMIN_MEDIA_FORM_BUSY__ = false;
             }
             const publicNews = event.target.closest('[data-public-news]'); if (publicNews) { const n = (window.__PUBLIC_NEWS_CACHE__ || []).find(x => String(x.id ?? '') === String(publicNews.dataset.publicNews ?? '')); if (n) openPublicNewsModal(n); }
+            const publicMedia = event.target.closest('[data-public-media], .home-media-slide');
+            if (publicMedia && (!event.target.closest('button') || publicMedia.classList.contains('media-latest-item'))) {
+                const records = getMediaRecords().filter(x => String(x.TYPE || '').toUpperCase() === 'FOTO');
+                const media = publicMedia.dataset.publicMedia ? records.find(x => String(x.ID_MEDIA || '') === String(publicMedia.dataset.publicMedia)) : records.find(x => String(x.JUDUL || '') === String(publicMedia.querySelector('h3, .title')?.textContent || ''));
+                if (media) openPublicMediaDetail(media);
+            }
         });
         document.addEventListener('input', event => {
             if (event.target.id === 'consultationSearch') {
@@ -6869,6 +6976,7 @@ function renderReportsPage() {
             const judul = form.querySelector('input[name="judul"]')?.value.trim() || '';
             const deskripsi = form.querySelector('textarea[name="deskripsi"]')?.value.trim() || '';
             const youtubeUrl = form.querySelector('input[name="youtube_url"]')?.value.trim() || '';
+            const imageUrl = form.querySelector('input[name="image_url"]')?.value.trim() || '';
             const status = String(form.querySelector('select[name="status"]')?.value || 'AKTIF').toUpperCase();
             const fileElement = form.querySelector('input[name="file"]');
             const file = fileElement && fileElement.files ? fileElement.files[0] : null;
@@ -6888,8 +6996,8 @@ function renderReportsPage() {
                 showToast('Link URL YouTube wajib diisi.', 'error');
                 return;
             }
-            if (mediaType === 'FOTO' && mode !== 'edit' && !file) {
-                showToast('Pilih file media terlebih dahulu.', 'error');
+            if (mediaType === 'FOTO' && mode !== 'edit' && !file && !imageUrl) {
+                showToast('Pilih file media atau isi URL gambar terlebih dahulu.', 'error');
                 return;
             }
             if (!isApiConfigured()) {
@@ -6936,6 +7044,12 @@ function renderReportsPage() {
                     basePayload.THUMBNAIL_URL = youtubeUrl;
                     basePayload.FILE_NAME = judul;
                     basePayload.MIME_TYPE = 'video/youtube';
+                }
+                if (mediaType === 'FOTO' && !uploaded && imageUrl) {
+                    basePayload.FILE_URL = imageUrl;
+                    basePayload.THUMBNAIL_URL = imageUrl;
+                    basePayload.FILE_NAME = judul;
+                    basePayload.MIME_TYPE = 'image/url';
                 }
                 const action = mode === 'edit' ? 'updateMedia' : 'addMedia';
                 const saveResponse = await apiRequest(action, basePayload);
@@ -7097,8 +7211,25 @@ function techSession(){
 
 
   function renderTechStatusCountBadge(){
-    const count=techAssigned().filter(record=>getServiceDisplayStatus(record.status)!=='Selesai').length;
-    return count>0?`<span class="tech-nav-count" aria-label="${count} pekerjaan belum selesai">${count>99?'99+':count}</span>`:'';
+    const count=techAssigned().filter(record=>isTechnicianPendingUpdate(record)).length;
+    return count>0?`<span class="tech-nav-count" aria-label="${count} tugas baru dari Admin belum diperbarui">${count>99?'99+':count}</span>`:'';
+  }
+
+  // Assignment by Admin is marked with ADMIN_1 (or another admin value).
+  // A technician update writes admin_update: TEKNISI, which clears the badge.
+  function isTechnicianPendingUpdate(record){
+    if(!record || getServiceDisplayStatus(record.status)==='Selesai') return false;
+    const marker=String(record.admin_update||record.updated_by||'').trim().toUpperCase();
+    return marker !== 'TEKNISI';
+  }
+
+  function syncTechStatusBadge(){
+    const button=document.querySelector('.technician-nav button[data-tech-menu="status"]');
+    if(!button) return;
+    const old=button.querySelector('.tech-nav-count');
+    if(old) old.remove();
+    const badge=renderTechStatusCountBadge();
+    if(badge) button.insertAdjacentHTML('beforeend',badge);
   }
 
 
@@ -7438,6 +7569,8 @@ function techSession(){
 
 
   async function refreshTechData(){
+    const knownAssignments = Array.isArray(window.__TECH_KNOWN_ASSIGNMENTS__)
+      ? new Set(window.__TECH_KNOWN_ASSIGNMENTS__.map(String)) : null;
     if(isApiConfigured()){
       try{
         await refreshServiceCacheFromApi();
@@ -7449,6 +7582,25 @@ function techSession(){
     if(!isTechnicianLoggedIn()){
       return;
     }
+    const assignedNow = techAssigned();
+    const assignedIds = assignedNow.map(record => String(record.id || record.ID || '')).filter(Boolean);
+    if(knownAssignments){
+      const newAssignments = assignedNow.filter(record => {
+        const id = String(record.id || record.ID || '');
+        return id && !knownAssignments.has(id) && getServiceDisplayStatus(record.status) !== 'Selesai';
+      });
+      if(newAssignments.length){
+        const first = newAssignments[0];
+        showToast(
+          newAssignments.length === 1
+            ? `Tugas servis baru diterima: ${first.id || first.ID || 'ID servis'}.`
+            : `${newAssignments.length} tugas servis baru diterima.`,
+          'success'
+        );
+      }
+    }
+    window.__TECH_KNOWN_ASSIGNMENTS__ = assignedIds;
+    syncTechStatusBadge();
     const shell=document.getElementById('technicianShell');
     const currentPage=shell?.dataset?.techPage || 'dashboard';
     if(document.getElementById('technicianView')){
