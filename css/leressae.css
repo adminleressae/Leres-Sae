@@ -1246,6 +1246,67 @@ body.login-modal-open {
     .login-dropdown-content.show {
         display: block !important;
     }
+
+    /* Mobile nav: keep the Layanan submenu attached to its trigger. */
+    .navbar .nav-links > li.dropdown {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+    }
+    .navbar .nav-links > li.dropdown > #layananToggle {
+        position: relative !important;
+        z-index: 2 !important;
+        margin: 0 !important;
+        border-radius: 9px !important;
+    }
+    .navbar .nav-links > li.dropdown.open > #layananToggle,
+    .navbar .nav-links > li.dropdown:has(.dropdown-content.show) > #layananToggle {
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        border-bottom-color: transparent !important;
+        box-shadow: none !important;
+    }
+    .navbar .nav-links > li.dropdown > .dropdown-content.show {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        transform: none !important;
+        width: 100% !important;
+        margin: -1px 0 0 !important;
+        padding: 0 !important;
+        border: 1px solid #dbe4ef !important;
+        border-top: 0 !important;
+        border-radius: 0 0 9px 9px !important;
+        background: #f8fbfc !important;
+        box-shadow: none !important;
+        overflow: hidden !important;
+    }
+    .navbar .nav-links > li.dropdown > .dropdown-content.show li {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .navbar .nav-links > li.dropdown > .dropdown-content.show li + li {
+        border-top: 1px solid #e5edf0 !important;
+    }
+    .navbar .nav-links > li.dropdown > .dropdown-content.show li a {
+        min-height: 38px !important;
+        margin: 0 !important;
+        padding: 9px 13px !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        color: #164255 !important;
+        font-size: .86rem !important;
+        line-height: 1.3 !important;
+    }
+    .navbar .nav-links > li.dropdown > .dropdown-content.show li a:hover,
+    .navbar .nav-links > li.dropdown > .dropdown-content.show li a:focus {
+        background: #e8f7f3 !important;
+        color: #075e55 !important;
+    }
 }
 
 /* Direct state rules for the live theme toggle and report page. */
@@ -3453,6 +3514,13 @@ html:has(#leressaeThemeToggle[aria-pressed="true"]) .technician-shell .tech-upda
         align-items: center;
         flex-wrap: wrap;
         padding: 10px 12px;
+        background: #ffffff !important;
+        background-image: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border-color: #dbe7e3 !important;
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14) !important;
+        isolation: isolate;
     }
     .brand {
         width: auto;
@@ -3481,6 +3549,8 @@ html:has(#leressaeThemeToggle[aria-pressed="true"]) .technician-shell .tech-upda
         opacity: 0;
         visibility: hidden;
         border-top: 1px solid transparent;
+        background: #ffffff !important;
+        background-image: none !important;
         transition:                     max-height 0.28s ease,                     opacity 0.18s ease,                     margin 0.28s ease,                     padding 0.28s ease,                     border-color 0.2s ease,                     visibility 0s linear 0.28s;
     }
     .navbar.nav-open .nav-right {
@@ -3490,6 +3560,7 @@ html:has(#leressaeThemeToggle[aria-pressed="true"]) .technician-shell .tech-upda
         opacity: 1;
         visibility: visible;
         border-top-color: #e2e8f0;
+        background: #ffffff !important;
         transition-delay: 0s;
     }
     .nav-links {
@@ -3564,7 +3635,10 @@ html:has(#leressaeThemeToggle[aria-pressed="true"]) .technician-shell .tech-upda
     html[data-leressae-theme="dark"] .navbar,
     html[data-theme="dark"] .navbar,
     body.dark-mode .navbar {
-        background: rgba(11, 18, 32, 0.96) !important;
+        background: #0b1220 !important;
+        background-image: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
         border-color: rgba(148, 163, 184, 0.18) !important;
         box-shadow: 0 12px 28px rgba(2, 6, 23, 0.28) !important;
     }
@@ -3579,7 +3653,18 @@ html:has(#leressaeThemeToggle[aria-pressed="true"]) .technician-shell .tech-upda
     html[data-leressae-theme="dark"] .nav-right,
     html[data-theme="dark"] .nav-right,
     body.dark-mode .nav-right {
+        background: #0b1220 !important;
+        background-image: none !important;
         border-top-color: rgba(148, 163, 184, 0.18) !important;
+    }
+    html[data-leressae-theme="dark"] .navbar .nav-links,
+    html[data-theme="dark"] .navbar .nav-links,
+    body.dark-mode .navbar .nav-links,
+    html[data-leressae-theme="dark"] .navbar .login-dropdown,
+    html[data-theme="dark"] .navbar .login-dropdown,
+    body.dark-mode .navbar .login-dropdown {
+        background: #0b1220 !important;
+        background-image: none !important;
     }
     html[data-leressae-theme="dark"] .nav-links li a,
     html[data-theme="dark"] .nav-links li a,
@@ -3595,7 +3680,7 @@ html:has(#leressaeThemeToggle[aria-pressed="true"]) .technician-shell .tech-upda
     html[data-theme="dark"] .nav-links li a.active,
     body.dark-mode .nav-links li a.active {
         color: #b5e8d2 !important;
-        background: rgba(8,127,112, 0.24) !important;
+        background: #087f70 !important;
         border-color: rgba(129, 204, 176, 0.42) !important;
     }
     html[data-leressae-theme="dark"] .dropdown-content.show,
@@ -3615,6 +3700,12 @@ html:has(#leressaeThemeToggle[aria-pressed="true"]) .technician-shell .tech-upda
     body.dark-mode .login-dropdown-content a {
         color: #dbeafc !important;
         background: transparent !important;
+    }
+    html[data-leressae-theme="dark"] .navbar .dropdown-content.show,
+    html[data-theme="dark"] .navbar .dropdown-content.show,
+    body.dark-mode .navbar .dropdown-content.show {
+        background: #111c2d !important;
+        border-color: rgba(148, 163, 184, 0.24) !important;
     }
     html[data-leressae-theme="dark"] .dropdown-content li a:hover,
     html[data-theme="dark"] .dropdown-content li a:hover,
@@ -19903,4 +19994,29 @@ html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body #page-admin
 html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body #page-admin .admin-tech-management-table .admin-tech-sort-button:is(:hover,:focus-visible) {
   color:#174b38 !important;
   -webkit-text-fill-color:#174b38 !important;
+}
+
+/* Final mobile dark-nav surface: remove late light-theme overrides. */
+@media (max-width: 900px) {
+  html[data-leressae-theme="dark"] .navbar .nav-right,
+  html[data-theme="dark"] .navbar .nav-right,
+  body.dark-mode .navbar .nav-right,
+  html[data-leressae-theme="dark"] .navbar .nav-links,
+  html[data-theme="dark"] .navbar .nav-links,
+  body.dark-mode .navbar .nav-links,
+  html[data-leressae-theme="dark"] .navbar .login-dropdown,
+  html[data-theme="dark"] .navbar .login-dropdown,
+  body.dark-mode .navbar .login-dropdown {
+    background: #0b1220 !important;
+    background-image: none !important;
+  }
+  html[data-leressae-theme="dark"] .navbar .dropdown-content.show,
+  html[data-theme="dark"] .navbar .dropdown-content.show,
+  body.dark-mode .navbar .dropdown-content.show,
+  html[data-leressae-theme="dark"] .navbar .login-dropdown-content.show,
+  html[data-theme="dark"] .navbar .login-dropdown-content.show,
+  body.dark-mode .navbar .login-dropdown-content.show {
+    background: #111c2d !important;
+    border-color: #334155 !important;
+  }
 }
