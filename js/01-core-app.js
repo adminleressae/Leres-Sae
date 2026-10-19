@@ -23,7 +23,7 @@ const CONFIG = {
             'healthCheck','loginAdmin','loginUser','saveTechnician','syncTechnicians','getTechnicians','getServices','getServiceStatus','getDashboard',
             'assignServiceTechnician',
             'syncFormResponses','cleanupDuplicateServices','updateServiceStatus','getStock','getStockAdditional','getStockHistory',
-            'stockIn','stockOut','getNews','addNews','updateNews','deleteNews','getLocations',
+            'stockIn','stockOut','getNews','addNews','updateNews','deleteNews','getLocations','getAgenda','saveAgenda','deleteAgenda',
             'getMedia','uploadFileToDrive','uploadMedia','addMedia','updateMedia','deleteMedia', 'syncMediaMetadata', 'migrateExistingMediaMetadata'
         ]); // Expanded only after a successful action response.
 
@@ -701,7 +701,7 @@ const CONFIG = {
             const protectedActions = [
                 'syncFormResponses', 'cleanupDuplicateServices', 'updateServiceStatus', 'assignServiceTechnician', 'saveTechnician', 'syncTechnicians',
                 'getTechnicians', 'addStock', 'stockIn', 'stockOut',
-                'addNews', 'updateNews', 'deleteNews',
+                'addNews', 'updateNews', 'deleteNews', 'saveAgenda', 'deleteAgenda',
                 'uploadFileToDrive', 'uploadMedia', 'addMedia', 'updateMedia', 'deleteMedia', 'syncMediaMetadata', 'migrateExistingMediaMetadata',
                 'getConsultationAttachment', 'getCompletedConsultations', 'completeConsultation'
             ];
@@ -1718,6 +1718,7 @@ function openServiceDetail(serviceId) {
                 stock: { label: 'Stock Flow', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5 12 3l9 4.5-9 4.5L3 7.5Z"></path><path d="M3 12l9 4.5 9-4.5"></path><path d="M3 16.5 12 21l9-4.5"></path></svg>' },
                 media: { label: 'Update Media', iconSvg: '<span class="admin-nav-icon" aria-hidden="true">◫</span>' },
                 news: { label: 'Update Berita', iconSvg: '<span class="admin-nav-icon" aria-hidden="true">▤</span>' },
+                agenda: { label: 'Update Kalender Kegiatan', iconSvg: '<span class="admin-nav-icon" aria-hidden="true">▦</span>' },
                 reports: { label: 'Laporan', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-8"></path><path d="M22 20v-12"></path></svg>' },
                 settings: { label: 'Pengaturan', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.82-.33 1.7 1.7 0 0 0-1 1.54V20a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9.8 18.4a1.7 1.7 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.54-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9.8 5.6a1.7 1.7 0 0 0 1-1.54V4a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 14.2 5.6a1.7 1.7 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.38.38.94.49 1.54 1H21a2 2 0 1 1 0 4h-.09c-.6.51-1.16.62-1.54 1Z"></path></svg>' }
             };
@@ -3990,6 +3991,7 @@ function renderReportsPage() {
                 locations: renderConsultationsPage,
                 media: renderMediaPage,
                 news: renderNewsPage,
+                agenda: renderAgendaPage,
                 reports: renderReportsPage,
                 settings: renderSettingsPage
             };
@@ -4006,6 +4008,9 @@ function renderReportsPage() {
             }
             const handler = pages[page] || renderAdminDashboardPage;
             renderAdminAppShell(page, handler());
+            if (page === 'agenda' && !options.skipAgendaRefresh) {
+                loadAgendaAdmin().then(() => { if (window.__ADMIN_CURRENT_PAGE__ === 'agenda') showAdminPage('agenda', { fromBack: true, skipAgendaRefresh: true }); }).catch(error => showToast(error.message || 'Agenda gagal dimuat.', 'error'));
+            }
             document.querySelectorAll('.page-view').forEach(pageEl => {
                 const isAdminPage = pageEl.id === 'page-admin';
                 pageEl.classList.toggle('active', isAdminPage);
@@ -6492,6 +6497,29 @@ function renderReportsPage() {
             `;
         }
 
+
+        function renderAgendaPage() {
+            const records = Array.isArray(window.__AGENDA_CACHE__) ? window.__AGENDA_CACHE__ : [];
+            const now = new Date(), y = now.getFullYear(), m = now.getMonth(), first = new Date(y, m, 1).getDay(), total = new Date(y, m + 1, 0).getDate();
+            const todayKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2,'0')}-${String(new Date().getDate()).padStart(2,'0')}`;
+            const cells = Array.from({length: 42}, (_, i) => { const n = i - first + 1, day = n < 1 ? new Date(y, m, 0).getDate() + n : n > total ? n - total : n, outside = n < 1 || n > total, date = `${y}-${String(m + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`, items = records.filter(x => x.date === date); return `<button type="button" class="admin-agenda-day${outside ? ' is-outside' : ''}${date === todayKey ? ' is-today' : ''}${items.length ? ' has-agenda' : ''}" ${outside ? 'disabled' : `onclick="selectAgendaDate('${date}')"`}><span>${day}</span>${items.map(x => `<small>${escapeHtml(x.title)}</small>`).join('')}</button>`; }).join('');
+            return `<div class="admin-card admin-agenda-page"><div class="admin-card-header"><h3>Update Kalender Kegiatan</h3></div><p class="section-sub-text">Pilih tanggal pada kalender atau isi manual, lalu tambahkan keterangan kegiatan.</p><form class="agenda-admin-form" onsubmit="saveAgendaAdmin(event)"><input type="hidden" name="id"><label>Tanggal kegiatan<input type="date" name="date" required></label><label>Keterangan kegiatan<textarea name="title" rows="3" required placeholder="Contoh: Pelayanan servis mesin produksi"></textarea></label><div class="agenda-form-actions"><button class="btn-primary" type="submit">Simpan Kegiatan</button><button class="save-status-btn agenda-delete-button" type="button" onclick="deleteSelectedAgendaAdmin()">Hapus Kegiatan</button></div></form><div class="admin-agenda-calendar"><div class="public-agenda-toolbar"><button type="button" disabled>‹</button><strong>${['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][m]} ${y}</strong><button type="button" disabled>›</button></div><div class="public-agenda-weekdays"><span>Min</span><span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span></div><div class="admin-agenda-days">${cells}</div></div></div>`;
+        }
+
+        window.selectAgendaDate = function (date) { const form = document.querySelector('.agenda-admin-form'); const item = (window.__AGENDA_CACHE__ || []).find(x => x.date === date); if (form) { form.id.value = item?.id || ''; form.date.value = date; form.title.value = item?.title || ''; form.title.focus(); } };
+        window.deleteSelectedAgendaAdmin = function () { const form = document.querySelector('.agenda-admin-form'); const id = form?.id?.value; if (!id) { showToast('Pilih kegiatan yang akan dihapus terlebih dahulu.', 'error'); return; } deleteAgendaAdmin(id); };
+
+        async function loadAgendaAdmin() {
+            const response = await apiRequest('getAgenda');
+            window.__AGENDA_CACHE__ = Array.isArray(response?.data) ? response.data : [];
+        }
+        window.saveAgendaAdmin = async function (event) {
+            event.preventDefault();
+            const form = event.target;
+            try { await apiRequest('saveAgenda', { token: getAdminToken(), id: form.id.value, date: form.date.value, title: form.title.value }); await loadAgendaAdmin(); showToast('Agenda berhasil disimpan.', 'success'); showAdminPage('agenda', { fromBack: true }); if (window.renderPublicAgenda) window.renderPublicAgenda(); } catch (error) { showToast(error.message || 'Agenda gagal disimpan.', 'error'); }
+        };
+        window.editAgendaAdmin = function (id) { const item = (window.__AGENDA_CACHE__ || []).find(x => String(x.id) === String(id)); const form = document.querySelector('.agenda-admin-form'); if (!item || !form) return; form.id.value = item.id; form.date.value = item.date; form.title.value = item.title; form.date.focus(); };
+        window.deleteAgendaAdmin = async function (id) { if (!confirm('Hapus agenda ini?')) return; try { await apiRequest('deleteAgenda', { token: getAdminToken(), id }); await loadAgendaAdmin(); showAdminPage('agenda', { fromBack: true }); if (window.renderPublicAgenda) window.renderPublicAgenda(); } catch (error) { showToast(error.message || 'Agenda gagal dihapus.', 'error'); } };
 
         function renderNewsPage() {
             const records = Array.isArray(window.__NEWS_CACHE__) ? window.__NEWS_CACHE__ : [];

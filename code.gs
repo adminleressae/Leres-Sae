@@ -19,6 +19,7 @@ const CONFIG = {
     LOCATIONS: 'LOCATIONS',
     CONSULTATION_STATUS: 'CONSULTATION_STATUS',
     SETTINGS: 'SETTINGS'
+    ,AGENDA: 'AGENDA'
   },
 
   DEFAULT_STATUS: 'Barang Diterima',
@@ -77,6 +78,7 @@ const HISTORY_HEADERS = [
 ];
 
 const CONSULTATION_STATUS_HEADERS = ['consultation_key', 'completed_at', 'completed_by'];
+const AGENDA_HEADERS = ['id', 'date', 'title', 'description', 'created_at', 'updated_at', 'updated_by'];
 
 const USER_HEADERS = [
   'USERNAME',
@@ -303,6 +305,17 @@ function doPost(e) {
         requireToken_(body.token, ['admin']);
         return json_(deleteNews_(body));
 
+      case 'getAgenda':
+        return json_(getAgenda_());
+
+      case 'saveAgenda':
+        requireToken_(body.token, ['admin']);
+        return json_(saveAgenda_(body));
+
+      case 'deleteAgenda':
+        requireToken_(body.token, ['admin']);
+        return json_(deleteAgenda_(body));
+
       case 'getLocations':
         return json_(getLocations_());
 
@@ -379,6 +392,7 @@ function ensureProjectSheets_() {
   ensureSheet_(ss, CONFIG.SHEETS.LOCATIONS, LOCATION_HEADERS);
   ensureSheet_(ss, CONFIG.SHEETS.CONSULTATION_STATUS, CONSULTATION_STATUS_HEADERS);
   ensureSheet_(ss, CONFIG.SHEETS.SETTINGS, SETTINGS_HEADERS);
+  ensureSheet_(ss, CONFIG.SHEETS.AGENDA, AGENDA_HEADERS);
   PropertiesService.getScriptProperties().setProperty('PROJECT_SHEETS_READY', 'true');
 }
 
@@ -2537,6 +2551,46 @@ function getConsultationAttachment_(fileId) {
       dataUrl: 'data:' + mimeType + ';base64,' + Utilities.base64Encode(bytes)
     }
   };
+}
+
+function getAgenda_() {
+  const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  ensureSheet_(ss, CONFIG.SHEETS.AGENDA, AGENDA_HEADERS);
+  const sheet = ss.getSheetByName(CONFIG.SHEETS.AGENDA);
+  if (!sheet || sheet.getLastRow() < 2) return { success: true, data: [] };
+  const values = sheet.getRange(2, 1, sheet.getLastRow() - 1, AGENDA_HEADERS.length).getDisplayValues();
+  return { success: true, data: values.filter(row => row[0] && row[1]).map(row => ({ id: row[0], date: row[1], title: row[2], description: row[3], createdAt: row[4], updatedAt: row[5], updatedBy: row[6] })) };
+}
+
+function saveAgenda_(payload) {
+  const date = String(payload.date || '').trim();
+  const title = String(payload.title || '').trim();
+  const description = String(payload.description || '').trim();
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) throw new Error('Tanggal kegiatan tidak valid.');
+  if (!title) throw new Error('Keterangan kegiatan wajib diisi.');
+  const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  ensureSheet_(ss, CONFIG.SHEETS.AGENDA, AGENDA_HEADERS);
+  const sheet = ss.getSheetByName(CONFIG.SHEETS.AGENDA);
+  const now = new Date();
+  const id = String(payload.id || Utilities.getUuid());
+  const rows = sheet.getLastRow() > 1 ? sheet.getRange(2, 1, sheet.getLastRow() - 1, AGENDA_HEADERS.length).getValues() : [];
+  const index = rows.findIndex(row => String(row[0]) === id);
+  const row = [id, date, title, description, index >= 0 ? rows[index][4] : now, now, String(payload.updatedBy || 'ADMIN')];
+  if (index >= 0) sheet.getRange(index + 2, 1, 1, row.length).setValues([row]);
+  else sheet.appendRow(row);
+  return { success: true, data: { id: id, date: date, title: title, description: description } };
+}
+
+function deleteAgenda_(payload) {
+  const id = String(payload.id || '').trim();
+  const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  ensureSheet_(ss, CONFIG.SHEETS.AGENDA, AGENDA_HEADERS);
+  const sheet = ss.getSheetByName(CONFIG.SHEETS.AGENDA);
+  const rows = sheet.getLastRow() > 1 ? sheet.getRange(2, 1, sheet.getLastRow() - 1, AGENDA_HEADERS.length).getValues() : [];
+  const index = rows.findIndex(row => String(row[0]) === id);
+  if (index < 0) throw new Error('Agenda tidak ditemukan.');
+  sheet.deleteRow(index + 2);
+  return { success: true, data: { id: id } };
 }
 
 function getLocations_() {
