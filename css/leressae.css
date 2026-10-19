@@ -29,10 +29,12 @@
 .public-agenda-event { padding: 11px 0; border-bottom: 1px solid #e8f0ee; }
 .public-agenda-event strong { color: #087f70; font-size: .75rem; }
 .public-agenda-event p { margin-top: 3px; color: #315b57; font-weight: 700; }
-.agenda-admin-form { display: grid; grid-template-columns: 220px minmax(0, 1fr) auto; gap: 14px; align-items: end; margin: 18px 0 24px; }
+.agenda-admin-form { display: grid; grid-template-columns: minmax(250px, .75fr) minmax(360px, 1.35fr) auto; gap: 18px; align-items: end; margin: 18px 0 24px; }
 .agenda-form-actions::after { content: 'Pilih tanggal kegiatan untuk edit/hapus.'; max-width: 150px; color: #087f70; font-size: .72rem; font-weight: 800; line-height: 1.25; }
 .agenda-admin-form label { display: grid; gap: 7px; color: #42615b; font-size: .8rem; font-weight: 800; }
+.agenda-admin-form label { min-width: 0; white-space: nowrap; }
 .agenda-admin-form input, .agenda-admin-form textarea { width: 100%; padding: 11px 12px; border: 1px solid #d5e3df; border-radius: 10px; color: #173b35; background: #fff; font: inherit; }
+.agenda-admin-form textarea { min-width: 0; min-height: 92px; height: 92px; resize: none; }
 .admin-agenda-calendar { overflow: hidden; border: 1px solid #dce8e5; border-radius: 20px; background: #fff; }
 .admin-agenda-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .admin-agenda-day { min-height: 82px; padding: 12px; border: 0; border-right: 1px solid #edf2f1; border-bottom: 1px solid #edf2f1; color: #244943; background: #fff; text-align: left; cursor: pointer; }
@@ -48,6 +50,7 @@
 :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .admin-agenda-day:hover { background: #203b31 !important; }
 :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .admin-agenda-day.is-outside { color: #688379 !important; background: #10201b !important; }
 @media (max-width: 720px) { .agenda-admin-form { grid-template-columns: 1fr; align-items: stretch; } }
+@media (max-width: 1100px) and (min-width: 721px) { .agenda-admin-form { grid-template-columns: minmax(210px, .7fr) minmax(260px, 1fr); } .agenda-form-actions { grid-column: 1 / -1; justify-content: flex-start; } }
 @media (max-width: 720px) { .public-agenda-body { grid-template-columns: 1fr; } .public-agenda-events { border-top: 1px solid #e4ecea; border-left: 0; } .public-agenda-day { min-height: 54px; padding: 8px; } }
 
 /* Calendar contrast for dark mode. */
