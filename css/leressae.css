@@ -1429,6 +1429,16 @@ html:has(#leressaeThemeToggle[aria-pressed="true"]) #publicNewsModal .public-new
     max-width: 100% !important;
   }
 }
+
+/* Ensure the mobile component overrides remain last in the cascade. */
+@media (max-width: 767px) {
+  #page-admin .admin-report-table-wrap { overflow-x: auto !important; max-width: 100% !important; }
+  #page-admin [data-stock-flow-root] .stock-source-tab {
+    min-height: 40px !important;
+    padding: 8px 10px !important;
+    font-size: .78rem !important;
+  }
+}
 @media (max-width: 640px) {
     .wrapper {
         width: min(100%, calc(100% - 10px));
@@ -1500,6 +1510,67 @@ html:has(#leressaeThemeToggle[aria-pressed="true"]) #publicNewsModal .public-new
     .page-header-title {
         font-size: 1.15rem;
     }
+}
+
+/* Mobile admin refinements: keep wide data tables inside their own scroll area
+   and keep Stock Flow controls compact on narrow screens. */
+@media (max-width: 767px) {
+  #page-admin .admin-report-table-wrap {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #page-admin .admin-report-table {
+    width: max-content !important;
+    min-width: 760px !important;
+    table-layout: auto !important;
+  }
+
+  #page-admin .admin-report-table th,
+  #page-admin .admin-report-table td {
+    white-space: nowrap !important;
+  }
+
+  #page-admin .admin-report-table td:nth-child(3),
+  #page-admin .admin-report-table td:nth-child(4),
+  #page-admin .admin-report-table td:nth-child(5) {
+    max-width: 150px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  #page-admin [data-stock-flow-root] .admin-card-header > div:last-child {
+    width: 100% !important;
+    gap: 6px !important;
+  }
+
+  #page-admin [data-stock-flow-root] .admin-card-header > div:last-child > :is(button, a) {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    min-height: 38px !important;
+    padding: 8px 10px !important;
+    font-size: .78rem !important;
+  }
+
+  #page-admin [data-stock-flow-root] > div:nth-child(2) {
+    gap: 6px !important;
+    margin: 12px 0 !important;
+  }
+
+  #page-admin [data-stock-flow-root] .stock-source-tab {
+    flex: 1 1 calc(50% - 6px) !important;
+    min-width: 0 !important;
+    min-height: 40px !important;
+    padding: 8px 10px !important;
+    font-size: .78rem !important;
+    line-height: 1.15 !important;
+  }
 }
 @media (max-width: 480px) {
     .wrapper {
@@ -20097,5 +20168,60 @@ html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body #page-admin
   body.dark-mode .navbar .login-dropdown-content.show {
     background: #111c2d !important;
     border-color: #334155 !important;
+  }
+}
+
+/* Final mobile layout for the operational report. */
+@media (max-width: 767px) {
+  #page-admin .admin-report-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  #page-admin .admin-report-header {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  #page-admin .admin-report-header .admin-report-export-button {
+    width: auto !important;
+    min-height: 38px !important;
+    padding: 8px 12px !important;
+  }
+
+  #page-admin .admin-report-filters {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  #page-admin .admin-report-filter {
+    grid-column: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  #page-admin .admin-report-search {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  #page-admin .admin-report-filter select,
+  #page-admin .admin-report-filter input {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  #page-admin .admin-report-summary-grid,
+  #page-admin .admin-report-charts {
+    grid-template-columns: minmax(0, 1fr) !important;
   }
 }
