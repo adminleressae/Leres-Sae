@@ -6503,7 +6503,44 @@ function renderReportsPage() {
             const now = new Date(), y = now.getFullYear(), m = now.getMonth(), first = new Date(y, m, 1).getDay(), total = new Date(y, m + 1, 0).getDate();
             const todayKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2,'0')}-${String(new Date().getDate()).padStart(2,'0')}`;
             const cells = Array.from({length: 42}, (_, i) => { const n = i - first + 1, day = n < 1 ? new Date(y, m, 0).getDate() + n : n > total ? n - total : n, outside = n < 1 || n > total, date = `${y}-${String(m + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`, items = records.filter(x => x.date === date); return `<button type="button" class="admin-agenda-day${outside ? ' is-outside' : ''}${date === todayKey ? ' is-today' : ''}${items.length ? ' has-agenda' : ''}" ${outside ? 'disabled' : `onclick="selectAgendaDate('${date}')"`}><span>${day}</span>${items.map(x => `<small>${escapeHtml(x.title)}</small>`).join('')}</button>`; }).join('');
-            return `<div class="admin-card admin-agenda-page"><div class="admin-card-header"><h3>Update Kalender Kegiatan</h3></div><p class="section-sub-text">Pilih tanggal pada kalender atau isi manual, lalu tambahkan keterangan kegiatan.</p><form class="agenda-admin-form" onsubmit="saveAgendaAdmin(event)"><input type="hidden" name="id"><label>Tanggal kegiatan<input type="date" name="date" required></label><label>Keterangan kegiatan<textarea name="title" rows="3" required placeholder="Contoh: Pelayanan servis mesin produksi"></textarea></label><div class="agenda-form-actions"><button class="btn-primary" type="submit">Simpan Kegiatan</button><button class="save-status-btn agenda-delete-button" type="button" onclick="deleteSelectedAgendaAdmin()">Hapus Kegiatan</button></div></form><div class="admin-agenda-calendar"><div class="public-agenda-toolbar"><button type="button" disabled>‹</button><strong>${['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][m]} ${y}</strong><button type="button" disabled>›</button></div><div class="public-agenda-weekdays"><span>Min</span><span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span></div><div class="admin-agenda-days">${cells}</div></div></div>`;
+            const agendaList = records
+                .slice()
+                .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
+                .map(item => `<tr>
+                    <td>${escapeHtml(formatDate(item.date))}</td>
+                    <td>${escapeHtml(item.title || '-')}</td>
+                    <td class="admin-agenda-actions">
+                        <button type="button" class="btn-secondary small" data-agenda-edit="${escapeHtml(item.id || '')}" onclick="editAgendaAdmin(this.dataset.agendaEdit)">Edit</button>
+                        <button type="button" class="save-status-btn" data-agenda-delete="${escapeHtml(item.id || '')}" onclick="deleteAgendaAdmin(this.dataset.agendaDelete)">Hapus</button>
+                    </td>
+                </tr>`).join('');
+            return `<div class="admin-card admin-agenda-page">
+                <div class="admin-card-header"><h3>Update Kalender Kegiatan</h3></div>
+                <p class="section-sub-text">Pilih tanggal pada kalender atau isi manual, lalu tambahkan keterangan kegiatan.</p>
+                <form class="agenda-admin-form" onsubmit="saveAgendaAdmin(event)">
+                    <input type="hidden" name="id">
+                    <label>Tanggal kegiatan<input type="date" name="date" required></label>
+                    <label>Keterangan kegiatan<textarea name="title" rows="3" required placeholder="Contoh: Pelayanan servis mesin produksi"></textarea></label>
+                    <div class="agenda-form-actions">
+                        <button class="btn-primary" type="submit">Simpan Kegiatan</button>
+                        <button class="save-status-btn agenda-delete-button" type="button" onclick="deleteSelectedAgendaAdmin()">Hapus Kegiatan</button>
+                    </div>
+                </form>
+                <div class="admin-agenda-calendar">
+                    <div class="public-agenda-toolbar"><button type="button" disabled>‹</button><strong>${['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][m]} ${y}</strong><button type="button" disabled>›</button></div>
+                    <div class="public-agenda-weekdays"><span>Min</span><span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span></div>
+                    <div class="admin-agenda-days">${cells}</div>
+                </div>
+                <div class="admin-agenda-list">
+                    <h4>Daftar Kegiatan</h4>
+                    <div class="admin-table-wrap">
+                        <table class="admin-table">
+                            <thead><tr><th>Tanggal</th><th>Kegiatan</th><th>Aksi</th></tr></thead>
+                            <tbody>${agendaList || '<tr><td colspan="3"><div class="admin-empty-state">Belum ada kegiatan.</div></td></tr>'}</tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>`;
         }
 
         window.selectAgendaDate = function (date) { const form = document.querySelector('.agenda-admin-form'); const item = (window.__AGENDA_CACHE__ || []).find(x => x.date === date); if (form) { form.id.value = item?.id || ''; form.date.value = date; form.title.value = item?.title || ''; form.title.focus(); } };
@@ -6519,7 +6556,48 @@ function renderReportsPage() {
             try { await apiRequest('saveAgenda', { token: getAdminToken(), id: form.id.value, date: form.date.value, title: form.title.value }); await loadAgendaAdmin(); showToast('Agenda berhasil disimpan.', 'success'); showAdminPage('agenda', { fromBack: true }); if (window.renderPublicAgenda) window.renderPublicAgenda(); } catch (error) { showToast(error.message || 'Agenda gagal disimpan.', 'error'); }
         };
         window.editAgendaAdmin = function (id) { const item = (window.__AGENDA_CACHE__ || []).find(x => String(x.id) === String(id)); const form = document.querySelector('.agenda-admin-form'); if (!item || !form) return; form.id.value = item.id; form.date.value = item.date; form.title.value = item.title; form.date.focus(); };
-        window.deleteAgendaAdmin = async function (id) { if (!confirm('Hapus agenda ini?')) return; try { await apiRequest('deleteAgenda', { token: getAdminToken(), id }); await loadAgendaAdmin(); showAdminPage('agenda', { fromBack: true }); if (window.renderPublicAgenda) window.renderPublicAgenda(); } catch (error) { showToast(error.message || 'Agenda gagal dihapus.', 'error'); } };
+        window.deleteAgendaAdmin = function (id) {
+            const item = (window.__AGENDA_CACHE__ || []).find(record => String(record.id) === String(id));
+            if (!item) {
+                showToast('Kegiatan tidak ditemukan. Muat ulang halaman lalu coba lagi.', 'error');
+                return;
+            }
+            document.getElementById('agendaDeleteConfirmation')?.remove();
+            const overlay = document.createElement('div');
+            overlay.id = 'agendaDeleteConfirmation';
+            overlay.className = 'agenda-confirm-overlay';
+            overlay.innerHTML = `<section class="agenda-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="agendaDeleteTitle" aria-describedby="agendaDeleteDescription">
+                <h3 id="agendaDeleteTitle">Hapus kegiatan?</h3>
+                <p id="agendaDeleteDescription"></p>
+                <div class="agenda-confirm-actions">
+                    <button type="button" class="btn-secondary" data-agenda-cancel>Batalkan</button>
+                    <button type="button" class="save-status-btn" data-agenda-confirm-delete>Hapus Kegiatan</button>
+                </div>
+            </section>`;
+            overlay.querySelector('#agendaDeleteDescription').textContent =
+                'Kegiatan "' + String(item.title || 'Tanpa judul') + '" akan dihapus dari kalender.';
+            document.body.appendChild(overlay);
+            const cancelButton = overlay.querySelector('[data-agenda-cancel]');
+            const deleteButton = overlay.querySelector('[data-agenda-confirm-delete]');
+            cancelButton.addEventListener('click', () => overlay.remove());
+            deleteButton.addEventListener('click', async () => {
+                deleteButton.disabled = true;
+                cancelButton.disabled = true;
+                try {
+                    await apiRequest('deleteAgenda', { token: getAdminToken(), id: String(item.id) });
+                    await loadAgendaAdmin();
+                    overlay.remove();
+                    showToast('Kegiatan berhasil dihapus.', 'success');
+                    showAdminPage('agenda', { fromBack: true, skipAgendaRefresh: true });
+                    if (window.renderPublicAgenda) window.renderPublicAgenda();
+                } catch (error) {
+                    deleteButton.disabled = false;
+                    cancelButton.disabled = false;
+                    showToast(error.message || 'Kegiatan gagal dihapus.', 'error');
+                }
+            });
+            cancelButton.focus();
+        };
 
         function renderNewsPage() {
             const records = Array.isArray(window.__NEWS_CACHE__) ? window.__NEWS_CACHE__ : [];

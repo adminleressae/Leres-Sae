@@ -78,7 +78,7 @@ const HISTORY_HEADERS = [
 ];
 
 const CONSULTATION_STATUS_HEADERS = ['consultation_key', 'completed_at', 'completed_by'];
-const AGENDA_HEADERS = ['id', 'date', 'title', 'description', 'created_at', 'updated_at', 'updated_by'];
+const AGENDA_HEADERS = ['id', 'date', 'title', 'description', 'created_at', 'updated_at', 'updated_by', 'google_event_id'];
 
 const USER_HEADERS = [
   'USERNAME',
@@ -307,6 +307,14 @@ function doPost(e) {
 
       case 'getAgenda':
         return json_(getAgenda_());
+
+      case 'getAgendaIntegrationStatus':
+        requireToken_(body.token, ['admin']);
+        return json_(getAgendaIntegrationStatus_());
+
+      case 'syncAgendaCalendar':
+        requireToken_(body.token, ['admin']);
+        return json_(syncAgendaCalendar_());
 
       case 'saveAgenda':
         requireToken_(body.token, ['admin']);
@@ -680,10 +688,7 @@ function onFormSubmit(e) {
         'konsultasi kerusakan keluhan', 'masalah',
         'kerusakan', 'kendala', 'deskripsi masalah'
       ]),
-      alamat: pickAnswer_(named, [
-        'alamat', 'alamat lengkap', 'alamat di google maps',
-        'lokasi', 'lokasi servis'
-      ]),
+      alamat: pickServiceAddress_(named),
       estimasi_selesai: pickAnswer_(named, [
         'estimasi selesai', 'tanggal estimasi',
         'jadwal', 'tanggal layanan'
@@ -714,23 +719,72 @@ function onFormSubmit(e) {
     upsertService_(record);
 
     if (!existingId && !e.suppressEmail) {
-      const nama = pickAnswer_(named, ['nama']) || '-';
-      const layanan = pickAnswer_(named, ['jenis layanan']) || '-';
-      const whatsapp = pickAnswer_(named, [
-        'no whatsapp', 'nomor whatsapp', 'whatsapp', 'nomor wa', 'no wa'
-      ]) || '-';
+      const googleMaps = pickAnswer_(named, [
+        'alamat di google maps', 'alamat google maps',
+        'google maps', 'link google maps', 'maps'
+      ]);
+      const escapeEmailHtml = function(value) {
+        return String(value || '-')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      };
+      const mapsValue = String(googleMaps || '-').trim();
+      const mapsCell = /^https?:\/\//i.test(mapsValue)
+        ? '<a href="' + escapeEmailHtml(mapsValue) + '" style="color:#2563eb;text-decoration:none;">Buka lokasi di Google Maps</a>'
+        : escapeEmailHtml(mapsValue);
+      const emailRows = [
+        ['Nama', record.customer_name],
+        ['Jenis Layanan', record.service_type],
+        ['Barang yang Diservis', record.item_name],
+        ['Google Maps', mapsCell],
+        ['Alamat', record.alamat],
+        ['No. WhatsApp', record.phone]
+      ];
       const body =
         'Terdapat permohonan layanan baru pada LERES SAE.\n\n' +
-        'Nama          : ' + nama + '\n' +
-        'Jenis Layanan : ' + layanan + '\n' +
-        'No. WhatsApp  : ' + whatsapp + '\n\n' +
+        'Nama: ' + (record.customer_name || '-') + '\n' +
+        'Jenis Layanan: ' + (record.service_type || '-') + '\n' +
+        'Barang yang Diservis: ' + (record.item_name || '-') + '\n' +
+        'Google Maps: ' + mapsValue + '\n' +
+        'Alamat: ' + (record.alamat || '-') + '\n' +
+        'No. WhatsApp: ' + (record.phone || '-') + '\n\n' +
         'Silakan buka dashboard LERES SAE untuk memproses permohonan.\n' +
         'Login Admin LERES SAE: https://adminleressae.github.io/Leres-Sae/';
+      const htmlBody =
+        '<div style="margin:0;padding:24px;background:#f3f6fb;font-family:Arial,sans-serif;color:#1f2937;">' +
+          '<div style="max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #e5eaf1;border-radius:12px;overflow:hidden;">' +
+            '<div style="padding:20px 24px;background:#123b5d;color:#ffffff;">' +
+              '<div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.85;">LERES SAE</div>' +
+              '<h2 style="margin:6px 0 0;font-size:20px;">Permohonan Layanan Baru</h2>' +
+            '</div>' +
+            '<div style="padding:24px;">' +
+              '<p style="margin:0 0 18px;line-height:1.6;">Terdapat permohonan layanan baru yang perlu ditindaklanjuti.</p>' +
+              '<table role="presentation" style="width:100%;border-collapse:collapse;font-size:14px;line-height:1.5;">' +
+                emailRows.map(function(row, index) {
+                  return '<tr style="background:' + (index % 2 ? '#f8fafc' : '#ffffff') + ';">' +
+                    '<td style="width:175px;padding:10px 12px;border-bottom:1px solid #e5eaf1;color:#64748b;font-weight:600;vertical-align:top;">' +
+                      escapeEmailHtml(row[0]) +
+                    '</td>' +
+                    '<td style="padding:10px 12px;border-bottom:1px solid #e5eaf1;color:#1f2937;overflow-wrap:anywhere;vertical-align:top;">' +
+                      (row[0] === 'Google Maps' ? mapsCell : escapeEmailHtml(row[1])) +
+                    '</td>' +
+                  '</tr>';
+                }).join('') +
+              '</table>' +
+              '<p style="margin:22px 0 8px;line-height:1.6;">Silakan buka dashboard LERES SAE untuk memproses permohonan.</p>' +
+              '<a href="https://adminleressae.github.io/Leres-Sae/" style="display:inline-block;padding:10px 16px;background:#2563eb;border-radius:6px;color:#ffffff;text-decoration:none;font-weight:600;">Buka Dashboard Admin</a>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
 
       MailApp.sendEmail({
         to: 'admin.leressae@gmail.com',
         subject: '🔔 LERES SAE - Permohonan Layanan Baru',
-        body: body
+        body: body,
+        htmlBody: htmlBody
       });
     }
 
@@ -2559,14 +2613,100 @@ function getAgenda_() {
   const sheet = ss.getSheetByName(CONFIG.SHEETS.AGENDA);
   if (!sheet || sheet.getLastRow() < 2) return { success: true, data: [] };
   const values = sheet.getRange(2, 1, sheet.getLastRow() - 1, AGENDA_HEADERS.length).getDisplayValues();
-  return { success: true, data: values.filter(row => row[0] && row[1]).map(row => ({ id: row[0], date: row[1], title: row[2], description: row[3], createdAt: row[4], updatedAt: row[5], updatedBy: row[6] })) };
+  return { success: true, data: values.filter(row => row[0] && row[1]).map(row => ({ id: row[0], date: row[1], title: row[2], description: row[3], createdAt: row[4], updatedAt: row[5], updatedBy: row[6], googleEventId: row[7] || '' })) };
+}
+
+function getAgendaIntegrationStatus_() {
+  const calendarId = PropertiesService.getScriptProperties().getProperty('GOOGLE_CALENDAR_ID');
+  if (!calendarId) {
+    return {
+      success: true,
+      data: {
+        connected: false,
+        message: 'Atur GOOGLE_CALENDAR_ID di Apps Script > Project Settings > Script Properties, lalu izinkan akses Google Calendar.'
+      }
+    };
+  }
+
+  try {
+    const calendar = CalendarApp.getCalendarById(calendarId);
+    return {
+      success: true,
+      data: calendar
+        ? { connected: true, calendarName: calendar.getName(), message: 'Agenda tersambung ke Google Calendar.' }
+        : { connected: false, message: 'Kalender tidak ditemukan. Periksa GOOGLE_CALENDAR_ID dan akses akun Apps Script.' }
+    };
+  } catch (error) {
+    return {
+      success: true,
+      data: {
+        connected: false,
+        message: 'Google Calendar tidak dapat diakses: ' + (error && error.message ? error.message : String(error))
+      }
+    };
+  }
+}
+
+function getAgendaCalendar_() {
+  const calendarId = PropertiesService.getScriptProperties().getProperty('GOOGLE_CALENDAR_ID');
+  if (!calendarId) throw new Error('Google Calendar belum diatur. Tambahkan GOOGLE_CALENDAR_ID di Apps Script > Project Settings > Script Properties.');
+  const calendar = CalendarApp.getCalendarById(calendarId);
+  if (!calendar) throw new Error('Google Calendar tidak ditemukan. Periksa GOOGLE_CALENDAR_ID dan akses akun Apps Script.');
+  return calendar;
+}
+
+function authorizeAgendaCalendar() {
+  const calendar = getAgendaCalendar_();
+  return { success: true, calendarName: calendar.getName() };
+}
+
+function parseAgendaDate_(date) {
+  const value = String(date || '').trim();
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) throw new Error('Tanggal kegiatan tidak valid.');
+  const parsed = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  if (parsed.getFullYear() !== Number(match[1]) || parsed.getMonth() !== Number(match[2]) - 1 || parsed.getDate() !== Number(match[3])) {
+    throw new Error('Tanggal kegiatan tidak valid.');
+  }
+  return parsed;
+}
+
+function syncAgendaEvent_(calendar, agenda, eventId) {
+  const event = eventId ? calendar.getEventById(String(eventId)) : null;
+  if (event) {
+    event.setTitle(agenda.title);
+    event.setDescription(agenda.description || '');
+    event.setAllDayDate(agenda.date);
+    return event.getId();
+  }
+  return calendar.createAllDayEvent(agenda.title, agenda.date, {
+    description: agenda.description || ''
+  }).getId();
+}
+
+function syncAgendaCalendar_() {
+  const calendar = getAgendaCalendar_();
+  const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  const sheet = ensureSheet_(ss, CONFIG.SHEETS.AGENDA, AGENDA_HEADERS);
+  const rows = sheet.getLastRow() > 1
+    ? sheet.getRange(2, 1, sheet.getLastRow() - 1, AGENDA_HEADERS.length).getValues()
+    : [];
+  let synced = 0;
+  rows.forEach(function(row, index) {
+    if (!row[0] || !row[1] || !row[2]) return;
+    const agenda = { date: parseAgendaDate_(row[1]), title: String(row[2]), description: String(row[3] || '') };
+    const eventId = syncAgendaEvent_(calendar, agenda, row[7]);
+    sheet.getRange(index + 2, 8).setValue(eventId);
+    synced++;
+  });
+  return { success: true, data: { synced: synced, calendarName: calendar.getName() } };
 }
 
 function saveAgenda_(payload) {
   const date = String(payload.date || '').trim();
   const title = String(payload.title || '').trim();
   const description = String(payload.description || '').trim();
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) throw new Error('Tanggal kegiatan tidak valid.');
+  const parsedDate = parseAgendaDate_(date);
   if (!title) throw new Error('Keterangan kegiatan wajib diisi.');
   const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   ensureSheet_(ss, CONFIG.SHEETS.AGENDA, AGENDA_HEADERS);
@@ -2575,10 +2715,18 @@ function saveAgenda_(payload) {
   const id = String(payload.id || Utilities.getUuid());
   const rows = sheet.getLastRow() > 1 ? sheet.getRange(2, 1, sheet.getLastRow() - 1, AGENDA_HEADERS.length).getValues() : [];
   const index = rows.findIndex(row => String(row[0]) === id);
-  const row = [id, date, title, description, index >= 0 ? rows[index][4] : now, now, String(payload.updatedBy || 'ADMIN')];
+  let googleEventId = index >= 0 ? String(rows[index][7] || '') : '';
+  if (PropertiesService.getScriptProperties().getProperty('GOOGLE_CALENDAR_ID')) {
+    googleEventId = syncAgendaEvent_(getAgendaCalendar_(), {
+      date: parsedDate,
+      title: title,
+      description: description
+    }, googleEventId);
+  }
+  const row = [id, date, title, description, index >= 0 ? rows[index][4] : now, now, String(payload.updatedBy || 'ADMIN'), googleEventId];
   if (index >= 0) sheet.getRange(index + 2, 1, 1, row.length).setValues([row]);
   else sheet.appendRow(row);
-  return { success: true, data: { id: id, date: date, title: title, description: description } };
+  return { success: true, data: { id: id, date: date, title: title, description: description, googleEventId: googleEventId } };
 }
 
 function deleteAgenda_(payload) {
@@ -2589,6 +2737,11 @@ function deleteAgenda_(payload) {
   const rows = sheet.getLastRow() > 1 ? sheet.getRange(2, 1, sheet.getLastRow() - 1, AGENDA_HEADERS.length).getValues() : [];
   const index = rows.findIndex(row => String(row[0]) === id);
   if (index < 0) throw new Error('Agenda tidak ditemukan.');
+  if (rows[index][7]) {
+    const calendar = getAgendaCalendar_();
+    const event = calendar.getEventById(String(rows[index][7]));
+    if (event) event.deleteEvent();
+  }
   sheet.deleteRow(index + 2);
   return { success: true, data: { id: id } };
 }
@@ -2932,17 +3085,38 @@ function pickAnswer_(namedValues, keywords) {
 
   for (let i = 0; i < keywords.length; i++) {
     const wanted = normalizeText_(keywords[i]);
+    for (let k = 0; k < keys.length; k++) {
+      if (normalizeText_(keys[k]) === wanted) {
+        return firstValue_(namedValues, [keys[k]]);
+      }
+    }
+  }
+
+  for (let i = 0; i < keywords.length; i++) {
+    const wanted = normalizeText_(keywords[i]);
 
     for (let k = 0; k < keys.length; k++) {
       const actual = normalizeText_(keys[k]);
 
-      if (actual === wanted || actual.indexOf(wanted) >= 0 || wanted.indexOf(actual) >= 0) {
+      if (actual.indexOf(wanted) >= 0) {
         return firstValue_(namedValues, [keys[k]]);
       }
     }
   }
 
   return '';
+}
+
+function pickServiceAddress_(namedValues) {
+  const addressValues = {};
+  Object.keys(namedValues || {}).forEach(function(key) {
+    if (!/google|maps/i.test(key)) {
+      addressValues[key] = namedValues[key];
+    }
+  });
+  return pickAnswer_(addressValues, [
+    'alamat lengkap', 'alamat', 'lokasi servis', 'lokasi'
+  ]);
 }
 
 function normalizeText_(value) {

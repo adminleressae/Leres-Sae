@@ -20225,3 +20225,103 @@ html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body #page-admin
     grid-template-columns: minmax(0, 1fr) !important;
   }
 }
+
+@media (min-width: 768px) {
+  #page-admin .admin-shell {
+    align-items: start !important;
+  }
+
+  #page-admin .admin-sidebar {
+    position: sticky !important;
+    top: 12px !important;
+    align-self: start !important;
+    max-height: calc(100vh - 24px) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+}
+
+#page-admin .admin-agenda-list {
+  margin-top: 24px;
+}
+
+#page-admin .admin-agenda-list h4 {
+  margin: 0 0 12px;
+  color: #17453f;
+}
+
+#page-admin .admin-agenda-actions {
+  display: flex;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.agenda-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, .58);
+}
+
+.agenda-confirm-dialog {
+  width: min(100%, 420px);
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #fff;
+  color: #1f2937;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .28);
+}
+
+.agenda-confirm-dialog h3 {
+  margin: 0 0 10px;
+  font-size: 1.1rem;
+}
+
+.agenda-confirm-dialog p {
+  margin: 0;
+  color: #475569;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.agenda-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.agenda-confirm-actions button {
+  min-height: 40px;
+}
+
+.agenda-confirm-actions [data-agenda-confirm-delete] {
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: #b91c1c;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.agenda-confirm-actions [data-agenda-confirm-delete]:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .agenda-confirm-dialog {
+  border-color: #334155;
+  background: #111c2d;
+  color: #e2e8f0;
+}
+
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .agenda-confirm-dialog p {
+  color: #cbd5e1;
+}
