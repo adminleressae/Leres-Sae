@@ -4466,8 +4466,6 @@ function renderReportsPage() {
                                     <div><strong>Nama Pelanggan:</strong> ${escapeHtml(item.customer_name || '-')}</div>
                                     <div><strong>No. WhatsApp:</strong> ${renderWhatsAppLink(item.phone || '-')}</div>
                                     <div><strong>Barang:</strong> ${escapeHtml(item.item_name || '-')}</div>
-                                    <div><strong>Merek:</strong> ${escapeHtml(item.merk || '-')}</div>
-                                    <div><strong>Jenis:</strong> ${escapeHtml(item.jenis || item.tipe || '-')}</div>
                                     <div><strong>Keluhan:</strong> ${escapeHtml(item.keluhan || '-')}</div>
                                     <div><strong>Tanggal Masuk:</strong> ${escapeHtml(formatDate(item.created_at || item.tanggal_masuk))}</div>
                                     <div><strong>Teknisi:</strong> ${escapeHtml(item.technician || '-')}</div>
@@ -7696,8 +7694,7 @@ function techSession(){
             <label>Nama Customer<input readonly value="${escapeHtml(form.nama||item.customer_name||'-')}"></label><label>No. WhatsApp<div class="tech-readonly-action">${renderWhatsAppLink(form.whatsapp||item.phone||'-')}</div></label>
             <label>Alamat<textarea readonly>${escapeHtml(form.alamat||'-')}</textarea></label><label>Google Maps<div class="tech-readonly-action">${customerMap?`<a class="tech-map-link" href="${escapeHtml(customerMap)}" target="_blank" rel="noopener noreferrer">Buka Maps</a>`:'-'}</div></label>
             <label>Media Customer<div class="tech-readonly-action">${renderCustomerMediaAction(item, form)}</div></label>
-            <label>Jenis Barang<input readonly value="${escapeHtml(form.barang||item.item_name||'-')}"></label><label>Merek<input readonly value="${escapeHtml(form.merk||item.merk||'-')}"></label>
-            <label>Tipe<input readonly value="${escapeHtml(form.tipe||item.tipe||'-')}"></label><label>Teknisi<input readonly value="${escapeHtml(form.teknisi||item.technician||session.name||'-')}"></label>
+            <label>Jenis Barang<input readonly value="${escapeHtml(form.barang||item.item_name||'-')}"></label><label>Teknisi<input readonly value="${escapeHtml(form.teknisi||item.technician||session.name||'-')}"></label>
             <label style="grid-column:1/-1">Keluhan<textarea readonly>${escapeHtml(form.keluhan||item.keluhan||'-')}</textarea></label>
           </div></section>
         ${updateOnly?`<section class="tech-update-section"><div class="tech-update-section-title"><span>2</span><div><strong>Informasi Servis</strong><small>Status terhubung dengan ID Servis.</small></div></div>

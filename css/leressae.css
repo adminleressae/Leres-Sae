@@ -4963,6 +4963,7 @@ body.dark-mode .tech-whatsapp-link {
         left:0;
         bottom:0;
         width:min(310px,86vw);
+        overflow-y:auto;
         z-index:2147481000;
         transform:translateX(-105%);
         transition:transform .22s ease;
@@ -20228,18 +20229,19 @@ html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body #page-admin
 
 @media (min-width: 768px) {
   #page-admin .admin-shell {
-    align-items: start !important;
+    align-items: stretch !important;
   }
 
   #page-admin .admin-sidebar {
-    position: sticky !important;
-    top: 12px !important;
-    align-self: start !important;
-    max-height: calc(100vh - 24px) !important;
+    position: relative !important;
+    top: auto !important;
+    align-self: stretch !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     overflow-x: hidden !important;
-    overflow-y: auto !important;
+    overflow-y: visible !important;
     overscroll-behavior: contain;
-    scrollbar-width: thin;
   }
 }
 
