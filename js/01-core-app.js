@@ -194,14 +194,26 @@ const CONFIG = {
 
         function getServiceProofUrl(item) {
             const directValue = item?.bukti_foto || item?.BUKTI_FOTO || item?.proof_photo
-                || item?.proofPhoto || item?.foto_teknisi || item?.foto_service || '';
+                || item?.proofPhoto || item?.proof_url || item?.service_proof_url
+                || item?.foto_teknisi || item?.foto_teknisi_url || item?.foto_service
+                || item?.foto_hasil_service || item?.foto_hasil_servis || '';
             const value = String(directValue || Object.entries(item || {}).find(([key, entry]) =>
-                /^(buktifoto|buktiphoto|proofphoto|fototeknisi|fotoservice|servicephoto|buktifotoservice|fotohasilservice|fotohasilperbaikan|fotoperbaikan)$/i.test(
+                /^(buktifoto|buktiphoto|proofphoto|proofurl|serviceproof|serviceproofurl|fototeknisi|fototeknisiurl|fotoservice|fotoservis|fotoserviceurl|fotoservisurl|servicephoto|buktifotoservice|fotohasilservice|fotohasilservis|fotohasilperbaikan|fotoperbaikan)$/i.test(
                     key.replace(/[^a-z0-9]/gi, '')
                 ) && entry
             )?.[1] || '').trim();
-            if (/^https?:\/\//i.test(value) || /^data:image\/(png|jpe?g|webp);/i.test(value)) return value;
+            if (/^data:image\/(png|jpe?g|webp);/i.test(value)) return value;
+            const driveId = value.match(/(?:drive\.google\.com\/(?:file\/d\/|thumbnail\?id=)|[?&]id=)([-\w]{20,})/i)?.[1]
+                || (/^[-\w]{20,}$/.test(value) ? value : '');
+            if (driveId) return `https://drive.google.com/thumbnail?id=${encodeURIComponent(driveId)}&sz=w1200`;
+            if (/^https?:\/\//i.test(value)) return value;
             return '';
+        }
+
+        function getServiceWorkNote(item) {
+            const isTechnicianUpdate = String(item?.admin_update || '').trim().toUpperCase() === 'TEKNISI';
+            return String(item?.catatan_teknisi || item?.keterangan_selesai
+                || (isTechnicianUpdate ? item?.notes : '') || '').trim() || 'Belum ada keterangan pekerjaan.';
         }
 
         function renderServiceProofAction(item, proof) {
@@ -1268,10 +1280,10 @@ const CONFIG = {
 
 
         function renderServiceDetailCard(item) {
-                        const form=getServiceFormFields(item),cost=normalizeServiceCost(item),proof=getServiceProofUrl(item),maps=safeExternalUrl(form.google_maps||item.google_maps||item.maps||'');
+                        const form=getServiceFormFields(item),cost=normalizeServiceCost(item),proof=getServiceProofUrl(item),maps=safeExternalUrl(form.google_maps||item.google_maps||item.maps||''),workNote=getServiceWorkNote(item);
                         const done=getServiceDisplayStatus(item.status)==='Selesai';
                         return `<div class="service-status-card"><div class="service-status-header"><h3>${escapeHtml(form.barang||item.item_name||'-')}</h3><span class="status-badge ${getStatusClass(item.status)}">${escapeHtml(getServiceDisplayStatus(item.status))}</span></div>
-                            <div class="service-meta"><div><strong>ID Servis:</strong> ${escapeHtml(item.id||'-')}</div><div><strong>Tanggal:</strong> ${escapeHtml(form.tanggal||formatDate(item.created_at||item.tanggal_masuk))}</div><div><strong>Nama Customer:</strong> ${escapeHtml(form.nama||item.customer_name||'-')}</div><div><strong>No. WhatsApp:</strong> ${renderWhatsAppLink(form.whatsapp||item.phone||'-')}</div><div><strong>Alamat:</strong> ${escapeHtml(form.alamat||item.alamat||'-')}</div><div><strong>Google Maps:</strong> ${maps?`<a class="btn-secondary small admin-gmaps-link" href="${escapeHtml(maps)}" target="_blank" rel="noopener noreferrer">Lihat GMaps</a>`:'-'}</div><div><strong>Foto Teknisi:</strong> ${renderServiceProofAction(item,proof)}</div><div><strong>Jenis Barang:</strong> ${escapeHtml(form.barang||item.item_name||'-')}</div><div><strong>Keluhan:</strong> ${escapeHtml(form.keluhan||item.keluhan||'-')}</div><div><strong>Teknisi:</strong> ${escapeHtml(form.teknisi||item.technician||'-')}</div><div><strong>Catatan Teknisi:</strong> ${escapeHtml(item.catatan_teknisi||item.notes||'-')}</div>${done?`<div><strong>Keterangan Selesai:</strong> ${escapeHtml(item.keterangan_selesai||item.notes||'-')}</div><div><strong>Tanggal Selesai:</strong> ${escapeHtml(item.tanggal_selesai?formatDate(item.tanggal_selesai):'-')}</div>`:''}<div><strong>Biaya Service:</strong> ${escapeHtml(cost.label)}</div>${item.biaya_keterangan?`<div><strong>Keterangan Biaya:</strong> ${escapeHtml(item.biaya_keterangan)}</div>`:''}<div><strong>Waktu Update Terakhir:</strong> ${escapeHtml(formatDateTimeValue(item.timestamp_update||item.created_at))}</div></div></div>`;
+                            <div class="service-meta"><div><strong>ID Servis:</strong> ${escapeHtml(item.id||'-')}</div><div><strong>Tanggal:</strong> ${escapeHtml(form.tanggal||formatDate(item.created_at||item.tanggal_masuk))}</div><div><strong>Nama Customer:</strong> ${escapeHtml(form.nama||item.customer_name||'-')}</div><div><strong>No. WhatsApp:</strong> ${renderWhatsAppLink(form.whatsapp||item.phone||'-')}</div><div><strong>Alamat:</strong> ${escapeHtml(form.alamat||item.alamat||'-')}</div><div><strong>Google Maps:</strong> ${maps?`<a class="btn-secondary small admin-gmaps-link" href="${escapeHtml(maps)}" target="_blank" rel="noopener noreferrer">Lihat GMaps</a>`:'-'}</div><div><strong>Foto Teknisi:</strong> ${renderServiceProofAction(item,proof)}</div><div><strong>Jenis Barang:</strong> ${escapeHtml(form.barang||item.item_name||'-')}</div><div><strong>Keluhan:</strong> ${escapeHtml(form.keluhan||item.keluhan||'-')}</div><div><strong>Teknisi:</strong> ${escapeHtml(form.teknisi||item.technician||'-')}</div><div><strong>Keterangan Pekerjaan:</strong> ${escapeHtml(workNote)}</div>${done?`<div><strong>Tanggal Selesai:</strong> ${escapeHtml(item.tanggal_selesai?formatDate(item.tanggal_selesai):'-')}</div>`:''}<div><strong>Biaya Service:</strong> ${escapeHtml(cost.label)}</div>${item.biaya_keterangan?`<div><strong>Keterangan Biaya:</strong> ${escapeHtml(item.biaya_keterangan)}</div>`:''}<div><strong>Waktu Update Terakhir:</strong> ${escapeHtml(formatDateTimeValue(item.timestamp_update||item.created_at))}</div></div></div>`;
                 }
 
 
@@ -1292,11 +1304,11 @@ function openServiceDetail(serviceId) {
             if(techShell&&isTechnicianLoggedIn()){returnKind='tech';const h=window.__LERESSAE_TECH_HISTORY||['dashboard'];returnPage=h[h.length-1]||'dashboard';}
             else if(adminShell&&isAdminLoggedIn()){returnKind='admin';const h=window.__LERESSAE_ADMIN_HISTORY||['dashboard'];returnPage=h[h.length-1]||'dashboard';}
             const scroll=window.scrollY||0;window.__LERESSAE_DETAIL_RETURN_CONTEXT__={kind:returnKind,page:returnPage,scroll};window.__LERESSAE_DETAIL_RETURN_PAGE__=returnPage;window.__LERESSAE_DETAIL_RETURN_KIND__=returnKind;window.__LERESSAE_DETAIL_RETURN_SCROLL__=scroll;
-            const form=getServiceFormFields(item),cost=normalizeServiceCost(item),proof=getServiceProofUrl(item),maps=safeExternalUrl(form.google_maps||item.google_maps||item.maps||'');
+            const form=getServiceFormFields(item),cost=normalizeServiceCost(item),proof=getServiceProofUrl(item),maps=safeExternalUrl(form.google_maps||item.google_maps||item.maps||''),workNote=getServiceWorkNote(item);
             const done=getServiceDisplayStatus(item.status)==='Selesai';
             const detailHtml=`<div class="leressae-detail-back-row"><button type="button" class="leressae-back-btn" data-service-detail-back><span class="leressae-back-icon">←</span><span>Kembali</span></button></div>
               <div class="service-status-card"><div class="service-status-header"><h3>${escapeHtml(form.barang||item.item_name||'-')}</h3><span class="status-badge ${getStatusClass(item.status)}">${escapeHtml(getServiceDisplayStatus(item.status))}</span></div>
-              <div class="service-meta"><div><strong>ID Servis:</strong> ${escapeHtml(item.id||'-')}</div><div><strong>Tanggal:</strong> ${escapeHtml(form.tanggal||formatDate(item.created_at||item.tanggal_masuk))}</div><div><strong>Nama Customer:</strong> ${escapeHtml(form.nama||item.customer_name||'-')}</div><div><strong>No. WhatsApp:</strong> ${renderWhatsAppLink(form.whatsapp||item.phone||'-')}</div><div><strong>Alamat:</strong> ${escapeHtml(form.alamat||item.alamat||'-')}</div><div><strong>Google Maps:</strong> ${maps?`<a class="btn-secondary small admin-gmaps-link" href="${escapeHtml(maps)}" target="_blank" rel="noopener noreferrer">Lihat GMaps</a>`:'-'}</div><div><strong>Foto Teknisi:</strong> ${renderServiceProofAction(item,proof)}</div><div><strong>Jenis Barang:</strong> ${escapeHtml(form.barang||item.item_name||'-')}</div><div><strong>Keluhan:</strong> ${escapeHtml(form.keluhan||item.keluhan||'-')}</div><div><strong>Teknisi:</strong> ${escapeHtml(form.teknisi||item.technician||'-')}</div><div><strong>Catatan Teknisi:</strong> ${escapeHtml(item.catatan_teknisi||item.notes||'-')}</div>${done?`<div><strong>Keterangan Selesai:</strong> ${escapeHtml(item.keterangan_selesai||item.notes||'-')}</div><div><strong>Tanggal Selesai:</strong> ${escapeHtml(item.tanggal_selesai?formatDate(item.tanggal_selesai):'-')}</div>`:''}<div><strong>Biaya Service:</strong> ${escapeHtml(cost.label)}</div>${item.biaya_keterangan?`<div><strong>Keterangan Biaya:</strong> ${escapeHtml(item.biaya_keterangan)}</div>`:''}<div><strong>Waktu Update Terakhir:</strong> ${escapeHtml(formatDateTimeValue(item.timestamp_update||item.created_at))}</div></div></div>`;
+              <div class="service-meta"><div><strong>ID Servis:</strong> ${escapeHtml(item.id||'-')}</div><div><strong>Tanggal:</strong> ${escapeHtml(form.tanggal||formatDate(item.created_at||item.tanggal_masuk))}</div><div><strong>Nama Customer:</strong> ${escapeHtml(form.nama||item.customer_name||'-')}</div><div><strong>No. WhatsApp:</strong> ${renderWhatsAppLink(form.whatsapp||item.phone||'-')}</div><div><strong>Alamat:</strong> ${escapeHtml(form.alamat||item.alamat||'-')}</div><div><strong>Google Maps:</strong> ${maps?`<a class="btn-secondary small admin-gmaps-link" href="${escapeHtml(maps)}" target="_blank" rel="noopener noreferrer">Lihat GMaps</a>`:'-'}</div><div><strong>Foto Teknisi:</strong> ${renderServiceProofAction(item,proof)}</div><div><strong>Jenis Barang:</strong> ${escapeHtml(form.barang||item.item_name||'-')}</div><div><strong>Keluhan:</strong> ${escapeHtml(form.keluhan||item.keluhan||'-')}</div><div><strong>Teknisi:</strong> ${escapeHtml(form.teknisi||item.technician||'-')}</div><div><strong>Keterangan Pekerjaan:</strong> ${escapeHtml(workNote)}</div>${done?`<div><strong>Tanggal Selesai:</strong> ${escapeHtml(item.tanggal_selesai?formatDate(item.tanggal_selesai):'-')}</div>`:''}<div><strong>Biaya Service:</strong> ${escapeHtml(cost.label)}</div>${item.biaya_keterangan?`<div><strong>Keterangan Biaya:</strong> ${escapeHtml(item.biaya_keterangan)}</div>`:''}<div><strong>Waktu Update Terakhir:</strong> ${escapeHtml(formatDateTimeValue(item.timestamp_update||item.created_at))}</div></div></div>`;
             if(returnKind==='admin'&&isAdminLoggedIn()){renderAdminAppShell(returnPage,detailHtml);document.querySelector('.admin-content')?.querySelectorAll(':scope > .leressae-back-row').forEach(el=>el.remove());requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'auto'}));return;}
             if(returnKind==='tech'&&isTechnicianLoggedIn()){const view=document.getElementById('technicianView');if(view)view.innerHTML=detailHtml;const shell=document.getElementById('technicianShell');if(shell)shell.dataset.techPage=returnPage;return;}
             const statusResult=document.getElementById('statusResult');if(statusResult)statusResult.innerHTML=detailHtml;navigateTo('page-status',{fromBack:true});
@@ -1672,6 +1684,7 @@ function openServiceDetail(serviceId) {
                     const result = await loginAdmin(username, password);
                     if (result.success) {
                         closeLogin();
+                        saveRolePage('admin', 'dashboard');
                         renderAdminDashboard();
                         navigateTo('page-admin');
                         startAdminSyncLoop();
@@ -2094,7 +2107,20 @@ function openServiceDetail(serviceId) {
             const customTo = window.__RUNNING_FILTER_CUSTOM_TO__ || (document.getElementById('runningDateTo') ? document.getElementById('runningDateTo').value : '');
             const invalidRange = !!(period === 'custom' && customFrom && customTo && customFrom > customTo);
             const searched = getFilteredServices(all, { keyword, status: 'all', date: 'all' });
-            const filtered = invalidRange ? [] : applyPeriodFilter(searched, period, 'created_at', customFrom, customTo);
+            const filtered = (invalidRange ? [] : applyPeriodFilter(searched, period, 'created_at', customFrom, customTo))
+                .sort((a, b) => {
+                    const awaitingAdminA = getServiceDisplayStatus(a.status) === 'Selesai';
+                    const awaitingAdminB = getServiceDisplayStatus(b.status) === 'Selesai';
+                    if (awaitingAdminA !== awaitingAdminB) return awaitingAdminA ? -1 : 1;
+
+                    const dateA = new Date(awaitingAdminA
+                        ? a.timestamp_update || a.created_at || a.timestamp || a.tanggal_masuk || 0
+                        : a.created_at || a.timestamp || a.tanggal_masuk || a.form_tanggal || 0).getTime() || 0;
+                    const dateB = new Date(awaitingAdminB
+                        ? b.timestamp_update || b.created_at || b.timestamp || b.tanggal_masuk || 0
+                        : b.created_at || b.timestamp || b.tanggal_masuk || b.form_tanggal || 0).getTime() || 0;
+                    return dateB - dateA;
+                });
             const emptyMessage = keyword ? 'Data servis tidak ditemukan.' : 'Tidak ada servis yang menunggu proses teknisi.';
             return `
                 <div class="admin-card">
@@ -4260,6 +4286,7 @@ function renderReportsPage() {
                     const result = await loginAdmin(username, password);
                     if (result.success) {
                         closeLogin();
+                        saveRolePage('admin', 'dashboard');
                         syncRoleNavbar();
                         navigateTo('page-admin');
                         renderAdminDashboard();
@@ -4274,6 +4301,7 @@ function renderReportsPage() {
                     const result = await loginTechnician(username, password);
                     if (result.success) {
                         closeLogin();
+                        saveRolePage('technician', 'dashboard');
                         syncRoleNavbar();
                         const techPanel = document.getElementById('technicianPanelContent');
                         if (techPanel) {
@@ -7447,8 +7475,8 @@ function techSession(){
     const initials=String(name).trim().charAt(0).toUpperCase()||'T';
     const nav=[
             ['dashboard','<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"></rect></svg>','Dashboard'],
-            ['clients','<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-1.5a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>','Lihat Client'],
             ['status','<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="18" rx="2"></rect><path d="M9 4.5h6a1.5 1.5 0 0 0-1.5-1.5h-3A1.5 1.5 0 0 0 9 4.5Z"></path><path d="m8.5 13 2.5 2.5 5-5"></path></svg>','Update Status'],
+            ['clients','<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-1.5a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>','Lihat Client'],
             ['profile','<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21v-1a8 8 0 0 1 16 0v1Z"></path></svg>','Profil Teknisi']
     ];
     return `<div class="technician-shell" id="technicianShell">
@@ -7699,18 +7727,18 @@ function techSession(){
           </div></section>
         ${updateOnly?`<section class="tech-update-section"><div class="tech-update-section-title"><span>2</span><div><strong>Informasi Servis</strong><small>Status terhubung dengan ID Servis.</small></div></div>
           <div class="tech-detail-grid"><div class="tech-detail-item"><span>Status Saat Ini</span><strong>${techStatusBadge(item.status)}</strong></div><div class="tech-detail-item"><span>Update Terakhir</span><strong>${escapeHtml(formatDateTimeValue(item.timestamp_update||item.created_at))}</strong></div></div></section>
-          <section class="tech-update-section"><div class="tech-update-section-title"><span>3</span><div><strong>Update Status</strong><small>Status dan identitas teknisi tersimpan bersama ID Servis.</small></div></div>
-            <label class="tech-full-field tech-technician-field"><span>Nama Teknisi</span><input id="techModalTechnician" type="text" value="${escapeHtml(session.name||form.teknisi||item.technician||'Teknisi')}" readonly></label>
-            <div class="tech-status-action-grid" style="margin-top:12px"><button type="button" class="tech-status-choice progress-choice ${currentStatus==='Sedang Diproses'?'active':''}" data-tech-status-choice="Sedang Diproses">◔ <span>Sedang Diproses</span></button><button type="button" class="tech-status-choice done-choice ${currentStatus==='Selesai'?'active':''}" data-tech-status-choice="Selesai" ${currentStatus!=='Selesai'&&!hasProof?'disabled':''}>✓ <span>Selesai</span></button></div>
-            <input type="hidden" id="techModalStatus" value="${escapeHtml(currentStatus)}"></section>
+          <section class="tech-update-section"><div class="tech-update-section-title"><span>3</span><div><strong>Bukti Foto Service</strong><small>JPG/JPEG/PNG. Preview dan kompres sebelum dikirim.</small></div></div>
+            <div class="tech-proof-upload-grid"><div class="tech-proof-preview" id="techModalProofPreview">${hasProof?`<img src="${escapeHtml(existingProofUrl)}" alt="Bukti service">`:'Belum ada foto'}</div><div class="tech-proof-upload-control"><input id="techModalProofInput" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png"><small id="techProofState" class="tech-proof-state ${hasProof?'uploaded':'missing'}">${hasProof?'✓ Foto tersedia':'⚠ Foto belum tersedia'}</small><small>Foto belum dianggap permanen sampai backend menerimanya.</small><button type="button" class="tech-btn secondary" id="techModalProofRemove" ${hasProof?'':'style="display:none"'}>Hapus Foto</button></div></div></section>
           <section class="tech-update-section"><div class="tech-update-section-title"><span>4</span><div><strong>Keterangan Pekerjaan</strong><small>Hasil pemeriksaan, tindakan, kondisi, sparepart, dan hasil service.</small></div></div>
             <label class="tech-full-field"><span id="techNoteLabel">${currentStatus==='Selesai'?'Keterangan Selesai':'Keterangan / Catatan Teknisi'}</span><textarea id="techModalNote" placeholder="Tuliskan keterangan pekerjaan...">${escapeHtml(item.keterangan_selesai||item.catatan_teknisi||item.notes||'')}</textarea></label></section>
-          <section class="tech-update-section"><div class="tech-update-section-title"><span>5</span><div><strong>Bukti Foto Service</strong><small>JPG/JPEG/PNG. Preview dan kompres sebelum dikirim.</small></div></div>
-            <div class="tech-proof-upload-grid"><div class="tech-proof-preview" id="techModalProofPreview">${hasProof?`<img src="${escapeHtml(existingProofUrl)}" alt="Bukti service">`:'Belum ada foto'}</div><div class="tech-proof-upload-control"><input id="techModalProofInput" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png"><small id="techProofState" class="tech-proof-state ${hasProof?'uploaded':'missing'}">${hasProof?'✓ Foto tersedia':'⚠ Foto belum tersedia'}</small><small>Foto belum dianggap permanen sampai backend menerimanya.</small><button type="button" class="tech-btn secondary" id="techModalProofRemove" ${hasProof?'':'style="display:none"'}>Hapus Foto</button></div></div></section>
-          <section class="tech-update-section"><div class="tech-update-section-title"><span>6</span><div><strong>Biaya Service</strong><small>Gratis atau Custom; nominal tetap numerik.</small></div></div>
+          <section class="tech-update-section"><div class="tech-update-section-title"><span>5</span><div><strong>Biaya Service</strong><small>Gratis atau Custom; nominal tetap numerik.</small></div></div>
             <div class="tech-cost-grid"><label>Biaya Service<select id="techCostType"><option value="" ${!cost.tipe?'selected':''}>Pilih</option><option value="Gratis" ${cost.tipe==='Gratis'?'selected':''}>Gratis</option><option value="Custom" ${cost.tipe==='Custom'?'selected':''}>Custom</option></select></label>
             <label id="techCostNominalWrap" ${cost.tipe==='Custom'?'':'style="display:none"'}>Nominal<input id="techCostNominal" type="number" min="0" step="1" value="${cost.tipe==='Custom'?cost.nominal:''}" placeholder="150000"><small id="techCostFormatted">${cost.tipe==='Custom'?escapeHtml(formatRupiah(cost.nominal)):'Rp 0'}</small></label>
             <label class="tech-full-field">Keterangan Biaya<input id="techCostNote" maxlength="250" value="${escapeHtml(item.biaya_keterangan||'')}" placeholder="Biaya jasa / sparepart / pemeriksaan"></label></div></section>
+          <section class="tech-update-section"><div class="tech-update-section-title"><span>6</span><div><strong>Update Status</strong><small>Status dan identitas teknisi tersimpan bersama ID Servis.</small></div></div>
+            <label class="tech-full-field tech-technician-field"><span>Nama Teknisi</span><input id="techModalTechnician" type="text" value="${escapeHtml(session.name||form.teknisi||item.technician||'Teknisi')}" readonly></label>
+            <div class="tech-status-action-grid" style="margin-top:12px"><button type="button" class="tech-status-choice progress-choice ${currentStatus==='Sedang Diproses'?'active':''}" data-tech-status-choice="Sedang Diproses">◔ <span>Sedang Diproses</span></button><button type="button" class="tech-status-choice done-choice ${currentStatus==='Selesai'?'active':''}" data-tech-status-choice="Selesai" ${currentStatus!=='Selesai'&&!hasProof?'disabled':''}>✓ <span>Selesai</span></button></div>
+            <input type="hidden" id="techModalStatus" value="${escapeHtml(currentStatus)}"></section>
           <section class="tech-update-section tech-update-submit-section"><div class="tech-submit-summary" id="techSubmitSummary">Status: <strong>${escapeHtml(currentStatus)}</strong> · Biaya: <strong>${escapeHtml(cost.label)}</strong></div><div class="tech-action-row"><button type="button" class="tech-btn" id="techModalSave">Simpan Update Status</button></div><div id="techFinishWarning" class="tech-finish-warning">⚠ Status <b>Selesai</b> terkunci sampai foto bukti tersedia.</div></section>`:`<section class="tech-update-section"><div class="tech-detail-grid"><div class="tech-detail-item"><span>Status</span><strong>${techStatusBadge(item.status)}</strong></div><div class="tech-detail-item"><span>Teknisi</span><strong>${escapeHtml(item.technician||form.teknisi||'-')}</strong></div><div class="tech-detail-item"><span>Catatan</span><strong>${escapeHtml(item.keterangan_selesai||item.notes||'-')}</strong></div><div class="tech-detail-item"><span>Biaya</span><strong>${escapeHtml(cost.label)}</strong></div></div></section>`}
       </div></div>`;
     document.body.appendChild(backdrop); const close=()=>backdrop.remove(); backdrop.querySelector('.tech-modal-close').onclick=close; backdrop.addEventListener('click',e=>{if(e.target===backdrop)close()}); if(!updateOnly)return;

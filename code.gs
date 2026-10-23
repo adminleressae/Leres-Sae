@@ -12,14 +12,10 @@ const CONFIG = {
     SERVICES: 'SERVICES',
     HISTORY: 'SERVICE_HISTORY',
     USERS: 'TEKNISI DAN ADMIN',
-    STOCK_MASTER: 'STOCK_MASTER',
-    STOCK_HISTORY: 'STOCK_HISTORY',
     NEWS: 'NEWS',
     MEDIA: 'MEDIA',
-    LOCATIONS: 'LOCATIONS',
     CONSULTATION_STATUS: 'CONSULTATION_STATUS',
-    SETTINGS: 'SETTINGS'
-    ,AGENDA: 'AGENDA'
+    AGENDA: 'AGENDA'
   },
 
   DEFAULT_STATUS: 'Barang Diterima',
@@ -62,9 +58,24 @@ const SERVICE_HEADERS = [
   'timestamp_update',
   'tanggal_selesai',
   'bukti_foto',
+  'catatan_teknisi',
+  'keterangan_selesai',
+  'biaya_keterangan',
   'form_row',
   'raw_form_data'
 ];
+const HIDDEN_SERVICE_HEADERS = [
+  'merk',
+  'tipe',
+  'keluhan',
+  'estimasi_selesai',
+  'status',
+  'id_teknisi',
+  'admin_cor',
+  'admin_completed',
+  'admin_completed_at'
+];
+const SERVICES_SCHEMA_VERSION = '4';
 
 const HISTORY_HEADERS = [
   'history_id',
@@ -93,27 +104,7 @@ const USER_HEADERS = [
   'UPDATED_AT',
   'LAST_LOGIN'
 ];
-
-const STOCK_HEADERS = [
-  'id',
-  'name',
-  'unit',
-  'stock',
-  'min_stock',
-  'price',
-  'account_code',
-  'account_name'
-];
-
-const STOCK_HISTORY_HEADERS = [
-  'date',
-  'id',
-  'name',
-  'type',
-  'qty',
-  'after',
-  'note'
-];
+const USERS_SCHEMA_VERSION = '4';
 
 const NEWS_HEADERS = [
   'id',
@@ -141,17 +132,6 @@ const MEDIA_HEADERS = [
   'MIME_TYPE'
 ];
 
-const LOCATION_HEADERS = [
-  'id',
-  'name',
-  'address',
-  'latitude',
-  'longitude',
-  'status'
-];
-
-const SETTINGS_HEADERS = ['key', 'value'];
-
 /* ==========================================================
    WEB APP
    ========================================================== */
@@ -170,7 +150,13 @@ function doPost(e) {
     const body = parseBody_(e);
     const action = String(body.action || 'healthCheck').trim();
 
-    if (PropertiesService.getScriptProperties().getProperty('PROJECT_SHEETS_READY') !== 'true') {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    if (
+      scriptProperties.getProperty('PROJECT_SHEETS_READY') !== 'true' ||
+      scriptProperties.getProperty('DEPRECATED_SHEETS_REMOVED') !== 'true' ||
+      scriptProperties.getProperty('SERVICES_SCHEMA_VERSION') !== SERVICES_SCHEMA_VERSION ||
+      scriptProperties.getProperty('USERS_SCHEMA_VERSION') !== USERS_SCHEMA_VERSION
+    ) {
       ensureProjectSheets_();
     }
 
@@ -237,16 +223,10 @@ function doPost(e) {
         return json_(syncTechnicians_(body.users));
 
       case 'getStock':
-        return json_(getStock_());
-
       case 'getStockHistory':
-        return json_(getStockHistory_());
-
       case 'stockIn':
-        return json_(stockIn_(body));
-
       case 'stockOut':
-        return json_(stockOut_(body));
+        return jsonError_('Fitur stok sudah dinonaktifkan dan sheet stok telah dihapus.');
 
       case 'getNews':
         return json_(getNews_());
@@ -390,18 +370,166 @@ function setupInitialSheets() {
 function ensureProjectSheets_() {
   const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
 
-  ensureSheet_(ss, CONFIG.SHEETS.SERVICES, SERVICE_HEADERS);
+  ensureServicesSheet_(ss);
   ensureSheet_(ss, CONFIG.SHEETS.HISTORY, HISTORY_HEADERS);
-  ensureSheet_(ss, CONFIG.SHEETS.USERS, USER_HEADERS);
-  ensureSheet_(ss, CONFIG.SHEETS.STOCK_MASTER, STOCK_HEADERS);
-  ensureSheet_(ss, CONFIG.SHEETS.STOCK_HISTORY, STOCK_HISTORY_HEADERS);
+  ensureUsersSheet_(ss);
+  deleteLegacyUsersSheets_(ss);
   ensureSheet_(ss, CONFIG.SHEETS.NEWS, NEWS_HEADERS);
   ensureSheet_(ss, CONFIG.SHEETS.MEDIA, MEDIA_HEADERS);
-  ensureSheet_(ss, CONFIG.SHEETS.LOCATIONS, LOCATION_HEADERS);
   ensureSheet_(ss, CONFIG.SHEETS.CONSULTATION_STATUS, CONSULTATION_STATUS_HEADERS);
-  ensureSheet_(ss, CONFIG.SHEETS.SETTINGS, SETTINGS_HEADERS);
   ensureSheet_(ss, CONFIG.SHEETS.AGENDA, AGENDA_HEADERS);
+  ['LOCATIONS', 'SETTINGS', 'STOCK_MASTER', 'STOCK_HISTORY'].forEach(function(name) {
+    const deprecatedSheet = ss.getSheetByName(name);
+    if (deprecatedSheet) ss.deleteSheet(deprecatedSheet);
+  });
   PropertiesService.getScriptProperties().setProperty('PROJECT_SHEETS_READY', 'true');
+  PropertiesService.getScriptProperties().setProperty('DEPRECATED_SHEETS_REMOVED', 'true');
+  PropertiesService.getScriptProperties().setProperty('SERVICES_SCHEMA_VERSION', SERVICES_SCHEMA_VERSION);
+  PropertiesService.getScriptProperties().setProperty('USERS_SCHEMA_VERSION', USERS_SCHEMA_VERSION);
+}
+
+function removeUnusedSpreadsheetSheets() {
+  const unusedSheetNames = ['LOCATIONS', 'SETTINGS', 'STOCK_MASTER', 'STOCK_HISTORY'];
+  const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  const sheets = spreadsheet.getSheets();
+  const sheetsToRemove = sheets.filter(function(sheet) {
+    return unusedSheetNames.indexOf(sheet.getName()) >= 0;
+  });
+
+  if (sheetsToRemove.length >= sheets.length) {
+    throw new Error('Penghapusan dibatalkan karena akan menghapus semua sheet.');
+  }
+
+  sheetsToRemove.forEach(function(sheet) {
+    spreadsheet.deleteSheet(sheet);
+  });
+
+  return {
+    success: true,
+    deletedSheets: sheetsToRemove.map(function(sheet) { return sheet.getName(); }),
+    message: sheetsToRemove.length
+      ? 'Tab yang tidak digunakan aplikasi berhasil dihapus.'
+      : 'Tidak ada tab lama yang perlu dihapus.'
+  };
+}
+
+function ensureServicesSheet_(ss) {
+  let sheet = ss.getSheetByName(CONFIG.SHEETS.SERVICES);
+  if (!sheet) sheet = ss.insertSheet(CONFIG.SHEETS.SERVICES);
+
+  const values = sheet.getDataRange().getValues();
+  if (!values.length || values[0].every(function(value) { return String(value || '').trim() === ''; })) {
+    sheet.getRange(1, 1, 1, SERVICE_HEADERS.length).setValues([SERVICE_HEADERS]);
+    sheet.setFrozenRows(1);
+    hideServiceColumns_(sheet);
+    return sheet;
+  }
+
+  const oldHeaders = values[0].map(function(value) { return String(value || '').trim(); });
+  const normalizedHeader = function(value) {
+    return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  };
+  const canonicalByKey = {};
+  SERVICE_HEADERS.forEach(function(header) {
+    canonicalByKey[normalizedHeader(header)] = header;
+  });
+
+  const newHeaders = SERVICE_HEADERS.slice();
+  const sourceTargets = oldHeaders.map(function(header, columnIndex) {
+    const canonical = canonicalByKey[normalizedHeader(header)];
+    if (canonical) return canonical;
+    if (!header) {
+      const hasData = values.slice(1).some(function(row) {
+        return row[columnIndex] !== '' && row[columnIndex] !== null && row[columnIndex] !== undefined;
+      });
+      if (!hasData) return '';
+    }
+
+    let candidate = header || 'legacy_column_' + (columnIndex + 1);
+    let suffix = 2;
+    while (newHeaders.some(function(existing) {
+      return normalizedHeader(existing) === normalizedHeader(candidate);
+    })) {
+      candidate = header + '__' + suffix++;
+    }
+    newHeaders.push(candidate);
+    return candidate;
+  });
+
+  const headersAlreadyCanonical = oldHeaders.length === newHeaders.length &&
+    oldHeaders.every(function(header, index) {
+      return header === newHeaders[index];
+    });
+  if (headersAlreadyCanonical) {
+    sheet.setFrozenRows(1);
+    hideServiceColumns_(sheet);
+    return sheet;
+  }
+
+  const migrated = [newHeaders];
+  for (let rowIndex = 1; rowIndex < values.length; rowIndex++) {
+    const row = new Array(newHeaders.length).fill('');
+    oldHeaders.forEach(function(header, columnIndex) {
+      const target = sourceTargets[columnIndex];
+      if (!target) return;
+
+      const targetIndex = newHeaders.indexOf(target);
+      const value = values[rowIndex][columnIndex];
+      if (row[targetIndex] === '' || row[targetIndex] === null) {
+        row[targetIndex] = value;
+      } else if (value !== '' && value !== null && value !== undefined) {
+        let duplicateHeader = target + '__legacy';
+        let suffix = 2;
+        while (newHeaders.indexOf(duplicateHeader) >= 0) {
+          duplicateHeader = target + '__legacy' + suffix++;
+        }
+        newHeaders.push(duplicateHeader);
+        migrated[0].push(duplicateHeader);
+        migrated.forEach(function(existingRow, existingIndex) {
+          if (existingIndex > 0) existingRow.push('');
+        });
+        row.push(value);
+      }
+    });
+    migrated.push(row);
+  }
+
+  sheet.clearContents();
+  sheet.getRange(1, 1, migrated.length, newHeaders.length).setValues(migrated);
+  sheet.setFrozenRows(1);
+  hideServiceColumns_(sheet);
+  return sheet;
+}
+
+function hideServiceColumns_(sheet) {
+  const lastColumn = sheet.getLastColumn();
+  if (!lastColumn) return;
+
+  const hiddenHeaders = HIDDEN_SERVICE_HEADERS.map(function(header) {
+    return String(header).toLowerCase().replace(/[^a-z0-9]/g, '');
+  });
+  const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+  const columnsToHide = [];
+
+  headers.forEach(function(header, index) {
+    const normalized = String(header || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (hiddenHeaders.indexOf(normalized) >= 0) columnsToHide.push(index + 1);
+  });
+
+  let rangeStart = 0;
+  let rangeLength = 0;
+  columnsToHide.sort(function(a, b) { return a - b; }).forEach(function(column) {
+    if (rangeLength && column === rangeStart + rangeLength) {
+      rangeLength++;
+      return;
+    }
+
+    if (rangeLength) sheet.hideColumns(rangeStart, rangeLength);
+    rangeStart = column;
+    rangeLength = 1;
+  });
+
+  if (rangeLength) sheet.hideColumns(rangeStart, rangeLength);
 }
 
 function ensureSheet_(ss, name, headers) {
@@ -438,6 +566,117 @@ function ensureSheet_(ss, name, headers) {
 
   sheet.setFrozenRows(1);
   return sheet;
+}
+
+function ensureUsersSheet_(ss) {
+  let sheet = ss.getSheetByName(CONFIG.SHEETS.USERS);
+  if (!sheet) sheet = ss.insertSheet(CONFIG.SHEETS.USERS);
+
+  const values = sheet.getDataRange().getValues();
+  if (!values.length || values[0].every(function(value) {
+    return String(value || '').trim() === '';
+  })) {
+    sheet.getRange(1, 1, 1, USER_HEADERS.length).setValues([USER_HEADERS]);
+    sheet.setFrozenRows(1);
+    return sheet;
+  }
+
+  const normalizeHeader = function(value) {
+    return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  };
+  const canonicalByKey = {};
+  USER_HEADERS.forEach(function(header) {
+    canonicalByKey[normalizeHeader(header)] = header;
+  });
+
+  const oldHeaders = values[0].map(function(value) { return String(value || '').trim(); });
+  const newHeaders = USER_HEADERS.slice();
+  const sourceTargets = oldHeaders.map(function(header, columnIndex) {
+    const canonical = canonicalByKey[normalizeHeader(header)];
+    if (canonical) return canonical;
+
+    if (!header) {
+      const hasData = values.slice(1).some(function(row) {
+        return row[columnIndex] !== '' && row[columnIndex] !== null && row[columnIndex] !== undefined;
+      });
+      if (!hasData) return '';
+    }
+
+    const base = header || 'legacy_column_' + (columnIndex + 1);
+    let candidate = base;
+    let suffix = 2;
+    while (newHeaders.some(function(existing) {
+      return normalizeHeader(existing) === normalizeHeader(candidate);
+    })) {
+      candidate = base + '__' + suffix++;
+    }
+    newHeaders.push(candidate);
+    return candidate;
+  });
+
+  const usernameIndex = USER_HEADERS.indexOf('USERNAME');
+  const createdAtIndex = USER_HEADERS.indexOf('CREATED_AT');
+  const migratedByUsername = Object.create(null);
+  const migratedRows = [];
+
+  for (let rowIndex = 1; rowIndex < values.length; rowIndex++) {
+    const row = new Array(newHeaders.length).fill('');
+    oldHeaders.forEach(function(header, columnIndex) {
+      const target = sourceTargets[columnIndex];
+      if (!target) return;
+      const targetIndex = newHeaders.indexOf(target);
+      const value = values[rowIndex][columnIndex];
+      if (value !== '' && value !== null && value !== undefined) row[targetIndex] = value;
+    });
+
+    const username = String(row[usernameIndex] || '').trim().toLowerCase();
+    if (!username) {
+      migratedRows.push(row);
+      continue;
+    }
+
+    const existingIndex = migratedByUsername[username];
+    if (existingIndex === undefined) {
+      migratedByUsername[username] = migratedRows.length;
+      migratedRows.push(row);
+      continue;
+    }
+
+    const existingRow = migratedRows[existingIndex];
+    row.forEach(function(value, columnIndex) {
+      if (value === '' || value === null || value === undefined) return;
+      if (columnIndex === createdAtIndex &&
+          existingRow[columnIndex] !== '' &&
+          existingRow[columnIndex] !== null &&
+          existingRow[columnIndex] !== undefined) return;
+      existingRow[columnIndex] = value;
+    });
+  }
+
+  const migrated = [newHeaders].concat(migratedRows);
+  sheet.clearContents();
+  sheet.getRange(1, 1, migrated.length, newHeaders.length).setValues(migrated);
+  sheet.setFrozenRows(1);
+  return sheet;
+}
+
+function deleteLegacyUsersSheets_(ss) {
+  const canonicalSheet = ss.getSheetByName(CONFIG.SHEETS.USERS);
+  const legacySheets = ss.getSheets().filter(function(sheet) {
+    return String(sheet.getName() || '').trim().toUpperCase() === 'USERS' &&
+      (!canonicalSheet || sheet.getSheetId() !== canonicalSheet.getSheetId());
+  });
+  if (!legacySheets.length) return [];
+
+  if (ss.getSheets().length - legacySheets.length < 1) {
+    throw new Error('Tab USERS tidak dihapus karena akan menghapus semua sheet.');
+  }
+
+  legacySheets.forEach(function(sheet) {
+    ss.deleteSheet(sheet);
+  });
+  console.log('Tab USERS lama dihapus; data akun utama tetap menggunakan TEKNISI DAN ADMIN.');
+  return legacySheets.map(function(sheet) { return sheet.getName(); });
 }
 
 function ensureDefaultAdmin_() {
@@ -620,7 +859,7 @@ function onFormSubmit(e) {
     const named = e.namedValues || {};
     const values = e.values || [];
     const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-    const sheet = ss.getSheetByName(CONFIG.SHEETS.SERVICES);
+    const sheet = ensureServicesSheet_(ss);
 
     if (!sheet) throw new Error('Sheet SERVICES tidak ditemukan.');
 
@@ -677,10 +916,7 @@ function onFormSubmit(e) {
         'jenis layanan', 'jenis servis', 'jenis layanan ',
         'layanan', 'service', 'service type'
       ]),
-      item_name: pickAnswer_(named, [
-        'nama barang', 'nama mesin', 'jenis barang', 'nama alat',
-        'barang', 'mesin', 'mesin yang diservis', 'alat'
-      ]),
+      item_name: pickServiceItemName_(named),
       merk: pickAnswer_(named, ['merk', 'merek', 'brand']),
       tipe: pickAnswer_(named, ['tipe', 'type', 'model']),
       keluhan: pickAnswer_(named, [
@@ -798,6 +1034,76 @@ function onFormSubmit(e) {
   } catch (error) {
     console.error('onFormSubmit error: ' + error.message);
     throw error;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function repairServiceItemNames() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    const services = ss.getSheetByName(CONFIG.SHEETS.SERVICES);
+    if (!services) throw new Error('Sheet SERVICES tidak ditemukan.');
+
+    const data = services.getDataRange().getValues();
+    if (data.length < 2) {
+      return { success: true, repaired: 0, message: 'Tidak ada data servis untuk diperbaiki.' };
+    }
+    const headers = data[0].map(function(value) { return String(value || '').trim(); });
+    const itemColumn = findHeaderIndex_(headers, ['item_name']);
+    const rawColumn = findHeaderIndex_(headers, ['raw_form_data']);
+    const formRowColumn = findHeaderIndex_(headers, ['form_row']);
+    if (itemColumn < 0) throw new Error('Kolom item_name tidak ditemukan di sheet SERVICES.');
+
+    const responseSheet = ss.getSheetByName('Form Responses 1') || findResponseSheet_(ss);
+    const responseData = responseSheet && responseSheet.getLastRow() > 0
+      ? responseSheet.getDataRange().getDisplayValues()
+      : [];
+    const responseHeaders = responseData.length
+      ? responseData[0].map(function(value) { return String(value || '').trim(); })
+      : [];
+    const updates = [];
+
+    for (let rowIndex = 1; rowIndex < data.length; rowIndex++) {
+      let formData = {};
+      const rawValue = rawColumn >= 0 ? data[rowIndex][rawColumn] : '';
+      if (rawValue) {
+        try {
+          formData = typeof rawValue === 'string' ? JSON.parse(rawValue) : rawValue;
+        } catch (error) {
+          throw new Error('raw_form_data tidak valid pada baris ' + (rowIndex + 1) + '. Tidak ada perubahan dilakukan.');
+        }
+      }
+
+      let itemName = pickServiceItemName_(formData);
+      if (!itemName && formRowColumn >= 0 && responseHeaders.length) {
+        const sourceRow = Number(data[rowIndex][formRowColumn]);
+        if (Number.isInteger(sourceRow) && sourceRow > 1 && sourceRow <= responseData.length) {
+          const sourceAnswers = {};
+          responseHeaders.forEach(function(header, columnIndex) {
+            sourceAnswers[header] = [responseData[sourceRow - 1][columnIndex]];
+          });
+          itemName = pickServiceItemName_(sourceAnswers);
+        }
+      }
+
+      if (itemName && String(data[rowIndex][itemColumn] || '').trim() !== itemName) {
+        updates.push({ row: rowIndex + 1, value: itemName });
+      }
+    }
+
+    updates.forEach(function(update) {
+      services.getRange(update.row, itemColumn + 1).setValue(update.value);
+    });
+    return {
+      success: true,
+      repaired: updates.length,
+      message: updates.length
+        ? 'Nama barang servis berhasil diperbaiki pada ' + updates.length + ' data.'
+        : 'Tidak ada item_name yang perlu diperbaiki.'
+    };
   } finally {
     lock.releaseLock();
   }
@@ -1348,7 +1654,7 @@ function updateServiceStatus_(body) {
   const session = requireToken_(token, ['admin', 'teknisi']);
 
   const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-  ensureSheet_(spreadsheet, CONFIG.SHEETS.SERVICES, SERVICE_HEADERS);
+  ensureServicesSheet_(spreadsheet);
   const sheet = spreadsheet.getSheetByName(CONFIG.SHEETS.SERVICES);
   if (!sheet) throw new Error('Sheet SERVICES tidak ditemukan.');
 
@@ -1401,7 +1707,8 @@ function updateServiceStatus_(body) {
     if (!isFinite(amount) || amount < 0) throw new Error('Nominal biaya tidak valid.');
     serviceCost = 'Rp ' + Math.round(amount).toLocaleString('id-ID');
   }
-  let proofUrl = String(data.bukti_foto || data.BUKTI_FOTO || oldRecord.bukti_foto || oldRecord.BUKTI_FOTO || '').trim();
+  const submittedProof = getServiceProofValue_(data) || getServiceProofValue_(body);
+  let proofUrl = String(submittedProof || getServiceProofValue_(oldRecord) || '').trim();
   if (/^data:/i.test(proofUrl)) {
     const image = proofUrl.match(/^data:(image\/(?:jpeg|png|webp));base64,[\s\S]+$/i);
     if (!image) throw new Error('Bukti foto harus berupa gambar JPG, PNG, atau WebP yang valid.');
@@ -1415,6 +1722,21 @@ function updateServiceStatus_(body) {
     proofUrl = String(upload.data && (upload.data.thumbnailUrl || upload.data.fileUrl) || '').trim();
     if (!proofUrl) throw new Error('Foto berhasil diunggah, tetapi URL foto tidak diterima.');
   }
+  const submittedWorkNote = data.catatan_teknisi !== undefined ? data.catatan_teknisi
+    : data.keterangan_selesai !== undefined ? data.keterangan_selesai
+      : data.notes !== undefined ? data.notes
+        : body.catatan_teknisi !== undefined ? body.catatan_teknisi
+          : body.keterangan_selesai !== undefined ? body.keterangan_selesai
+            : body.notes;
+  const workNote = String(submittedWorkNote !== undefined
+    ? submittedWorkNote
+    : oldRecord.catatan_teknisi || oldRecord.notes || '').trim();
+  const finishNote = newStatus === 'Selesai'
+    ? String(data.keterangan_selesai !== undefined ? data.keterangan_selesai
+      : (body.keterangan_selesai !== undefined ? body.keterangan_selesai : workNote)).trim()
+    : String(oldRecord.keterangan_selesai || '');
+  const costNote = String(data.biaya_keterangan !== undefined ? data.biaya_keterangan
+    : (body.biaya_keterangan !== undefined ? body.biaya_keterangan : oldRecord.biaya_keterangan || '')).trim();
   const updated = Object.assign({}, oldRecord, {
     status: newStatus,
     technician: String(session.role || '').trim().toLowerCase() === 'teknisi'
@@ -1423,7 +1745,10 @@ function updateServiceStatus_(body) {
     // Teknisi mengirim biaya_tipe/biaya_nominal. Simpan hasilnya ke kolom
     // biaya yang sudah digunakan panel Admin dan kompatibel dengan sheet lama.
     biaya: serviceCost,
-    notes: String(data.notes !== undefined ? data.notes : oldRecord.notes || ''),
+    notes: workNote,
+    catatan_teknisi: workNote,
+    keterangan_selesai: finishNote,
+    biaya_keterangan: costNote,
     admin_update: String(data.admin_update || data.updated_by || session.username || 'ADMIN_1'),
     timestamp_update: now,
     tanggal_selesai: (newStatus === 'Selesai' || newStatus === 'Sudah Diambil') ? (data.tanggal_selesai || now.slice(0, 10)) : (oldRecord.tanggal_selesai || ''),
@@ -1441,7 +1766,7 @@ function updateServiceStatus_(body) {
 }
 
 function upsertService_(record) {
-  const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEETS.SERVICES);
+  const sheet = ensureServicesSheet_(SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID));
   if (!sheet) throw new Error('Sheet SERVICES tidak ditemukan.');
 
   const values = sheet.getDataRange().getValues();
@@ -1481,7 +1806,6 @@ function upsertService_(record) {
     }
     writeObjectToRow_(sheet, existingRow, headers, updatedRecord);
   } else {
-    ensureSheet_(SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID), CONFIG.SHEETS.SERVICES, SERVICE_HEADERS);
     const refreshed = sheet.getDataRange().getValues();
     const refreshedHeaders = refreshed[0].map(String);
     const row = refreshedHeaders.map(function(header) {
@@ -1692,148 +2016,6 @@ function requireToken_(token, allowedRoles) {
   }
 
   return session;
-}
-
-/* ==========================================================
-   STOCK
-   ========================================================== */
-
-function getStock_() {
-  const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEETS.STOCK_MASTER);
-  if (!sheet || sheet.getLastRow() < 2) return { success: true, data: [] };
-
-  const values = sheet.getDataRange().getValues();
-  const headers = values[0].map(String);
-
-  const rows = values.slice(1)
-    .filter(function(row) {
-      return row.some(function(cell) {
-        return String(cell || '').trim() !== '';
-      });
-    })
-    .map(function(row) {
-      return objectFromRow_(headers, row);
-    });
-
-  return { success: true, data: rows };
-}
-
-function getStockHistory_() {
-  const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEETS.STOCK_HISTORY);
-  if (!sheet || sheet.getLastRow() < 2) return { success: true, data: [] };
-
-  const values = sheet.getDataRange().getValues();
-  const headers = values[0].map(String);
-
-  return {
-    success: true,
-    data: values.slice(1)
-      .filter(function(row) {
-        return row.some(function(cell) {
-          return String(cell || '').trim() !== '';
-        });
-      })
-      .map(function(row) {
-        return objectFromRow_(headers, row);
-      })
-  };
-}
-
-function stockIn_(payload) {
-  const id = String(payload.id || '').trim();
-  const qty = Number(payload.qty || 0);
-
-  if (!id) return jsonError_('ID barang wajib diisi.');
-  if (!Number.isFinite(qty) || qty <= 0) return jsonError_('Jumlah stok masuk harus lebih dari 0.');
-
-  const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEETS.STOCK_MASTER);
-  const result = findStockRow_(sheet, id);
-  if (!result) return jsonError_('Barang stok tidak ditemukan.');
-
-  const stockCol = findHeaderIndex_(result.headers, ['stock', 'STOCK', 'jumlah']);
-  if (stockCol < 0) return jsonError_('Kolom stock tidak ditemukan.');
-
-  const current = Number(result.row[stockCol] || 0);
-  const newStock = current + qty;
-
-  sheet.getRange(result.rowNumber, stockCol + 1).setValue(newStock);
-
-  appendStockHistory_(
-    id,
-    getValueByAliases_(result.headers, result.row, ['name', 'nama']),
-    'MASUK',
-    qty,
-    newStock,
-    payload.note || 'Stok masuk'
-  );
-
-  return {
-    success: true,
-    message: 'Stok masuk berhasil dicatat.',
-    data: { id: id, stock: newStock }
-  };
-}
-
-function stockOut_(payload) {
-  const id = String(payload.id || '').trim();
-  const qty = Number(payload.qty || 0);
-
-  if (!id) return jsonError_('ID barang wajib diisi.');
-  if (!Number.isFinite(qty) || qty <= 0) return jsonError_('Jumlah stok keluar harus lebih dari 0.');
-
-  const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEETS.STOCK_MASTER);
-  const result = findStockRow_(sheet, id);
-  if (!result) return jsonError_('Barang stok tidak ditemukan.');
-
-  const stockCol = findHeaderIndex_(result.headers, ['stock', 'STOCK', 'jumlah']);
-  if (stockCol < 0) return jsonError_('Kolom stock tidak ditemukan.');
-
-  const current = Number(result.row[stockCol] || 0);
-  if (qty > current) return jsonError_('Jumlah keluar melebihi stok saat ini.');
-
-  const newStock = current - qty;
-  sheet.getRange(result.rowNumber, stockCol + 1).setValue(newStock);
-
-  appendStockHistory_(
-    id,
-    getValueByAliases_(result.headers, result.row, ['name', 'nama']),
-    'KELUAR',
-    qty,
-    newStock,
-    payload.note || 'Stok keluar'
-  );
-
-  return {
-    success: true,
-    message: 'Stok keluar berhasil dicatat.',
-    data: { id: id, stock: newStock }
-  };
-}
-
-function findStockRow_(sheet, id) {
-  if (!sheet || sheet.getLastRow() < 2) return null;
-
-  const values = sheet.getDataRange().getValues();
-  const headers = values[0].map(String);
-  const idCol = findHeaderIndex_(headers, ['id', 'ID', 'kode']);
-  if (idCol < 0) return null;
-
-  for (let r = 1; r < values.length; r++) {
-    if (String(values[r][idCol] || '').trim() === id) {
-      return {
-        rowNumber: r + 1,
-        row: values[r],
-        headers: headers
-      };
-    }
-  }
-
-  return null;
-}
-
-function appendStockHistory_(id, name, type, qty, after, note) {
-  const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEETS.STOCK_HISTORY);
-  sheet.appendRow([new Date().toISOString(), id, name || '', type, qty, after, note || '']);
 }
 
 /* ==========================================================
@@ -2175,11 +2357,16 @@ function uploadFileToDrive_(payload) {
   const fileName = String(payload.fileName || ('leressae-' + Date.now())).replace(/[\\/:*?"<>|]/g, '_');
   const blob = Utilities.newBlob(bytes, mimeType, fileName);
   const file = folder.createFile(blob);
-  try {
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  } catch (sharingError) {
-    file.setTrashed(true);
-    throw new Error('File tersimpan, tetapi akses publik Drive tidak dapat diaktifkan. Periksa kebijakan berbagi Google Workspace: ' + sharingError.message);
+  const folderAccess = folder.getSharingAccess();
+  const inheritsPublicAccess = folderAccess === DriveApp.Access.ANYONE
+    || folderAccess === DriveApp.Access.ANYONE_WITH_LINK;
+  if (!inheritsPublicAccess) {
+    try {
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    } catch (sharingError) {
+      file.setTrashed(true);
+      throw new Error('File tersimpan, tetapi akses publik Drive tidak dapat diaktifkan. Periksa kebijakan berbagi Google Workspace: ' + sharingError.message);
+    }
   }
 
   if (purpose === 'MEDIA') {
@@ -2881,39 +3068,6 @@ function syncTechnicians_(users) {
 }
 
 /* ==========================================================
-   SETTINGS
-   ========================================================== */
-
-function getSettings_() {
-  const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEETS.SETTINGS);
-  if (!sheet || sheet.getLastRow() < 2) return {};
-
-  const values = sheet.getDataRange().getValues();
-  const obj = {};
-
-  for (let r = 1; r < values.length; r++) {
-    const key = String(values[r][0] || '').trim();
-    if (key) obj[key] = values[r][1] ?? '';
-  }
-
-  return obj;
-}
-
-function setSetting_(key, value) {
-  const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEETS.SETTINGS);
-  const values = sheet.getDataRange().getValues();
-
-  for (let r = 1; r < values.length; r++) {
-    if (String(values[r][0] || '').trim() === String(key)) {
-      sheet.getRange(r + 1, 2).setValue(value);
-      return;
-    }
-  }
-
-  sheet.appendRow([key, value]);
-}
-
-/* ==========================================================
    HELPERS
    ========================================================== */
 
@@ -2981,8 +3135,10 @@ function objectFromRow_(headers, row) {
 }
 
 function getServiceProofValue_(record) {
-  const proofKeys = ['buktifoto', 'buktiphoto', 'proofphoto', 'fototeknisi', 'fotoservice',
-    'servicephoto', 'buktifotoservice', 'fotohasilservice', 'fotohasilperbaikan', 'fotoperbaikan'];
+  const proofKeys = ['buktifoto', 'buktiphoto', 'proofphoto', 'proofurl', 'serviceproof',
+    'serviceproofurl', 'fototeknisi', 'fototeknisiurl', 'fotoservice', 'fotoservis',
+    'fotoserviceurl', 'fotoservisurl', 'servicephoto', 'buktifotoservice',
+    'fotohasilservice', 'fotohasilservis', 'fotohasilperbaikan', 'fotoperbaikan'];
   const keys = Object.keys(record || {}).filter(function(name) {
     return proofKeys.indexOf(String(name).replace(/[^a-z0-9]/gi, '').toLowerCase()) >= 0;
   });
@@ -3078,6 +3234,33 @@ function firstValue_(namedValues, possibleKeys) {
   }
 
   return '';
+}
+
+function pickExactAnswer_(namedValues, aliases) {
+  const keys = Object.keys(namedValues || {});
+  for (let i = 0; i < aliases.length; i++) {
+    const wanted = normalizeText_(aliases[i]);
+    const key = keys.find(function(candidate) {
+      return normalizeText_(candidate) === wanted;
+    });
+    if (key === undefined) continue;
+    const value = firstValue_(namedValues, [key]);
+    const answer = String(value === null || value === undefined ? '' : value).trim();
+    if (answer) return answer;
+  }
+  return '';
+}
+
+function pickServiceItemName_(namedValues) {
+  return pickExactAnswer_(namedValues, [
+    'Mesin yang diservis',
+    'Nama barang',
+    'Nama mesin',
+    'Jenis barang',
+    'Nama alat',
+    'Barang yang diservis',
+    'Barang'
+  ]);
 }
 
 function pickAnswer_(namedValues, keywords) {
