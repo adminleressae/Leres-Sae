@@ -1726,12 +1726,12 @@ function openServiceDetail(serviceId) {
                 running: { label: 'Servis Berjalan', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h4.5A1.5 1.5 0 0 1 20 4.5v4.5"></path><path d="M14 20h6"></path><path d="M20 12v7.5A1.5 1.5 0 0 1 18.5 21H5.5A1.5 1.5 0 0 1 4 19.5V4.5A1.5 1.5 0 0 1 5.5 3H12"></path><path d="M12 8v4l3 2"></path></svg>' },
                 completed: { label: 'Servis Selesai', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12.5 2.2 2.2 4.8-5.2"></path></svg>' },
                 customers: { label: 'Pelanggan', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"></path><circle cx="9.5" cy="7" r="3.5"></circle><path d="M22 19v-1a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>' },
-                locations: { label: 'Konsultasi', iconSvg: '<span class="admin-nav-icon" aria-hidden="true">⌖</span>' },
+                locations: { label: 'Konsultasi', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3h9A2.5 2.5 0 0 1 19 5.5v8A2.5 2.5 0 0 1 16.5 16H11l-4.5 4v-4.5A2.5 2.5 0 0 1 5 13Z"></path><path d="M8 8h8M8 11.5h5"></path></svg>' },
                 technicians: { label: 'Teknisi', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 20a7 7 0 0 1 16 0"></path><path d="M18 8h4"></path><path d="M20 6v4"></path></svg>' },
                 stock: { label: 'Stock Flow', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5 12 3l9 4.5-9 4.5L3 7.5Z"></path><path d="M3 12l9 4.5 9-4.5"></path><path d="M3 16.5 12 21l9-4.5"></path></svg>' },
-                media: { label: 'Update Media', iconSvg: '<span class="admin-nav-icon" aria-hidden="true">◫</span>' },
-                news: { label: 'Update Berita', iconSvg: '<span class="admin-nav-icon" aria-hidden="true">▤</span>' },
-                agenda: { label: 'Update Kalender Kegiatan', iconSvg: '<span class="admin-nav-icon" aria-hidden="true">▦</span>' },
+                media: { label: 'Update Media', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"></rect><circle cx="8.5" cy="9" r="1.5"></circle><path d="m21 15-5-5L5 20"></path></svg>' },
+                news: { label: 'Update Berita', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 1 4 17.5v-11A2 2 0 0 1 5 4.5Z"></path><path d="M8 7h9M8 11h9M8 15h6M4 17.5A2.5 2.5 0 0 1 6.5 15H20"></path></svg>' },
+                agenda: { label: 'Update Kalender Kegiatan', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2.5"></rect><path d="M7 3v4M17 3v4M3 10h18"></path><path d="M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01M16 17.5h.01"></path></svg>' },
                 reports: { label: 'Laporan', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-8"></path><path d="M22 20v-12"></path></svg>' },
                 settings: { label: 'Pengaturan', iconSvg: '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.82-.33 1.7 1.7 0 0 0-1 1.54V20a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9.8 18.4a1.7 1.7 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.54-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9.8 5.6a1.7 1.7 0 0 0 1-1.54V4a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 14.2 5.6a1.7 1.7 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.38.38.94.49 1.54 1H21a2 2 0 1 1 0 4h-.09c-.6.51-1.16.62-1.54 1Z"></path></svg>' }
             };
@@ -6964,12 +6964,44 @@ function renderReportsPage() {
 
 
         function setupNewsViews() {
-            const nav = document.querySelector('.nav-links'); if (nav && !document.getElementById('nav-info')) nav.insertAdjacentHTML('beforeend', '<li><a href="#page-info" onclick="navigateTo(\'page-info\', {fromNavbar:true}); return false;" class="nav-item" id="nav-info">Berita</a></li>');
+            const nav = document.querySelector('.nav-links');
+            if (nav && !document.getElementById('nav-info')) {
+                const newsItem = document.createElement('li');
+                newsItem.innerHTML = '<a href="#page-info" onclick="navigateTo(\'page-info\', {fromNavbar:true}); return false;" class="nav-item" id="nav-info">Berita</a>';
+                const mediaItem = nav.querySelector('#nav-media')?.closest('li');
+                if (mediaItem) mediaItem.insertAdjacentElement('afterend', newsItem);
+                else nav.appendChild(newsItem);
+            }
             const wrapper = document.querySelector('.wrapper'); if (wrapper && !document.getElementById('page-info')) wrapper.insertAdjacentHTML('beforeend', '<section id="page-info" class="page-view card-container"><h1 class="page-header-title">Info / Berita</h1><p class="page-header-desc">Informasi terbaru LERES SAE BPTI Disperindag DIY.</p><div id="publicNewsList" class="tutorial-scroll" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));overflow:visible"></div></section>');
             if (wrapper && !document.getElementById('page-news-detail')) wrapper.insertAdjacentHTML('beforeend', '<section id="page-news-detail" class="page-view news-detail-page"><div class="news-detail-layout"><main class="news-detail-main"></main><aside class="news-detail-sidebar"><h2>Berita Terbaru</h2><div class="news-detail-latest-list"></div></aside></div></section>');
             if (wrapper && !document.getElementById('page-media-detail')) wrapper.insertAdjacentHTML('beforeend', '<section id="page-media-detail" class="page-view news-detail-page media-detail-page"><div class="news-detail-layout media-detail-layout"><main class="media-detail-main"></main><aside class="news-detail-sidebar media-detail-sidebar"><h2>Media Terbaru</h2><div class="media-detail-latest-list"></div></aside></div></section>');
             const dashboard = document.getElementById('page-dashboard');
             if (dashboard && !document.getElementById('homeMediaSpotlight')) dashboard.insertAdjacentHTML('beforeend', '<section id="homeMediaSpotlight" class="home-media-spotlight" aria-label="Sorotan dokumentasi media"><div class="media-spotlight-head"><div><h2 class="media-spotlight-title">Sorotan Media</h2><p class="media-spotlight-subtitle">Momen kegiatan, praktik, dan kolaborasi terbaru BPTI Disperindag DIY.</p></div></div><div class="home-media-content"><div class="home-media-empty">Memuat dokumentasi foto…</div></div></section>');
+            if (dashboard && !document.getElementById('publicVisitorCounter')) dashboard.insertAdjacentHTML('beforeend', '<section id="publicVisitorCounter" class="public-visitor-counter" aria-label="Statistik pengunjung"><div class="public-visitor-heading"><span class="public-visitor-label">STATISTIK PENGUNJUNG</span><h2>Pengunjung LERES SAE</h2><p>Informasi kunjungan website public secara ringkas.</p></div><div class="public-visitor-stats"><div class="public-visitor-stat"><span class="public-visitor-icon" aria-hidden="true">◷</span><div><span>Pengunjung Hari Ini</span><strong id="publicVisitorToday">0</strong></div></div><div class="public-visitor-stat"><span class="public-visitor-icon" aria-hidden="true">▥</span><div><span>Pengunjung Mingguan</span><strong id="publicVisitorWeekly">0</strong></div></div><div class="public-visitor-stat"><span class="public-visitor-icon" aria-hidden="true">◉</span><div><span>Total Pengunjung</span><strong id="publicVisitorCount">0</strong></div></div></div></section>');
+            const visitorCountNode = document.getElementById('publicVisitorCount');
+            if (visitorCountNode) {
+                const visitorKey = 'leressae_public_visitor_count';
+                if (!sessionStorage.getItem('leressae_public_visited')) {
+                    const nextCount = Number(localStorage.getItem(visitorKey) || 0) + 1;
+                    localStorage.setItem(visitorKey, String(nextCount));
+                    sessionStorage.setItem('leressae_public_visited', '1');
+                }
+                visitorCountNode.textContent = Number(localStorage.getItem(visitorKey) || 0).toLocaleString('id-ID');
+                const todayNode = document.getElementById('publicVisitorToday');
+                const weeklyNode = document.getElementById('publicVisitorWeekly');
+                const todayKey = `leressae_public_visitor_day_${new Date().toISOString().slice(0,10)}`;
+                const weekDate = new Date();
+                const weekStart = new Date(weekDate.getFullYear(), 0, 1);
+                const weekNumber = Math.ceil((((weekDate - weekStart) / 86400000) + weekStart.getDay() + 1) / 7);
+                const weekKey = `leressae_public_visitor_week_${weekDate.getFullYear()}-${weekNumber}`;
+                if (!sessionStorage.getItem('leressae_public_visited_day')) {
+                    localStorage.setItem(todayKey, String(Number(localStorage.getItem(todayKey) || 0) + 1));
+                    localStorage.setItem(weekKey, String(Number(localStorage.getItem(weekKey) || 0) + 1));
+                    sessionStorage.setItem('leressae_public_visited_day', '1');
+                }
+                if (todayNode) todayNode.textContent = Number(localStorage.getItem(todayKey) || 0).toLocaleString('id-ID');
+                if (weeklyNode) weeklyNode.textContent = Number(localStorage.getItem(weekKey) || 0).toLocaleString('id-ID');
+            }
             if (dashboard && !document.getElementById('homeNewsList')) {
                 const newsSection = document.createElement('div');
                 newsSection.className = 'dashboard-section';

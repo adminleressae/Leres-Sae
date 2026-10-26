@@ -6,6 +6,27 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+#page-dashboard #homeMediaSpotlight { margin-bottom:0 !important; }
+.public-visitor-counter { display:grid; grid-template-columns:minmax(220px,.8fr) minmax(0,1.7fr); align-items:center; gap:28px; margin:0 0 4px; padding:26px 28px; border:1px solid #dcebe3; border-radius:18px; background:#fff; box-shadow:0 10px 24px rgba(25,55,58,.05); color:#123b37; }
+.public-visitor-heading h2 { margin:6px 0 4px; color:#0b3a32; font-size:1.35rem; }
+.public-visitor-heading p { margin:0; color:#60756f; font-size:.88rem; }
+.public-visitor-icon { display:grid; place-items:center; flex:0 0 auto; width:46px; height:46px; border-radius:14px; background:#e3f3eb; color:#087f70; font-size:1.25rem; }
+.public-visitor-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.public-visitor-stat { display:flex; align-items:center; gap:11px; min-width:0; padding:15px 13px; border:1px solid #e1eee8; border-radius:14px; background:#f8fcfa; }
+.public-visitor-stat > div { min-width:0; }
+.public-visitor-stat > div > span { display:block; color:#527067; font-size:.75rem; line-height:1.3; }
+.public-visitor-stat strong { display:block; margin-top:5px; color:#0b3a32; font-size:1.45rem; line-height:1; }
+.public-visitor-label { display:block; color:#267260; font-size:.7rem; letter-spacing:.14em; font-weight:800; }
+.public-visitor-counter strong { display:block; margin-top:4px; color:#0b3a32; font-size:1.8rem; line-height:1.1; }
+.public-visitor-counter p { margin:4px 0 0; color:#60756f; font-size:.88rem; }
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .public-visitor-counter { background:#142521 !important; border-color:#31584f; color:#e8fff6; }
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .public-visitor-icon { background:#23483f; color:#9ff4d8; }
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .public-visitor-label { color:#a9f0d2; }
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .public-visitor-counter strong { color:#f0fff9; }
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .public-visitor-counter p { color:#b9d8cd; }
+@media (max-width:900px) { .public-visitor-counter { grid-template-columns:1fr; gap:18px; } }
+@media (max-width:600px) { .public-visitor-counter { padding:18px; gap:14px; } .public-visitor-stats { grid-template-columns:1fr; } }
+
 /* Public agenda calendar. */
 .public-agenda-section { margin-top: 28px; }
 .public-agenda-heading { margin-bottom: 18px; }
@@ -5730,6 +5751,264 @@ body.dark-mode .tech-whatsapp-link {
     transform: none !important;
     will-change: auto;
   }
+}
+
+/* Bring the troubleshooting library cards in line with the service page. */
+#page-media-penanganan .tutorial-scroll {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: clamp(16px, 1.8vw, 26px) !important;
+  margin-top: 24px !important;
+  overflow: visible !important;
+}
+#page-media-penanganan .tutorial-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 300px;
+  flex-direction: column;
+  padding: 26px 24px 20px !important;
+  overflow: hidden;
+  border: 1px solid #e1e9e5 !important;
+  border-radius: 22px !important;
+  box-shadow: 0 14px 32px rgba(24, 48, 43, .07), inset 0 1px 0 rgba(255,255,255,.95) !important;
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-media-penanganan .tutorial-card {
+  background: linear-gradient(145deg, #fff, #fbfcfc) !important;
+}
+#page-media-penanganan .tutorial-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 22px;
+  right: 22px;
+  height: 4px;
+  border-radius: 0 0 4px 4px;
+  background: linear-gradient(90deg, #078675, #78c8a5);
+}
+#page-media-penanganan .tutorial-card:nth-child(3)::before {
+  background: linear-gradient(90deg, #d99e0b, #ffd04e);
+}
+#page-media-penanganan .tutorial-card:hover {
+  transform: translateY(-3px);
+  border-color: #bfd9cf !important;
+  box-shadow: 0 21px 40px rgba(24, 48, 43, .11) !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-media-penanganan .tutorial-card h3 {
+  margin: 16px 0 10px;
+  color: #173b38 !important;
+  font-size: 1.2rem;
+  line-height: 1.35;
+  letter-spacing: -.02em;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-media-penanganan .tutorial-card p {
+  margin: 0 0 24px;
+  color: #617472 !important;
+  font-size: .98rem;
+  line-height: 1.65;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-media-penanganan .tutorial-tag {
+  width: fit-content;
+  min-height: 30px;
+  padding: 6px 11px;
+  border: 1px solid #dcebe5;
+  border-radius: 999px;
+  background: #f4faf7 !important;
+  color: #267260 !important;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+#page-media-penanganan .tutorial-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid #e8eeeb;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-media-penanganan .tutorial-meta {
+  color: #506b65 !important;
+}
+@media (max-width: 1100px) {
+  #page-media-penanganan .tutorial-scroll { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 620px) {
+  #page-media-penanganan .tutorial-scroll { grid-template-columns: minmax(0, 1fr) !important; }
+  #page-media-penanganan .tutorial-card { min-height: 260px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #page-media-penanganan .tutorial-card { transition: none !important; }
+  #page-media-penanganan .tutorial-card:hover { transform: none !important; }
+}
+
+/* Premium, restrained depth for the light-theme primary navigation. */
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar {
+  border-color: #e8edeb !important;
+  background: linear-gradient(180deg, #fff 0%, #fdfefd 100%) !important;
+  box-shadow: 0 16px 36px rgba(22, 40, 36, .075),
+              0 2px 5px rgba(22, 40, 36, .035),
+              inset 0 1px 0 #fff,
+              inset 0 -1px 0 rgba(228, 235, 231, .72) !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar .brand-title {
+  color: #122b3d !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,.85);
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar .brand-sub {
+  color: #397064 !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar .nav-links > li > a {
+  transition: color .18s ease, transform .18s ease, background-color .18s ease;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar .nav-links > li > a:hover {
+  transform: translateY(-1px);
+  color: #087f70 !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar .nav-links > li > a.active::after,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar .nav-links > li > a[aria-current="page"]::after {
+  background: linear-gradient(90deg, #078675 0%, #53b394 72%, #e8b531 100%) !important;
+  box-shadow: 0 1px 3px rgba(8, 127, 112, .12);
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar .btn-login {
+  border: 1px solid #0d765c !important;
+  background: linear-gradient(180deg, #2d8758 0%, #176842 100%) !important;
+  box-shadow: 0 9px 18px rgba(23, 91, 62, .17),
+              inset 0 1px 0 rgba(255,255,255,.28),
+              inset 0 -2px 0 rgba(11, 68, 47, .18) !important;
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar .btn-login:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow: 0 12px 22px rgba(23, 91, 62, .2), inset 0 1px 0 rgba(255,255,255,.3) !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar :is(.dropdown-content, .login-dropdown-content) {
+  border-color: #e1e8e5 !important;
+  background: #fff !important;
+  box-shadow: 0 18px 38px rgba(21, 38, 34, .13), inset 0 1px 0 #fff !important;
+}
+.navbar :is(a, button):focus-visible {
+  outline: 3px solid rgba(8, 127, 112, .38) !important;
+  outline-offset: 3px !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .navbar :is(a, button) { transition: none !important; }
+  .navbar .nav-links > li > a:hover,
+  .navbar .btn-login:hover { transform: none !important; }
+}
+
+/* Final responsive pass: let every major surface shrink to the device width. */
+@media (max-width: 900px) {
+  html, body { max-width: 100%; }
+  body { overflow-x: clip; }
+  .wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding-inline: clamp(12px, 3.6vw, 26px) !important;
+  }
+  .navbar, .navbar .brand, .navbar .nav-right, .navbar .nav-links,
+  .page-view, .card-container, .site-footer,
+  .admin-shell, .admin-content, .technician-shell, .technician-content {
+    box-sizing: border-box !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+  .navbar { width: 100% !important; }
+  .navbar .nav-links li, .navbar .nav-links a,
+  .navbar .login-dropdown, .navbar .btn-login { min-width: 0 !important; }
+  .navbar .nav-links a { min-height: 46px !important; }
+  .navbar .dropdown-content,
+  .navbar .login-dropdown-content { max-width: 100% !important; }
+  :is(#page-dashboard, #page-pendaftaran, #page-media-penanganan, #page-media,
+      #page-kontak, #page-status, #page-info, #page-news-detail,
+      #page-admin, .technician-shell) :is(h1, h2, h3, p, a, label, strong) {
+    overflow-wrap: anywhere;
+  }
+  :is(#page-dashboard, #page-pendaftaran, #page-media-penanganan, #page-media,
+      #page-kontak, #page-status, #page-info, #page-admin, .technician-shell)
+    :is(input, select, textarea, button) { max-width: 100%; }
+  #page-dashboard .hero-section,
+  #page-dashboard .dashboard-section,
+  #page-pendaftaran, #page-media-penanganan, #page-media,
+  #page-kontak, #page-status, #page-info, #page-admin {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  #page-dashboard .hero-section { grid-template-columns: minmax(0, 1fr) !important; }
+  #page-dashboard .hero-content,
+  #page-dashboard .hero-slogan-card { min-width: 0 !important; max-width: 100% !important; }
+  #page-pendaftaran .public-application-options,
+  #page-kontak .contact-grid,
+  #page-media-penanganan .tutorial-scroll,
+  #page-media .media-grid { min-width: 0 !important; }
+  #page-admin :is(.admin-card, .admin-panel, .admin-topbar, .admin-filter-card),
+  .technician-shell :is(.tech-section, .tech-card, .tech-topbar, .tech-status-page) {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+  #page-admin :is(.admin-table-wrap, .admin-tech-management-wrap, .admin-activity-table-wrap),
+  .technician-shell :is(.tech-table-wrap, .tech-client-table-wrap) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  :is(.stock-modal, .login-modal, .tech-modal-backdrop, .media-modal-active) :is(.stock-panel, .login-panel, .tech-modal, .media-modal) {
+    box-sizing: border-box !important;
+    width: min(100% - 24px, 720px) !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100dvh - 24px) !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+}
+@media (max-width: 540px) {
+  .wrapper { padding-inline: 12px !important; }
+  .navbar { gap: 8px !important; }
+  .navbar .brand { flex: 1 1 auto !important; }
+  .navbar .brand .logo-img { flex: 0 0 auto; object-fit: contain; }
+  .navbar .brand-text { min-width: 0; }
+  .navbar .brand-title { font-size: clamp(1rem, 4.4vw, 1.2rem) !important; }
+  .navbar .brand-sub { font-size: clamp(.62rem, 2.8vw, .72rem) !important; }
+  #page-dashboard .services-dashboard-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  #page-dashboard .services-dashboard-grid > * { min-width: 0 !important; }
+  #page-media .media-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  #page-status :is(.consultation-status-form, .status-form) {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  #page-status :is(input, button) { width: 100% !important; min-height: 48px !important; }
+  #page-pendaftaran .public-application-card { padding: 26px 20px !important; }
+  #page-pendaftaran .public-application-card :is(.btn-primary, .btn-secondary) {
+    min-height: 48px !important;
+    white-space: normal !important;
+  }
+  #page-kontak .contact-actions > a { min-height: 48px !important; }
+  #page-admin .admin-topbar,
+  #page-admin .admin-card-header,
+  .technician-shell .tech-client-toolbar-wrap,
+  .technician-shell .tech-topbar { gap: 12px !important; }
+  #page-admin :is(.admin-topbar, .admin-card-header) > *,
+  .technician-shell .tech-topbar > * { min-width: 0 !important; max-width: 100% !important; }
+  .tech-modal-backdrop, .stock-modal, .login-modal { padding: 12px !important; }
+}
+@media (max-width: 360px) {
+  .wrapper { padding-inline: 9px !important; }
+  .navbar { padding-inline: 9px !important; }
+  .navbar .brand { gap: 6px !important; }
+  .navbar .brand-title { font-size: 1rem !important; }
+  .navbar .brand-sub { font-size: .6rem !important; }
+  .navbar .nav-toggle { width: 42px !important; min-width: 42px !important; }
+  .page-header-title { font-size: clamp(1.45rem, 7vw, 1.8rem) !important; line-height: 1.2 !important; }
 }
 
 /* Final refinement: clear editorial hierarchy and a compact service-focus rail. */
@@ -20514,3 +20793,454 @@ html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard 
 :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .tech-consultations-page .tech-consultation-tabs { border-color:#31584f; color:#a9f0d2; }
 :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .tech-consultations-page .tech-consultation-tabs span { color:#b9d8cd; }
 :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .tech-consultations-page .tech-consultations-table th { background:#19382d !important; color:#d7f6e7 !important; }
+
+/* Clean light workspace surfaces in Admin and Technician. Keep the dark sidebars,
+   branded actions, status colors, and all dark-theme rules unchanged. */
+html[data-leressae-theme="light"] #page-admin :is(.admin-content, .admin-shell),
+html[data-leressae-theme="light"] .technician-shell :is(.technician-content, .technician-main) {
+  background: #fff !important;
+  background-image: none !important;
+}
+html[data-leressae-theme="light"] #page-admin :is(.admin-topbar, .admin-card, .admin-stat-card, .admin-stat-mini, .admin-info-card, .admin-report-chart-card, .admin-report-details, .admin-filter-card, .admin-panel, .settings-card, .settings-panel, .stock-panel, .stock-source-panel, .stock-body),
+html[data-leressae-theme="light"] .technician-shell :is(.tech-welcome, .tech-stat, .tech-section, .tech-card, .tech-profile-grid > div, .tech-stock-pill, .tech-status-summary > div) {
+  background: #fff !important;
+  background-image: none !important;
+  border-color: #e3e7e5 !important;
+  box-shadow: 0 5px 18px rgba(24, 39, 35, .045), inset 0 1px 0 #fff !important;
+}
+html[data-leressae-theme="light"] #page-admin :is(.admin-table, .admin-report-table, .admin-tech-management-table) th,
+html[data-leressae-theme="light"] .technician-shell :is(.tech-table, .tech-client-table, .tech-dashboard-jobs-table) th {
+  color: #40534d !important;
+  background: #f5f6f6 !important;
+  border-color: #e5e8e7 !important;
+}
+html[data-leressae-theme="light"] #page-admin :is(.admin-table, .admin-report-table, .admin-tech-management-table) td,
+html[data-leressae-theme="light"] .technician-shell :is(.tech-table, .tech-client-table, .tech-dashboard-jobs-table) td {
+  background: #fff !important;
+  border-color: #e8ebea !important;
+}
+html[data-leressae-theme="light"] #page-admin :is(.admin-table, .admin-report-table, .admin-tech-management-table) tbody tr:hover td,
+html[data-leressae-theme="light"] .technician-shell :is(.tech-table, .tech-client-table, .tech-dashboard-jobs-table) tbody tr:hover td {
+  background: #f8f9f9 !important;
+}
+
+/* Final high-specificity reset for older soft-green dashboard rules. */
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-admin .admin-shell,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) .technician-shell {
+  background: #fff !important;
+  background-image: none !important;
+  border-color: #e5e8e7 !important;
+  box-shadow: 0 10px 28px rgba(21, 35, 31, .055) !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-admin :is(.admin-topbar, .admin-card, .admin-stat-card, .admin-stat-mini, .admin-info-card, .admin-report-chart-card, .admin-report-details, .admin-filter-card, .admin-panel, .settings-card, .settings-panel, .stock-panel, .stock-source-panel, .stock-body),
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) .technician-shell :is(.tech-welcome, .tech-stat, .tech-section, .tech-card, .tech-profile-grid > div, .tech-stock-pill, .tech-status-summary > div) {
+  background: #fff !important;
+  background-image: none !important;
+  border-color: #e1e5e3 !important;
+  box-shadow: 0 5px 18px rgba(21, 35, 31, .05) !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-admin :is(.admin-table, .admin-report-table, .admin-tech-management-table) th,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) .technician-shell :is(.tech-table, .tech-client-table, .tech-dashboard-jobs-table) th {
+  background: #f4f5f5 !important;
+  background-image: none !important;
+  border-color: #e2e5e4 !important;
+}
+
+/* Public dashboard: restrained premium glass, clearer hierarchy and soft motion. */
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-section {
+  isolation: isolate;
+  min-height: clamp(430px, 40vw, 570px) !important;
+  grid-template-columns: minmax(0, 1.12fr) minmax(330px, .88fr) !important;
+  align-items: center !important;
+  gap: clamp(30px, 4vw, 64px) !important;
+  padding: clamp(36px, 5vw, 76px) !important;
+  border: 1px solid #e6e9e8 !important;
+  border-radius: clamp(24px, 2.2vw, 34px) !important;
+  background: #fff !important;
+  background-image: none !important;
+  box-shadow: 0 18px 48px rgba(20, 35, 31, .07), inset 0 1px 0 #fff !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-section::before,
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-section::after {
+  display: none !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-section .decor-bike {
+  opacity: .08 !important;
+  stroke: #b88718 !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-badge {
+  color: #49645e !important;
+  background: #fff !important;
+  border-color: #e1e7e4 !important;
+  box-shadow: 0 5px 16px rgba(20, 35, 31, .045) !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-title {
+  margin-bottom: 20px !important;
+  font-size: clamp(3.1rem, 5.4vw, 5.25rem) !important;
+  line-height: .98 !important;
+  letter-spacing: -.055em !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-desc {
+  max-width: 620px !important;
+  margin-bottom: 30px !important;
+  color: #586b67 !important;
+  font-size: clamp(1rem, 1.35vw, 1.18rem) !important;
+  line-height: 1.65 !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-actions {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  max-width: 760px !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-actions > :is(.btn-primary, .btn-secondary) {
+  min-width: 0 !important;
+  min-height: 54px !important;
+  padding: 13px 16px !important;
+  border-radius: 14px !important;
+  font-size: .94rem !important;
+  line-height: 1.25 !important;
+  white-space: normal !important;
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-actions .btn-primary {
+  background: linear-gradient(135deg, #0b8978, #075e55) !important;
+  box-shadow: 0 8px 18px rgba(8, 112, 91, .16), inset 0 1px 0 rgba(255,255,255,.2) !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-actions .btn-secondary:not(.btn-history) {
+  color: #214d43 !important;
+  background: linear-gradient(145deg, #fff, #fbfcfb) !important;
+  border: 1px solid #dfe6e3 !important;
+  box-shadow: 0 6px 16px rgba(20, 35, 31, .045), inset 0 1px 0 #fff !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-actions > :is(.btn-primary, .btn-secondary):hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 24px rgba(20, 35, 31, .12), inset 0 1px 0 rgba(255,255,255,.3) !important;
+  }
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-slogan-card {
+  min-height: 0 !important;
+  padding: clamp(28px, 3vw, 42px) !important;
+  border: 1px solid #e3e8e6 !important;
+  border-top: 3px solid #efb323 !important;
+  border-radius: 24px !important;
+  background: linear-gradient(145deg, #fff 0%, #fbfcfb 100%) !important;
+  box-shadow: 0 14px 34px rgba(20, 35, 31, .065), inset 0 1px 0 #fff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  animation: dashboardCardIn .72s .12s both cubic-bezier(.2,.7,.2,1);
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .slogan-label {
+  color: #087f70 !important;
+  letter-spacing: .13em !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .slogan-main {
+  color: #152f35 !important;
+  font-size: clamp(1.55rem, 2.2vw, 2.1rem) !important;
+  line-height: 1.18 !important;
+  letter-spacing: -.035em !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .slogan-sub {
+  margin-top: 16px !important;
+  color: #5d6d69 !important;
+  font-size: clamp(.92rem, 1.05vw, 1.02rem) !important;
+  line-height: 1.68 !important;
+}
+html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-content {
+  animation: dashboardContentIn .68s both cubic-bezier(.2,.7,.2,1);
+}
+@keyframes dashboardContentIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes dashboardCardIn {
+  from { opacity: 0; transform: translateY(16px) scale(.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (max-width: 900px) {
+  html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-section {
+    min-height: 0 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 26px !important;
+    padding: clamp(30px, 6vw, 54px) !important;
+  }
+  html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-content { max-width: 760px !important; }
+  html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-slogan-card { max-width: 760px !important; }
+}
+@media (max-width: 600px) {
+  html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-section {
+    gap: 22px !important;
+    padding: 26px 20px !important;
+    border-radius: 22px !important;
+  }
+  html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-title { font-size: clamp(2.8rem, 13vw, 4rem) !important; }
+  html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-actions { grid-template-columns: minmax(0, 1fr) !important; }
+  html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-actions > :is(.btn-primary, .btn-secondary) { width: 100% !important; }
+  html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-mode) #page-dashboard .hero-slogan-card { padding: 24px 20px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #page-dashboard .hero-content,
+  #page-dashboard .hero-slogan-card { animation: none !important; }
+  #page-dashboard .hero-actions > :is(.btn-primary, .btn-secondary) { transition: none !important; }
+}
+
+/* Remove the circular green wash and decorative ring from the principle card. */
+#page-dashboard .hero-slogan-card::before,
+#page-dashboard .hero-slogan-card::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+#page-dashboard .hero-section > .decor-bike {
+  display: none !important;
+  visibility: hidden !important;
+}
+#page-dashboard .hero-section::before,
+#page-dashboard .hero-section::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+/* Keep consultation table headings on one line; their wrappers can scroll horizontally. */
+.tech-consultations-table th,
+.admin-consultations-table th {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+}
+
+/* Give each single-line consultation heading enough room instead of letting
+   the browser compress columns until they collide. Narrow screens scroll. */
+.tech-consultations-page .tech-table-wrap,
+.admin-consultations-page .admin-table-wrap {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch;
+}
+.tech-consultations-table,
+.admin-consultations-table {
+  width: 100% !important;
+  min-width: 1460px !important;
+  table-layout: auto !important;
+}
+.tech-consultations-table th,
+.admin-consultations-table th {
+  min-width: 130px !important;
+  padding: 14px 16px !important;
+}
+.tech-consultations-table th:nth-child(1),
+.admin-consultations-table th:nth-child(1) { min-width: 175px !important; }
+.tech-consultations-table th:nth-child(2),
+.admin-consultations-table th:nth-child(2) { min-width: 125px !important; }
+.tech-consultations-table th:nth-child(3),
+.admin-consultations-table th:nth-child(3) { min-width: 155px !important; }
+.tech-consultations-table th:nth-child(4),
+.admin-consultations-table th:nth-child(4) { min-width: 180px !important; }
+.tech-consultations-table th:nth-child(5),
+.admin-consultations-table th:nth-child(5) { min-width: 240px !important; }
+.tech-consultations-table th:nth-child(6),
+.admin-consultations-table th:nth-child(6) { min-width: 190px !important; }
+.tech-consultations-table th:nth-child(7),
+.admin-consultations-table th:nth-child(7) { min-width: 155px !important; }
+.tech-consultations-table th:nth-child(8),
+.admin-consultations-table th:nth-child(8) { min-width: 110px !important; }
+
+/* Admin navigation icons use a consistent, crisp outline style. */
+#page-admin .admin-nav-item .admin-nav-icon {
+  display: block;
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Contact page: clean, structured information cards matching the reference. */
+#page-kontak .contact-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: clamp(14px, 1.2vw, 22px) !important;
+  margin-top: clamp(30px, 3.6vw, 58px) !important;
+  align-items: stretch;
+}
+#page-kontak .contact-card {
+  position: relative;
+  min-width: 0;
+  min-height: 290px;
+  overflow: hidden;
+  padding: 42px 26px 26px !important;
+  border: 1px solid #e2e9e7 !important;
+  border-radius: 25px !important;
+  background: linear-gradient(145deg, #fff 0%, #fbfcfc 100%) !important;
+  box-shadow: 0 14px 30px rgba(22, 43, 37, .065), inset 0 1px 0 #fff !important;
+}
+#page-kontak .contact-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 7%;
+  right: 7%;
+  height: 4px;
+  border-radius: 0 0 4px 4px;
+  background: linear-gradient(90deg, #078675, #78c8a5);
+}
+#page-kontak .contact-card:nth-child(3)::before {
+  background: linear-gradient(90deg, #d99e0b, #ffd04e);
+}
+#page-kontak .contact-card strong {
+  margin-bottom: 14px;
+  color: #183e39 !important;
+  font-size: 1.22rem;
+  letter-spacing: -.02em;
+}
+#page-kontak .contact-card p {
+  margin: 0 0 14px;
+  color: #64757a;
+  font-size: 1rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+#page-kontak .contact-card a {
+  color: #237450 !important;
+  font-weight: 700;
+  text-decoration: none;
+}
+#page-kontak .contact-card a:hover { text-decoration: underline; text-underline-offset: 3px; }
+#page-kontak .contact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: clamp(28px, 3vw, 48px);
+}
+#page-kontak .contact-actions .btn-secondary {
+  min-width: 132px;
+  min-height: 54px;
+  border: 1px solid #dce7e3;
+  border-radius: 15px;
+  background: linear-gradient(145deg, #fff, #f8fbfa);
+  box-shadow: 0 8px 20px rgba(22, 43, 37, .055), inset 0 1px 0 #fff;
+}
+#page-kontak .contact-actions .btn-secondary:hover {
+  border-color: #9ccdb8;
+  transform: translateY(-1px);
+}
+@media (max-width: 1100px) {
+  #page-kontak .contact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  #page-kontak .contact-card { min-height: 240px; }
+}
+@media (max-width: 620px) {
+  #page-kontak .contact-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  #page-kontak .contact-card { min-height: auto; padding: 34px 22px 20px !important; }
+  #page-kontak .contact-actions > a { flex: 1 1 130px; text-align: center; }
+}
+
+/* Refined service choice cards: clearer hierarchy and restrained depth. */
+#page-pendaftaran .public-application-options {
+  gap: clamp(18px, 1.8vw, 30px) !important;
+  margin-top: clamp(34px, 4vw, 62px) !important;
+}
+#page-pendaftaran .public-application-card {
+  position: relative;
+  min-height: 300px !important;
+  padding: clamp(25px, 2.5vw, 38px) !important;
+  overflow: hidden;
+  border: 1px solid #e3eae8 !important;
+  border-radius: 24px !important;
+  background: linear-gradient(145deg, #fff 0%, #fcfdfd 100%) !important;
+  box-shadow: 0 16px 36px rgba(24, 48, 43, .075), inset 0 1px 0 #fff !important;
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+#page-pendaftaran .public-application-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 30px;
+  right: 30px;
+  height: 4px;
+  border-radius: 0 0 5px 5px;
+  background: linear-gradient(90deg, #078675, #78c8a5);
+}
+#page-pendaftaran .public-application-card:nth-child(2)::before {
+  background: linear-gradient(90deg, #d99e0b, #ffd04e);
+}
+#page-pendaftaran .public-application-card:hover {
+  transform: translateY(-3px);
+  border-color: #cbded8 !important;
+  box-shadow: 0 22px 42px rgba(24, 48, 43, .105), inset 0 1px 0 #fff !important;
+}
+#page-pendaftaran .public-application-kicker {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 30px;
+  padding: 5px 11px;
+  border: 1px solid #d9ebe5;
+  border-radius: 999px;
+  background: #f5faf8;
+  color: #247664 !important;
+  font-size: .72rem !important;
+  letter-spacing: .12em;
+}
+#page-pendaftaran .public-application-card:nth-child(2) .public-application-kicker {
+  border-color: #f0e4c5;
+  background: #fffaf0;
+  color: #8a6815 !important;
+}
+#page-pendaftaran .public-application-card h2 {
+  margin: 18px 0 10px !important;
+  color: #173b38 !important;
+  font-size: clamp(1.35rem, 1.7vw, 1.65rem) !important;
+  letter-spacing: -.025em;
+}
+#page-pendaftaran .public-application-card p {
+  max-width: 54ch;
+  margin-bottom: 28px !important;
+  color: #617472 !important;
+  font-size: 1.02rem;
+  line-height: 1.72 !important;
+}
+#page-pendaftaran .public-application-card .btn-primary,
+#page-pendaftaran .public-application-card .btn-secondary {
+  min-height: 56px !important;
+  border-radius: 15px !important;
+  font-size: 1rem;
+  font-weight: 750;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+#page-pendaftaran .public-application-card .btn-primary:hover,
+#page-pendaftaran .public-application-card .btn-secondary:hover { transform: translateY(-1px); }
+#page-pendaftaran .public-application-card .btn-primary {
+  box-shadow: 0 10px 22px rgba(8, 116, 98, .16), inset 0 1px 0 rgba(255,255,255,.18);
+}
+#page-pendaftaran .public-application-card .btn-secondary {
+  border-color: #dce8e4 !important;
+  background: linear-gradient(145deg, #fff, #f8fbfa) !important;
+  box-shadow: 0 8px 18px rgba(24, 48, 43, .05), inset 0 1px 0 #fff;
+}
+#page-pendaftaran .public-application-note {
+  margin-top: 36px !important;
+  padding-top: 22px;
+  border-top: 1px solid #edf1ef;
+  color: #61706b !important;
+  line-height: 1.6;
+}
+@media (max-width: 760px) {
+  #page-pendaftaran .public-application-card { min-height: 0 !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #page-pendaftaran .public-application-card,
+  #page-pendaftaran .public-application-card .btn-primary,
+  #page-pendaftaran .public-application-card .btn-secondary { transition: none !important; }
+  #page-pendaftaran .public-application-card:hover,
+  #page-pendaftaran .public-application-card .btn-primary:hover,
+  #page-pendaftaran .public-application-card .btn-secondary:hover { transform: none !important; }
+}
