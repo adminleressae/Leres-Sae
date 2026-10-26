@@ -4352,12 +4352,37 @@ function renderReportsPage() {
             }
             const statusForm = document.getElementById('statusForm');
             if (!statusForm) return;
+            document.querySelectorAll('[data-status-panel]').forEach(function (tab) {
+                tab.addEventListener('click', function () {
+                    const panel = tab.dataset.statusPanel;
+                    document.querySelectorAll('[data-status-panel]').forEach(function (item) {
+                        const active = item === tab;
+                        item.classList.toggle('is-active', active);
+                        item.setAttribute('aria-selected', active ? 'true' : 'false');
+                    });
+                    document.querySelectorAll('[data-status-content]').forEach(function (content) {
+                        const active = content.dataset.statusContent === panel;
+                        content.classList.toggle('is-active', active);
+                        content.hidden = !active;
+                    });
+                });
+            });
             statusForm.addEventListener('submit', async function (event) {
                 event.preventDefault();
                 const phoneInput = document.getElementById('statusPhone');
                 const phoneValue = phoneInput ? phoneInput.value : '';
                 const records = await getServiceStatus(phoneValue);
                 renderStatusResults(records);
+            });
+            document.getElementById('consultationStatusForm')?.addEventListener('submit', function (event) {
+                event.preventDefault();
+                const name = document.getElementById('consultationStatusName')?.value.trim().toLowerCase();
+                const phone = document.getElementById('consultationStatusPhone')?.value.trim();
+                const result = document.getElementById('consultationStatusResult');
+                const matches = (window.__CONSULTATIONS_CACHE__ || []).filter(function (item) {
+                    return !item.completed && String(item.name || item.customer_name || '').trim().toLowerCase() === name && String(item.phone || item.whatsapp || '').replace(/\D/g, '') === phone.replace(/\D/g, '');
+                });
+                if (result) result.innerHTML = matches.length ? '<div class="status-empty"><strong>Konsultasi ditemukan.</strong><p>Permohonan Anda sedang ditindaklanjuti oleh petugas.</p></div>' : '<div class="status-empty"><strong>Data konsultasi belum ditemukan.</strong><p>Pastikan nama dan nomor WhatsApp sesuai dengan formulir konsultasi.</p></div>';
             });
 
             const dashboardStatusForm = document.getElementById('dashboardStatusForm');
@@ -5928,7 +5953,6 @@ function renderReportsPage() {
                                     <th>No. WhatsApp</th>
                                     <th>Topik Konsultasi</th>
                                     <th>Deskripsi Permasalahan</th>
-                                    <th>Tingkat Prioritas</th>
                                     <th>Lampiran Pendukung</th>
                                     <th>Bidang Usaha</th>
                                     <th>Aksi</th>
@@ -5942,12 +5966,11 @@ function renderReportsPage() {
                                         <td>${renderWhatsAppLink(item.whatsapp || '-')}</td>
                                         <td>${escapeHtml(item.topic || '-')}</td>
                                         <td class="admin-consultation-description">${escapeHtml(item.description || '-')}</td>
-                                        <td>${escapeHtml(item.priority || '-')}</td>
                                         <td>${consultationAttachmentHtml(item.attachment)}</td>
                                         <td>${escapeHtml(item.business || '-')}</td>
                                         <td><button class="btn-primary small" type="button" data-consultation-done="${escapeHtml(item.key)}">Selesai</button></td>
                                     </tr>
-                                `).join('') : `<tr><td colspan="9"><div class="admin-empty-state">${loadError ? 'Data konsultasi tidak dapat dimuat. Periksa koneksi Spreadsheet lalu coba sinkronkan kembali.' : isLoading ? 'Memuat data konsultasi dari Spreadsheet…' : 'Belum ada konsultasi yang perlu ditangani.'}</div></td></tr>`}
+                                `).join('') : `<tr><td colspan="8"><div class="admin-empty-state">${loadError ? 'Data konsultasi tidak dapat dimuat. Periksa koneksi Spreadsheet lalu coba sinkronkan kembali.' : isLoading ? 'Memuat data konsultasi dari Spreadsheet…' : 'Belum ada konsultasi yang perlu ditangani.'}</div></td></tr>`}
                             </tbody>
                         </table>
                     </div>
@@ -7477,6 +7500,7 @@ function techSession(){
             ['dashboard','<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"></rect></svg>','Dashboard'],
             ['status','<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="18" rx="2"></rect><path d="M9 4.5h6a1.5 1.5 0 0 0-1.5-1.5h-3A1.5 1.5 0 0 0 9 4.5Z"></path><path d="m8.5 13 2.5 2.5 5-5"></path></svg>','Update Status'],
             ['clients','<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-1.5a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>','Lihat Client'],
+            ['consultations','<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3h9A2.5 2.5 0 0 1 19 5.5v8A2.5 2.5 0 0 1 16.5 16H11l-4.5 4v-4.5A2.5 2.5 0 0 1 5 13Z"></path><path d="M8 8h8M8 11.5h5"></path></svg>','Konsultasi'],
             ['profile','<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21v-1a8 8 0 0 1 16 0v1Z"></path></svg>','Profil Teknisi']
     ];
     return `<div class="technician-shell" id="technicianShell">
@@ -7592,6 +7616,17 @@ function techSession(){
     </div>`;
   }
 
+  function techConsultations(){
+    const records=(window.__CONSULTATIONS_CACHE__||[]);
+    const pending=records.filter(item=>!item.completed);
+    return `<div class="tech-section tech-consultations-page">
+      <div class="tech-section-header tech-client-toolbar-wrap"><div><h3>Konsultasi</h3><p>Tinjau konsultasi pelanggan dan simpan hasil jawaban saat menyelesaikannya.</p></div><button type="button" class="tech-btn" data-refresh-consultations>Sinkronkan</button></div>
+      <div class="tech-consultation-tabs"><strong>Perlu Ditangani (${pending.length})</strong><span>Konsultasi Selesai (${records.filter(item=>item.completed).length})</span></div>
+      <div class="technician-toolbar tech-client-filters"><input id="techConsultationSearch" class="tech-client-search" placeholder="Cari nama, WhatsApp, topik, atau prioritas" aria-label="Cari konsultasi"></div>
+      <div class="tech-table-wrap"><table class="tech-table tech-consultations-table"><thead><tr><th>WAKTU PENGAJUAN</th><th>NAMA</th><th>NO. WHATSAPP</th><th>TOPIK KONSULTASI</th><th>DESKRIPSI PERMASALAHAN</th><th>LAMPIRAN PENDUKUNG</th><th>BIDANG USAHA</th><th>AKSI</th></tr></thead><tbody>${pending.map(item=>`<tr><td>${escapeHtml(item.date||item.timestamp||'-')}</td><td>${escapeHtml(item.name||item.customer_name||'-')}</td><td>${escapeHtml(item.phone||item.whatsapp||'-')}</td><td>${escapeHtml(item.topic||'-')}</td><td class="tech-consultation-description">${escapeHtml(item.description||'-')}</td><td>${typeof consultationAttachmentHtml==='function'?consultationAttachmentHtml(item.attachment):escapeHtml(item.attachment||'-')}</td><td>${escapeHtml(item.business||'-')}</td><td><span class="tech-consultation-pending">Perlu Ditangani</span></td></tr>`).join('')||'<tr><td colspan="8"><div class="tech-empty">Belum ada konsultasi yang perlu ditangani.</div></td></tr>'}</tbody></table></div>
+    </div>`;
+  }
+
 
   function techStatusPage(){
     const jobs=techAssigned();
@@ -7687,17 +7722,18 @@ function techSession(){
     if(!view) return;
     document.querySelectorAll('.technician-content > .leressae-back-row').forEach(el=>el.remove());
     view.querySelectorAll(':scope > .leressae-back-row').forEach(el=>el.remove());
-    const titles={dashboard:'Dashboard Teknisi',clients:'Lihat Client',status:'Update Status',stock:'Cek Stok',profile:'Profil Teknisi'};
+    const titles={dashboard:'Dashboard Teknisi',clients:'Lihat Client',consultations:'Konsultasi',status:'Update Status',stock:'Cek Stok',profile:'Profil Teknisi'};
     if(title) title.textContent=titles[page]||'Dashboard';
     const subtitles={
       dashboard:'Ringkasan servis yang ditugaskan kepada akun teknisi ini, termasuk pekerjaan aktif dan yang telah selesai.',
       clients:'Data pelanggan dan servis yang ditugaskan kepada Anda, beserta informasi kontak, lokasi, barang, keluhan, dan media.',
+      consultations:'Tinjau konsultasi pelanggan dan tindak lanjuti pertanyaan teknis yang masuk.',
       status:'Daftar pekerjaan yang belum selesai. Perbarui progres, keterangan pekerjaan, bukti foto, dan biaya servis melalui detail pekerjaan.',
       stock:'Informasi stok barang untuk membantu pemeriksaan ketersediaan dan status jumlah stok.',
       profile:'Informasi identitas dan status akun teknisi yang sedang digunakan.'
     };
     const subtitle=document.getElementById('techPageSubtitle'); if(subtitle) subtitle.textContent=subtitles[page]||'Operasional teknisi terhubung dengan data Admin LERES SAE.';
-    view.innerHTML=page==='clients'?techClients():page==='status'?techStatusPage():page==='profile'?techProfile():page==='stock'?techStockPage():techDashboard();
+    view.innerHTML=page==='clients'?techClients():page==='consultations'?techConsultations():page==='status'?techStatusPage():page==='profile'?techProfile():page==='stock'?techStockPage():techDashboard();
     view.querySelectorAll(':scope > .leressae-back-row').forEach(el=>el.remove());
     document.querySelectorAll('[data-tech-menu]').forEach(b=>b.classList.toggle('active',b.dataset.techMenu===page));
     const shell=document.getElementById('technicianShell'); if(shell) shell.dataset.techPage=page;
@@ -7838,7 +7874,7 @@ function techSession(){
       panel.className='technician-panel-wrap';
       techPage.appendChild(panel);
     }
-    const allowed=['dashboard','clients','status','stock','profile'];
+    const allowed=['dashboard','clients','consultations','status','stock','profile'];
     const saved=getSavedRolePage('technician');
     const targetPage=allowed.includes(saved)?saved:'dashboard';
     window.__LERESSAE_TECH_HISTORY=[targetPage];

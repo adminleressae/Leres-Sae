@@ -81,6 +81,7 @@
                     <div class="hero-actions">
                         <button onclick="navigateTo('page-pendaftaran')" class="btn-primary">Ajukan Layanan &rarr;</button>
                         <a href="https://forms.gle/7JexS4VjZNYuHMecA" class="btn-secondary" target="_blank" rel="noopener noreferrer">Konsultasi Teknis</a>
+                        <button onclick="navigateTo('page-status')" class="btn-secondary btn-consultation-status">Cek Status Konsultasi</button>
                         <button onclick="navigateTo('page-status')" class="btn-secondary btn-history">Cek Riwayat Servis/Perbaikan</button>
                     </div>
                 </div>
@@ -221,17 +222,22 @@
             <p class="page-header-desc">
                 Silakan isi formulir resmi ini untuk mengajukan permohonan servis, perawatan peralatan, atau konsultasi teknis. Data yang diserahkan menjadi dasar verifikasi dan penjadwalan tim lapangan.
             </p>
-            <div style="margin-bottom: 24px;">
-                <a href="https://forms.gle/Y8VssPdKa77c1XM89" target="_blank" rel="noopener noreferrer" class="btn-primary">
-                    Isi Formulir Untuk Pengajuan Servis (Google Form) &rarr;
-                </a>
+            <div class="public-application-options">
+                <article class="public-application-card">
+                    <span class="public-application-kicker">LAYANAN SERVIS</span>
+                    <h2>Pengajuan Servis</h2>
+                    <p>Ajukan servis atau perawatan peralatan produksi. Tim kami akan menindaklanjuti data dan jadwal layanan.</p>
+                    <a href="https://forms.gle/Y8VssPdKa77c1XM89" target="_blank" rel="noopener noreferrer" class="btn-primary">Isi Formulir Servis &rarr;</a>
+                </article>
+                <article class="public-application-card">
+                    <span class="public-application-kicker">KONSULTASI TEKNIS</span>
+                    <h2>Konsultasi</h2>
+                    <p>Sampaikan kendala teknis melalui formulir, lalu pantau tindak lanjut konsultasi Anda.</p>
+                    <a href="https://forms.gle/7JexS4VjZNYuHMecA" target="_blank" rel="noopener noreferrer" class="btn-primary">Kirim Konsultasi &rarr;</a>
+                    <button type="button" class="btn-secondary" onclick="navigateTo('page-status'); setTimeout(() => document.querySelector('[data-status-panel=consultation]')?.click(), 0);">Cek Status Konsultasi</button>
+                </article>
             </div>
-             <div style="margin-bottom: 24px;">
-                <a href="https://forms.gle/7JexS4VjZNYuHMecA" target="_blank" rel="noopener noreferrer" class="btn-primary">
-                    Isi Formulir Untuk Konsultasi (Google Form) &rarr;
-                </a>
-            </div>
-            <p style="font-size: 13px; color: #087f70; font-weight: 600;">
+            <p class="public-application-note">
                 Kolaborasi BPTI Disperindag DIY, SMK, dan IKM demi efisiensi industri daerah.
             </p>
         </section>
@@ -365,11 +371,21 @@
         </section>
 
         <section id="page-status" class="page-view card-container">
-            <h1 class="page-header-title">Cek Riwayat Servis/Perbaikan</h1>
-            <p class="page-header-desc">
-                Cari berdasarkan nomor WhatsApp pelanggan untuk melihat semua riwayat servis dan progres terkini per barang yang masuk.
-            </p>
-            <div class="status-lookup-wrap">
+            <h1 class="page-header-title">Cek Status Layanan</h1>
+            <p class="page-header-desc">Pilih jenis layanan untuk melihat riwayat servis atau tindak lanjut konsultasi Anda.</p>
+            <div class="public-status-tabs" role="tablist" aria-label="Jenis status layanan">
+                <button type="button" class="public-status-tab is-active" role="tab" aria-selected="true" data-status-panel="service">
+                    <span class="public-status-tab-icon" aria-hidden="true">⚙</span>
+                    <span><strong>Riwayat Servis</strong><small>Lacak progres dan detail perbaikan</small></span><span class="public-status-arrow" aria-hidden="true">→</span>
+                </button>
+                <button type="button" class="public-status-tab" role="tab" aria-selected="false" data-status-panel="consultation">
+                    <span class="public-status-tab-icon" aria-hidden="true">◎</span>
+                    <span><strong>Status Konsultasi</strong><small>Lihat tindak lanjut dan hasil konsultasi</small></span><span class="public-status-arrow" aria-hidden="true">→</span>
+                </button>
+            </div>
+            <div class="public-status-panel is-active" data-status-content="service" role="tabpanel">
+              <div class="public-status-panel-heading"><h2>Riwayat Servis/Perbaikan</h2><p>Cari dengan nomor WhatsApp yang digunakan saat mengajukan layanan.</p></div>
+              <div class="status-lookup-wrap">
                 <form id="statusForm" class="status-form">
                     <input id="statusPhone" type="tel" inputmode="numeric" aria-label="Nomor WhatsApp pelanggan" placeholder="Masukkan nomor WhatsApp, contoh: 0812 3456 7890" required>
                     <button type="submit">
@@ -380,8 +396,19 @@
                         <span>Lihat Status</span>
                     </button>
                 </form>
+              </div>
+              <div id="statusResult" class="status-result" aria-live="polite"></div>
             </div>
-            <div id="statusResult" class="status-result" aria-live="polite"></div>
+            <div class="public-status-panel" data-status-content="consultation" role="tabpanel" hidden>
+              <div class="public-status-panel-heading"><h2>Status Konsultasi</h2><p>Masukkan nama dan nomor WhatsApp yang sama dengan formulir konsultasi.</p></div>
+              <form id="consultationStatusForm" class="consultation-status-form">
+                <input id="consultationStatusName" type="text" placeholder="Nama sesuai formulir" aria-label="Nama sesuai formulir" required>
+                <input id="consultationStatusPhone" type="tel" inputmode="numeric" placeholder="Nomor WhatsApp sesuai formulir" aria-label="Nomor WhatsApp sesuai formulir" required>
+                <button type="submit">Lihat Status Konsultasi</button>
+              </form>
+              <div id="consultationStatusResult" class="status-result" aria-live="polite"></div>
+              <p class="consultation-status-help">Belum mengajukan konsultasi? <a href="https://forms.gle/7JexS4VjZNYuHMecA" target="_blank" rel="noopener noreferrer">Buka Formulir Konsultasi</a>.</p>
+            </div>
         </section>
 
         <section id="page-admin" class="page-view card-container">
