@@ -5,7 +5,7 @@ const CONFIG = {
             FORM_URL: 'https://forms.gle/11gDFYxD5HDBCaU9A',
             SERVICE_SPREADSHEET_ID: '1q5nXDOtpHZ588WoudqPqFSIxqUE6y9l7bdOuH0JyfeY',
             SERVICE_SPREADSHEET_URL: 'https://docs.google.com/spreadsheets/d/1q5nXDOtpHZ588WoudqPqFSIxqUE6y9l7bdOuH0JyfeY/edit?resourcekey=&gid=299653006#gid=299653006',
-            SERVICE_SPREADSHEET_GID: '299653006',
+            SERVICE_RESPONSE_GID: '728576356',
             CONSULTATION_SPREADSHEET_GID: '1998776970',
             CONSULTATION_SPREADSHEET_URL: 'https://docs.google.com/spreadsheets/d/1q5nXDOtpHZ588WoudqPqFSIxqUE6y9l7bdOuH0JyfeY/edit?resourcekey=&gid=1998776970#gid=1998776970',
             TIMEZONE: 'Asia/Jakarta',
@@ -587,7 +587,8 @@ const CONFIG = {
                 } catch (error) {
                     console.warn('Unable to load service records from API:', error);
                     window.__SERVICE_CACHE_ERROR__ = error?.message || 'Data servis gagal dimuat.';
-                    return loadServiceRecords();
+                    setServiceCache([]);
+                    throw error;
                 }
             })();
             window.__SERVICE_CACHE_REQUEST__ = request;
@@ -628,19 +629,18 @@ const CONFIG = {
             if (!cleanPhone) return [];
             const apiReady = !!(CONFIG.API_URL && CONFIG.API_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL');
             if (!apiReady) {
-                return [];
+                throw new Error('API belum dikonfigurasi.');
             }
             try {
                 const data = await apiRequest('getServiceStatus', { phone: cleanPhone });
                 const rows = Array.isArray(data && data.data) ? data.data : [];
-                if (rows.length) {
-                    setServiceCache(rows);
-                }
+                setServiceCache(rows);
+                window.__SERVICE_STATUS_LOOKUP_ERROR__ = '';
                 return rows;
             } catch (error) {
                 console.warn('Service status fetch failed:', error);
-                const cached = loadServiceRecords();
-                return cached.filter(item => normalizePhone(item.phone) === cleanPhone);
+                window.__SERVICE_STATUS_LOOKUP_ERROR__ = error?.message || 'Data servis gagal dimuat.';
+                throw error;
             }
         }
 
@@ -715,11 +715,11 @@ const CONFIG = {
                 'getTechnicians', 'addStock', 'stockIn', 'stockOut',
                 'addNews', 'updateNews', 'deleteNews', 'saveAgenda', 'deleteAgenda',
                 'uploadFileToDrive', 'uploadMedia', 'addMedia', 'updateMedia', 'deleteMedia', 'syncMediaMetadata', 'migrateExistingMediaMetadata',
-                'getConsultationAttachment', 'getCompletedConsultations', 'completeConsultation'
+                'getConsultationAttachment', 'getCompletedConsultations', 'completeConsultation', 'saveConsultationAnswer'
             ];
             const requestPayload = { ...payload };
             if (protectedActions.includes(action) && !requestPayload.token) {
-                const technicianAwareActions = ['updateServiceStatus'];
+                const technicianAwareActions = ['updateServiceStatus', 'getConsultationAttachment', 'getCompletedConsultations', 'saveConsultationAnswer'];
                 const preferredToken = (isTechnicianLoggedIn() && technicianAwareActions.includes(action))
                     ? getTechnicianToken()
                     : getAdminToken();
@@ -731,7 +731,9 @@ const CONFIG = {
                 }
             }
             const controller = new AbortController();
-            const requestTimeout = action === 'uploadFileToDrive' || action === 'updateServiceStatus' || action === 'getConsultationAttachment' ? 120000 : 20000;
+            const requestTimeout = action === 'uploadFileToDrive' || action === 'updateServiceStatus' || action === 'getConsultationAttachment'
+                ? 120000
+                : action === 'syncFormResponses' || action === 'cleanupDuplicateServices' ? 60000 : 20000;
             const timeout = window.setTimeout(() => controller.abort(), requestTimeout);
             let response;
             try {
@@ -2039,7 +2041,7 @@ function openServiceDetail(serviceId) {
                         <table class="admin-table admin-services-table">
                             <thead>
                                 <tr>
-                                    <th>ID</th><th>Tanggal</th><th>Customer</th><th>No. WhatsApp</th><th>Alamat</th><th>Google Maps</th><th>Media Customer</th><th>Barang</th><th>Keluhan</th><th>Deskripsi Kerusakan</th><th>Status</th><th>Penugasan Teknisi</th><th>Update</th>
+                                    <th>ID</th><th>Tanggal</th><th>Customer</th><th>No. WhatsApp</th><th>Alamat</th><th>Google Maps</th><th>Media Customer</th><th>Barang</th><th>Keluhan</th><th>Deskripsi Kerusakan</th><th>Status</th><th>Penugasan Teknisi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -2069,9 +2071,8 @@ function openServiceDetail(serviceId) {
                                                 return `<div class="admin-service-assignment"><select class="admin-service-assignment-select" data-service-technician="${escapeHtml(item.id || '')}" aria-label="Pilih teknisi untuk servis ${escapeHtml(item.id || '')}" ${activeTechnicians.length ? '' : 'disabled'}><option value="" ${assignedUser ? '' : 'selected'}>${activeTechnicians.length ? 'Pilih teknisi' : 'Tidak ada teknisi aktif'}</option>${activeTechnicians.map(user => `<option value="${escapeHtml(user.USERNAME)}" ${assignedUser && assignedUser.USERNAME.toLowerCase() === user.USERNAME.toLowerCase() ? 'selected' : ''}>${escapeHtml(user.NAMA)} (${escapeHtml(user.USERNAME)})</option>`).join('')}</select><button type="button" class="btn-secondary small admin-service-assign-button" data-assign-service="${escapeHtml(item.id || '')}" ${activeTechnicians.length ? '' : 'disabled'}>${assignedTechnician ? 'Simpan Teknisi' : 'Tugaskan'}</button></div>`;
                                             })()}
                                         </td>
-                                        <td>${escapeHtml(formatDate(item.timestamp_update || item.created_at || f.tanggal))}</td>
                                     </tr>`;
-                                }).join('') : `<tr><td colspan="13"><div class="admin-empty-state">${emptyMessage}</div></td></tr>`}
+                                }).join('') : `<tr><td colspan="12"><div class="admin-empty-state">${emptyMessage}</div></td></tr>`}
                             </tbody>
                         </table>
                     </div>
@@ -2374,7 +2375,11 @@ function openServiceDetail(serviceId) {
             `).join('');
             return `
                 <div class="admin-card admin-customers-card">
-                    <div class="admin-card-header"><div><h3>Manajemen Pelanggan</h3><p class="section-sub-text">Ringkasan servis dan transaksi setiap pelanggan.</p></div><span class="admin-user-chip">${customers.length} pelanggan</span></div>
+                    <div class="admin-card-header">
+                        <div><h3>Manajemen Pelanggan</h3><p class="section-sub-text">Ringkasan servis dan transaksi setiap pelanggan.</p></div>
+                        <button class="btn-primary admin-report-export-button" type="button" data-export-customers="true" aria-label="Ekspor Excel data pelanggan">Export Excel</button>
+                        <span class="admin-user-chip">${customers.length} pelanggan</span>
+                    </div>
                     <div class="admin-table-wrap admin-customers-table-wrap">
                         <table class="admin-table admin-customers-table">
                             <thead><tr><th>Customer</th><th>No. WhatsApp</th><th>Jumlah Servis</th><th>Servis Aktif</th><th>Servis Selesai</th><th>Total Transaksi</th><th>Servis Terakhir</th><th>Aksi</th></tr></thead>
@@ -2383,6 +2388,32 @@ function openServiceDetail(serviceId) {
                     </div>
                 </div>
             `;
+        }
+
+        function exportCustomersExcel() {
+            const customers = getAdminCustomerGroups();
+            const headers = ['Customer', 'No. WhatsApp', 'Jumlah Servis', 'Servis Aktif', 'Servis Selesai', 'Total Transaksi', 'Servis Terakhir'];
+            const rows = customers.map(customer => [
+                customer.name || '',
+                customer.phone || '',
+                customer.total,
+                customer.active,
+                customer.completed,
+                customer.totalRevenue,
+                customer.lastDate || '-'
+            ]);
+            const date = new Date().toISOString().slice(0, 10);
+            downloadStyledExcelTable({
+                title: 'DATA PELANGGAN',
+                subtitle: `Daftar pelanggan · ${rows.length} data · Diekspor ${new Date().toLocaleString('id-ID')}`,
+                sheetName: 'Data Pelanggan',
+                tableName: 'DataPelanggan',
+                filename: `data-pelanggan-${date}.xlsx`,
+                headers,
+                rows,
+                columnWidths: [30, 22, 18, 16, 18, 22, 20]
+            });
+            showToast('File Excel data pelanggan berhasil diunduh.', 'success');
         }
 
 
@@ -3223,7 +3254,7 @@ function parseServiceSpreadsheetCsv(text) {
         cells.some(value => /whatsapp/i.test(value)) &&
         cells.some(value => /google maps/i.test(value))
     );
-    if (headerIndex < 0) throw new Error('Kolom nama, WhatsApp, dan Google Maps tidak ditemukan di Spreadsheet servis.');
+    if (headerIndex < 0) throw new Error('Kolom nama, WhatsApp, dan Google Maps tidak ditemukan di tab Form Servis.');
     const headers = rows[headerIndex].map(value => value.toLowerCase().trim());
     const findColumn = expression => headers.findIndex(value => expression.test(value));
     const timestampIndex = findColumn(/^timestamp$/i);
@@ -3300,7 +3331,7 @@ async function refreshCustomerSpreadsheetMaps(force = false) {
     const cache = window.__CUSTOMER_SPREADSHEET_CACHE__ || { updatedAt: 0 };
     if (window.__CUSTOMER_SPREADSHEET_REQUEST__) return window.__CUSTOMER_SPREADSHEET_REQUEST__;
     if (!force && Date.now() - cache.updatedAt < 60000) return window.__CUSTOMER_SPREADSHEET_MAPS__ || [];
-    const spreadsheetUrl = `https://docs.google.com/spreadsheets/d/${CONFIG.SERVICE_SPREADSHEET_ID}/export?format=csv&gid=${CONFIG.SERVICE_SPREADSHEET_GID}&_=${Date.now()}`;
+    const spreadsheetUrl = `https://docs.google.com/spreadsheets/d/${CONFIG.SERVICE_SPREADSHEET_ID}/export?format=csv&gid=${CONFIG.SERVICE_RESPONSE_GID}&_=${Date.now()}`;
     const request = (async () => {
         try {
             const response = await fetch(spreadsheetUrl, { cache: 'no-store' });
@@ -3313,7 +3344,7 @@ async function refreshCustomerSpreadsheetMaps(force = false) {
         } catch (error) {
             window.__CUSTOMER_SPREADSHEET_ERROR__ = error?.message || 'Spreadsheet servis gagal dimuat.';
             window.__CUSTOMER_SPREADSHEET_CACHE__ = { ...cache, updatedAt: Date.now() };
-            console.warn('Gagal memuat data Google Maps dari Spreadsheet servis:', error);
+            console.warn('Gagal memuat data Google Maps dari tab Form Servis:', error);
             throw error;
         }
     })();
@@ -4371,18 +4402,39 @@ function renderReportsPage() {
                 event.preventDefault();
                 const phoneInput = document.getElementById('statusPhone');
                 const phoneValue = phoneInput ? phoneInput.value : '';
-                const records = await getServiceStatus(phoneValue);
-                renderStatusResults(records);
+                const result = document.getElementById('statusResult');
+                const submitButton = statusForm.querySelector('button[type="submit"]');
+                if (submitButton) submitButton.disabled = true;
+                if (result) result.innerHTML = '<div class="status-empty">Memuat data servis…</div>';
+                try {
+                    const records = await getServiceStatus(phoneValue);
+                    renderStatusResults(records);
+                } catch (error) {
+                    if (result) result.innerHTML = `<div class="status-empty"><strong>Status servis gagal dimuat.</strong><p>${escapeHtml(error?.message || 'Periksa koneksi lalu coba lagi.')}</p></div>`;
+                } finally {
+                    if (submitButton) submitButton.disabled = false;
+                }
             });
-            document.getElementById('consultationStatusForm')?.addEventListener('submit', function (event) {
+            document.getElementById('consultationStatusForm')?.addEventListener('submit', async function (event) {
                 event.preventDefault();
-                const name = document.getElementById('consultationStatusName')?.value.trim().toLowerCase();
                 const phone = document.getElementById('consultationStatusPhone')?.value.trim();
                 const result = document.getElementById('consultationStatusResult');
-                const matches = (window.__CONSULTATIONS_CACHE__ || []).filter(function (item) {
-                    return !item.completed && String(item.name || item.customer_name || '').trim().toLowerCase() === name && String(item.phone || item.whatsapp || '').replace(/\D/g, '') === phone.replace(/\D/g, '');
-                });
-                if (result) result.innerHTML = matches.length ? '<div class="status-empty"><strong>Konsultasi ditemukan.</strong><p>Permohonan Anda sedang ditindaklanjuti oleh petugas.</p></div>' : '<div class="status-empty"><strong>Data konsultasi belum ditemukan.</strong><p>Pastikan nama dan nomor WhatsApp sesuai dengan formulir konsultasi.</p></div>';
+                const form = event.currentTarget;
+                const submitButton = form.querySelector('button[type="submit"]');
+                if (submitButton) submitButton.disabled = true;
+                if (result) result.innerHTML = '<div class="status-empty">Memuat status konsultasi…</div>';
+                try {
+                    const response = await apiRequest('getPublicConsultationStatus', { phone });
+                    const matches = Array.isArray(response?.data) ? response.data : [];
+                    if (!result) return;
+                    result.innerHTML = matches.length
+                        ? `<div class="status-list">${matches.map(item => `<article class="service-status-card"><div class="service-status-header"><h3>${escapeHtml(item.topic || 'Konsultasi')}</h3><span class="consultation-status-pill ${item.completed ? 'is-completed' : ''}">${item.completed ? 'Selesai' : 'Perlu Ditangani'}</span></div><div class="service-meta"><div><strong>Waktu pengajuan:</strong> ${escapeHtml(item.timestamp || '-')}</div></div>${item.answer?`<div class="consultation-public-answer"><strong>Jawaban Petugas</strong><p>${escapeHtml(item.answer).replace(/\r?\n/g,'<br>')}</p></div>`:item.completed?'<p>Konsultasi Anda telah ditandai selesai.</p>':'<p>Permohonan Anda sedang ditindaklanjuti oleh petugas.</p>'}</article>`).join('')}</div>`
+                        : '<div class="status-empty"><strong>Data konsultasi belum ditemukan.</strong><p>Pastikan nomor WhatsApp sama dengan yang digunakan pada formulir konsultasi.</p></div>';
+                } catch (error) {
+                    if (result) result.innerHTML = `<div class="status-empty"><strong>Status konsultasi gagal dimuat.</strong><p>${escapeHtml(error?.message || 'Periksa koneksi lalu coba lagi.')}</p></div>`;
+                } finally {
+                    if (submitButton) submitButton.disabled = false;
+                }
             });
 
             const dashboardStatusForm = document.getElementById('dashboardStatusForm');
@@ -4789,6 +4841,16 @@ function renderReportsPage() {
                 const exportAdminServicesButton = target.closest('[data-export-admin-services]');
                 if (exportAdminServicesButton) {
                     exportFilteredReportExcel(getAdminServicesForExport(), { adminServices: true });
+                    return;
+                }
+                const exportCustomersButton = target.closest('[data-export-customers]');
+                if (exportCustomersButton) {
+                    exportCustomersExcel();
+                    return;
+                }
+                const exportConsultationsButton = target.closest('[data-export-consultations]');
+                if (exportConsultationsButton) {
+                    exportConsultationsExcel();
                     return;
                 }
             }, true);
@@ -5548,46 +5610,32 @@ function renderReportsPage() {
                 renderAdminDashboard();
                 return;
             }
-            window.__ADMIN_SYNC_STATE__ = { label: 'Syncing...', text: 'Mengambil data terbaru...' };
+            if (window.__ADMIN_SYNC_IN_PROGRESS__) return;
+            window.__ADMIN_SYNC_IN_PROGRESS__ = true;
             try {
-                if (!window.__SERVICE_DUPLICATE_CLEANUP_REQUEST__) {
-                    window.__SERVICE_DUPLICATE_CLEANUP_REQUEST__ = apiRequest('cleanupDuplicateServices')
-                        .then(result => {
-                            const removed = Number(result.removed ?? result.data?.removed ?? 0);
-                            if (!Number.isFinite(removed)) {
-                                throw new Error('Jumlah baris duplikat dari server tidak valid.');
-                            }
-                            if (removed > 0) {
-                                showToast(removed + ' baris servis duplikat dibersihkan otomatis.', 'success');
-                            }
-                            return result;
-                        })
-                        .catch(error => {
-                            window.__SERVICE_DUPLICATE_CLEANUP_ERROR__ = error;
-                            console.error('Pembersihan otomatis data servis ganda gagal:', error);
-                            showToast(error.message || 'Pembersihan otomatis data servis ganda gagal.', 'error');
-                            return null;
-                        });
-                }
-                await window.__SERVICE_DUPLICATE_CLEANUP_REQUEST__;
-                await refreshServiceCacheFromApi();
+                window.__ADMIN_SYNC_STATE__ = { label: 'Syncing...', text: 'Mengambil data terbaru...' };
                 try {
-                    await refreshConsultationsFromSpreadsheet();
-                } catch (consultationError) {
-                    console.warn('Sinkronisasi konsultasi admin gagal:', consultationError);
+                    await refreshServiceCacheFromApi();
+                    try {
+                        await refreshConsultationsFromSpreadsheet();
+                    } catch (consultationError) {
+                        console.warn('Sinkronisasi konsultasi admin gagal:', consultationError);
+                    }
+                    window.__ADMIN_SYNC_STATE__ = window.__SERVICE_CACHE_ERROR__
+                        ? { label: 'Connection Error', text: 'Gagal mengambil data terbaru' }
+                        : { label: 'Connected', text: 'Data tersinkronisasi' };
+                } catch (error) {
+                    window.__ADMIN_SYNC_STATE__ = { label: 'Connection Error', text: 'Gagal mengambil data terbaru' };
+                    console.warn('Admin sync failed:', error);
                 }
-                window.__ADMIN_SYNC_STATE__ = window.__SERVICE_CACHE_ERROR__
-                    ? { label: 'Connection Error', text: 'Gagal mengambil data terbaru' }
-                    : { label: 'Connected', text: 'Data tersinkronisasi' };
-            } catch (error) {
-                window.__ADMIN_SYNC_STATE__ = { label: 'Connection Error', text: 'Gagal mengambil data terbaru' };
-                console.warn('Admin sync failed:', error);
+                const activePage = document.querySelector('.admin-nav-item.active')?.dataset.adminPage || 'dashboard';
+                if (activePage === 'media' && isMediaAdminEditing()) {
+                    return;
+                }
+                showAdminPage(activePage, { skipStockRefresh: activePage === 'stock' });
+            } finally {
+                window.__ADMIN_SYNC_IN_PROGRESS__ = false;
             }
-            const activePage = document.querySelector('.admin-nav-item.active')?.dataset.adminPage || 'dashboard';
-            if (activePage === 'media' && isMediaAdminEditing()) {
-                return;
-            }
-            showAdminPage(activePage, { skipStockRefresh: activePage === 'stock' });
         }
 
 
@@ -5919,13 +5967,75 @@ function renderReportsPage() {
         }
 
 
+        function openConsultationReplyDialog(item) {
+            if (!item || !item.key) {
+                showToast('Identitas konsultasi tidak valid.', 'error');
+                return;
+            }
+            document.getElementById('consultationReplyModal')?.remove();
+            const modal = document.createElement('div');
+            modal.id = 'consultationReplyModal';
+            modal.className = 'stock-modal show consultation-reply-modal';
+            modal.innerHTML = `<section class="stock-panel" role="dialog" aria-modal="true" aria-labelledby="consultationReplyTitle">
+                <header class="stock-panel-header"><h3 id="consultationReplyTitle">Jawab Konsultasi</h3><button type="button" class="stock-close" data-consultation-reply-close aria-label="Tutup">×</button></header>
+                <form class="stock-body" data-consultation-reply-form>
+                    <p><strong>${escapeHtml(item.topic || 'Konsultasi')}</strong></p>
+                    <p>${escapeHtml(item.description || '')}</p>
+                    <label class="consultation-reply-label" for="consultationReplyText">Jawaban untuk pelanggan</label>
+                    <textarea id="consultationReplyText" name="answer" maxlength="5000" required placeholder="Tulis jawaban konsultasi..." aria-describedby="consultationReplyHelp">${escapeHtml(item.answer || '')}</textarea>
+                    <small id="consultationReplyHelp">Jawaban akan disimpan dan ditampilkan pada halaman Cek Status Konsultasi.</small>
+                    <div class="consultation-reply-actions"><button type="button" class="btn-secondary" data-consultation-reply-close>Batal</button><button type="submit" class="btn-primary">Kirim Jawaban</button></div>
+                </form>
+            </section>`;
+            document.body.appendChild(modal);
+            const close = () => modal.remove();
+            modal.querySelectorAll('[data-consultation-reply-close]').forEach(button => button.addEventListener('click', close));
+            modal.addEventListener('click', event => { if (event.target === modal) close(); });
+            modal.querySelector('form').addEventListener('submit', async event => {
+                event.preventDefault();
+                const form = event.currentTarget;
+                const submit = form.querySelector('button[type="submit"]');
+                const answer = String(new FormData(form).get('answer') || '').trim();
+                if (!answer) {
+                    showToast('Isi jawaban konsultasi terlebih dahulu.', 'error');
+                    return;
+                }
+                submit.disabled = true;
+                try {
+                    const response = await apiRequest('saveConsultationAnswer', {
+                        consultationKey: item.key,
+                        answer,
+                        token: isTechnicianLoggedIn() ? getTechnicianToken() : getAdminToken()
+                    });
+                    if (!response || response.success === false) throw new Error(response?.message || 'Jawaban konsultasi gagal disimpan.');
+                    item.answer = answer;
+                    item.completed = true;
+                    close();
+                    if (isTechnicianLoggedIn()) {
+                        window.__TECH_CONSULTATION_TAB__ = 'completed';
+                        renderTechView('consultations', { fromBack: true });
+                    }
+                    else showAdminPage('locations', { fromBack: true, skipConsultationsRefresh: true });
+                    showToast('Jawaban konsultasi berhasil disimpan.', 'success');
+                } catch (error) {
+                    console.error('Gagal menyimpan jawaban konsultasi:', error);
+                    showToast(error?.message || 'Jawaban konsultasi gagal disimpan.', 'error');
+                    submit.disabled = false;
+                }
+            });
+            modal.querySelector('#consultationReplyText').focus();
+        }
+
         function renderConsultationsPage() {
             const all = Array.isArray(window.__CONSULTATIONS_CACHE__) ? window.__CONSULTATIONS_CACHE__ : [];
             const isLoading = Boolean(window.__CONSULTATIONS_LOADING__);
             const loadError = window.__CONSULTATIONS_LOAD_ERROR__ || '';
             const keyword = (window.__CONSULTATION_FILTER__ || '').trim().toLowerCase();
-            const active = all.filter(item => !item.completed);
+            const activeTab = window.__ADMIN_CONSULTATION_TAB__ === 'completed' ? 'completed' : 'pending';
+            const active = all.filter(item => activeTab === 'completed' ? item.completed : !item.completed);
             const rows = active.filter(item => !keyword || Object.values(item).some(value => String(value || '').toLowerCase().includes(keyword)));
+            const pendingCount = all.filter(item => !item.completed).length;
+            const completedCount = all.filter(item => item.completed).length;
             return `
                 <div class="admin-card admin-consultations-page">
                     <div class="admin-card-header">
@@ -5936,11 +6046,16 @@ function renderReportsPage() {
                         <div class="admin-consultations-actions">
                             <a class="btn-secondary" href="${CONFIG.CONSULTATION_SPREADSHEET_URL}" target="_blank" rel="noopener noreferrer">Buka Spreadsheet</a>
                             <button class="btn-primary" type="button" data-refresh-consultations ${isLoading ? 'disabled' : ''}>${isLoading ? 'Menyinkronkan…' : 'Sinkronkan'}</button>
+                            <button class="btn-primary admin-report-export-button" type="button" data-export-consultations ${isLoading || !!loadError ? 'disabled' : ''}>Export Excel</button>
                         </div>
                     </div>
                     <div class="admin-service-filter-bar admin-consultations-toolbar" style="margin-bottom:12px;">
                         <input id="consultationSearch" class="admin-service-search-input" placeholder="Cari nama, WhatsApp, topik, atau prioritas" value="${escapeHtml(window.__CONSULTATION_FILTER__ || '')}" aria-label="Cari konsultasi" />
                         <span class="admin-user-chip admin-service-total">Total: ${rows.length}</span>
+                    </div>
+                    <div class="admin-consultation-tabs" role="group" aria-label="Filter status konsultasi">
+                        <button type="button" class="${activeTab === 'pending' ? 'active' : ''}" aria-pressed="${activeTab === 'pending'}" data-admin-consultation-tab="pending">Perlu Ditangani (${pendingCount})</button>
+                        <button type="button" class="${activeTab === 'completed' ? 'active' : ''}" aria-pressed="${activeTab === 'completed'}" data-admin-consultation-tab="completed">Konsultasi Selesai (${completedCount})</button>
                     </div>
                     ${loadError ? `<p class="admin-consultations-error" role="alert">${escapeHtml(loadError)}</p>` : ''}
                     ${isLoading ? '<p class="section-sub-text" aria-live="polite">Memuat data konsultasi dari Spreadsheet…</p>' : ''}
@@ -5955,6 +6070,8 @@ function renderReportsPage() {
                                     <th>Deskripsi Permasalahan</th>
                                     <th>Lampiran Pendukung</th>
                                     <th>Bidang Usaha</th>
+                                    <th>Jawaban</th>
+                                    <th>Status</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -5968,14 +6085,70 @@ function renderReportsPage() {
                                         <td class="admin-consultation-description">${escapeHtml(item.description || '-')}</td>
                                         <td>${consultationAttachmentHtml(item.attachment)}</td>
                                         <td>${escapeHtml(item.business || '-')}</td>
-                                        <td><button class="btn-primary small" type="button" data-consultation-done="${escapeHtml(item.key)}">Selesai</button></td>
+                                        <td class="admin-consultation-answer">${item.answer ? escapeHtml(item.answer).replace(/\r?\n/g, '<br>') : 'Belum dijawab'}</td>
+                                        <td><span class="tech-consultation-pending ${item.completed ? 'is-completed' : ''}">${item.completed ? 'Selesai' : 'Perlu Ditangani'}</span></td>
+                                        <td><button class="btn-primary small" type="button" data-consultation-reply="${escapeHtml(item.key)}">${item.answer ? 'Ubah Jawaban' : 'Jawab'}</button></td>
                                     </tr>
-                                `).join('') : `<tr><td colspan="8"><div class="admin-empty-state">${loadError ? 'Data konsultasi tidak dapat dimuat. Periksa koneksi Spreadsheet lalu coba sinkronkan kembali.' : isLoading ? 'Memuat data konsultasi dari Spreadsheet…' : 'Belum ada konsultasi yang perlu ditangani.'}</div></td></tr>`}
+                                `).join('') : `<tr><td colspan="10"><div class="admin-empty-state">${loadError ? 'Data konsultasi tidak dapat dimuat. Periksa koneksi Spreadsheet lalu coba sinkronkan kembali.' : isLoading ? 'Memuat data konsultasi dari Spreadsheet…' : activeTab === 'completed' ? 'Belum ada konsultasi yang selesai.' : 'Belum ada konsultasi yang perlu ditangani.'}</div></td></tr>`}
                             </tbody>
                         </table>
                     </div>
                 </div>
             `;
+        }
+
+        function exportConsultationsExcel() {
+            const all = Array.isArray(window.__CONSULTATIONS_CACHE__) ? window.__CONSULTATIONS_CACHE__ : [];
+            if (window.__CONSULTATIONS_LOADING__) {
+                showToast('Tunggu sampai sinkronisasi konsultasi selesai sebelum ekspor.', 'error');
+                return;
+            }
+            if (window.__CONSULTATIONS_LOAD_ERROR__) {
+                showToast('Data konsultasi gagal dimuat. Sinkronkan ulang sebelum ekspor.', 'error');
+                return;
+            }
+            if (!all.length) {
+                showToast('Tidak ada data konsultasi untuk diekspor.', 'error');
+                return;
+            }
+            const headers = [
+                'Waktu Pengajuan',
+                'Nama',
+                'No. WhatsApp',
+                'Topik Konsultasi',
+                'Deskripsi Permasalahan',
+                'Tingkat Prioritas',
+                'Lampiran Pendukung',
+                'Bidang Usaha',
+                'Jawaban Petugas',
+                'Status',
+                'Tanggal Ekspor'
+            ];
+            const rows = all.map(item => [
+                item.timestamp || item.date || '',
+                item.name || item.customer_name || '',
+                item.whatsapp || item.phone || '',
+                item.topic || '',
+                item.description || '',
+                item.priority || '',
+                item.attachment || '',
+                item.business || '',
+                item.answer || '',
+                item.completed ? 'Selesai' : 'Perlu Ditangani',
+                new Date().toLocaleDateString('id-ID')
+            ]);
+            const date = new Date().toISOString().slice(0, 10);
+            downloadStyledExcelTable({
+                title: 'LAPORAN KONSULTASI',
+                subtitle: `Semua konsultasi · ${rows.length} data · Diekspor ${new Date().toLocaleString('id-ID')}`,
+                sheetName: 'Laporan Konsultasi',
+                tableName: 'LaporanKonsultasi',
+                filename: `laporan-konsultasi-${date}.xlsx`,
+                headers,
+                rows,
+                columnWidths: [24, 26, 21, 28, 44, 20, 40, 26, 50, 20, 18]
+            });
+            showToast('File Excel laporan konsultasi berhasil diunduh.', 'success');
         }
 
 
@@ -6682,7 +6855,9 @@ function renderReportsPage() {
             const spreadsheetUrl = `https://docs.google.com/spreadsheets/d/${CONFIG.SERVICE_SPREADSHEET_ID}/export?format=csv&gid=${CONFIG.CONSULTATION_SPREADSHEET_GID}&_=${Date.now()}`;
             const request = Promise.all([
                 fetch(spreadsheetUrl, { cache: 'no-store' }),
-                apiRequest('getCompletedConsultations', { token: getAdminToken() })
+                apiRequest('getCompletedConsultations', {
+                    token: isTechnicianLoggedIn() ? getTechnicianToken() : getAdminToken()
+                })
             ])
                 .then(async ([response, completedResponse]) => {
                     if (!response.ok) throw new Error(`Spreadsheet konsultasi gagal dimuat (${response.status}).`);
@@ -6692,9 +6867,12 @@ function renderReportsPage() {
                         throw new Error('Status konsultasi selesai tidak valid dari server.');
                     }
                     const completedSet = new Set(completedKeys.map(String));
+                    const answers = completedResponse?.data?.answers && typeof completedResponse.data.answers === 'object'
+                        ? completedResponse.data.answers
+                        : {};
                     const consultations = await Promise.all(parseConsultationSpreadsheetCsv(csv).map(async item => {
                         const key = await consultationIdentityKey(item);
-                        return { ...item, key, completed: completedSet.has(key) };
+                        return { ...item, key, completed: completedSet.has(key), answer: String(answers[key] || '') };
                     }));
                     window.__CONSULTATIONS_CACHE__ = consultations;
                     window.__CONSULTATIONS_CACHE_UPDATED_AT__ = Date.now();
@@ -6710,6 +6888,9 @@ function renderReportsPage() {
                     window.__CONSULTATIONS_REQUEST__ = null;
                     if (window.__ADMIN_CURRENT_PAGE__ === 'locations') {
                         showAdminPage('locations', { fromBack: true, skipConsultationsRefresh: true });
+                    }
+                    if (isTechnicianLoggedIn() && document.getElementById('technicianShell')?.dataset.techPage === 'consultations') {
+                        renderTechView('consultations', { fromBack: true });
                     }
                 });
             window.__CONSULTATIONS_REQUEST__ = request;
@@ -7032,6 +7213,7 @@ function renderReportsPage() {
             }
             const syncConsultations = event.target.closest('[data-refresh-consultations]');
             if (syncConsultations) {
+                if (isTechnicianLoggedIn()) return;
                 const request = refreshConsultationsFromSpreadsheet(true);
                 showAdminPage('locations', { fromBack: true, skipConsultationsRefresh: true });
                 try {
@@ -7040,6 +7222,22 @@ function renderReportsPage() {
                 } catch (error) {
                     showToast(error?.message || 'Data konsultasi gagal disinkronkan.', 'error');
                 }
+                return;
+            }
+            const adminConsultationTab = event.target.closest('[data-admin-consultation-tab]');
+            if (adminConsultationTab) {
+                window.__ADMIN_CONSULTATION_TAB__ = adminConsultationTab.dataset.adminConsultationTab;
+                showAdminPage('locations', { fromBack: true, skipConsultationsRefresh: true });
+                return;
+            }
+            const replyConsultation = event.target.closest('[data-consultation-reply]');
+            if (replyConsultation) {
+                const item = (window.__CONSULTATIONS_CACHE__ || []).find(row => row.key === replyConsultation.dataset.consultationReply);
+                if (!item) {
+                    showToast('Data konsultasi tidak ditemukan. Sinkronkan ulang lalu coba kembali.', 'error');
+                    return;
+                }
+                openConsultationReplyDialog(item);
                 return;
             }
             const completeConsultation = event.target.closest('[data-consultation-done]');
@@ -7651,11 +7849,28 @@ function techSession(){
   function techConsultations(){
     const records=(window.__CONSULTATIONS_CACHE__||[]);
     const pending=records.filter(item=>!item.completed);
+    const completed=records.filter(item=>item.completed);
+    const activeTab=window.__TECH_CONSULTATION_TAB__==='completed'?'completed':'pending';
+    const visibleRecords=(activeTab==='completed'?completed:pending).filter(item=>{
+      const query=String(window.__TECH_CONSULTATION_FILTER__||'').trim().toLowerCase();
+      return !query||[item.name,item.customer_name,item.phone,item.whatsapp,item.topic,item.description,item.priority,item.business,item.answer,item.timestamp,item.date]
+        .some(value=>String(value||'').toLowerCase().includes(query));
+    });
+    const loading=Boolean(window.__CONSULTATIONS_LOADING__);
+    const loadError=String(window.__CONSULTATIONS_LOAD_ERROR__||'');
+    const emptyMessage=loadError?'Data konsultasi gagal dimuat. Tekan Sinkronkan untuk mencoba lagi.'
+      :loading?'Memuat data konsultasi…'
+        :activeTab==='completed'?'Belum ada konsultasi yang selesai.'
+          :'Belum ada konsultasi yang perlu ditangani.';
     return `<div class="tech-section tech-consultations-page">
-      <div class="tech-section-header tech-client-toolbar-wrap"><div><h3>Konsultasi</h3><p>Tinjau konsultasi pelanggan dan simpan hasil jawaban saat menyelesaikannya.</p></div><button type="button" class="tech-btn" data-refresh-consultations>Sinkronkan</button></div>
-      <div class="tech-consultation-tabs"><strong>Perlu Ditangani (${pending.length})</strong><span>Konsultasi Selesai (${records.filter(item=>item.completed).length})</span></div>
-      <div class="technician-toolbar tech-client-filters"><input id="techConsultationSearch" class="tech-client-search" placeholder="Cari nama, WhatsApp, topik, atau prioritas" aria-label="Cari konsultasi"></div>
-      <div class="tech-table-wrap"><table class="tech-table tech-consultations-table"><thead><tr><th>WAKTU PENGAJUAN</th><th>NAMA</th><th>NO. WHATSAPP</th><th>TOPIK KONSULTASI</th><th>DESKRIPSI PERMASALAHAN</th><th>LAMPIRAN PENDUKUNG</th><th>BIDANG USAHA</th><th>AKSI</th></tr></thead><tbody>${pending.map(item=>`<tr><td>${escapeHtml(item.date||item.timestamp||'-')}</td><td>${escapeHtml(item.name||item.customer_name||'-')}</td><td>${escapeHtml(item.phone||item.whatsapp||'-')}</td><td>${escapeHtml(item.topic||'-')}</td><td class="tech-consultation-description">${escapeHtml(item.description||'-')}</td><td>${typeof consultationAttachmentHtml==='function'?consultationAttachmentHtml(item.attachment):escapeHtml(item.attachment||'-')}</td><td>${escapeHtml(item.business||'-')}</td><td><span class="tech-consultation-pending">Perlu Ditangani</span></td></tr>`).join('')||'<tr><td colspan="8"><div class="tech-empty">Belum ada konsultasi yang perlu ditangani.</div></td></tr>'}</tbody></table></div>
+      <div class="tech-section-header tech-client-toolbar-wrap"><div><h3>Konsultasi</h3><p>Tinjau konsultasi pelanggan dan periksa status tindak lanjutnya.</p></div><button type="button" class="tech-btn" data-refresh-consultations ${loading?'disabled':''}>${loading?'Menyinkronkan…':'Sinkronkan'}</button></div>
+      <div class="tech-consultation-tabs" role="group" aria-label="Status konsultasi">
+        <button type="button" class="${activeTab==='pending'?'active':''}" aria-pressed="${activeTab==='pending'}" data-tech-consultation-tab="pending">Perlu Ditangani (${pending.length})</button>
+        <button type="button" class="${activeTab==='completed'?'active':''}" aria-pressed="${activeTab==='completed'}" data-tech-consultation-tab="completed">Konsultasi Selesai (${completed.length})</button>
+      </div>
+      <div class="technician-toolbar tech-client-filters"><input id="techConsultationSearch" class="tech-client-search" placeholder="Cari nama, WhatsApp, topik, atau prioritas" aria-label="Cari konsultasi" value="${escapeHtml(window.__TECH_CONSULTATION_FILTER__||'')}"></div>
+      ${loadError?`<p class="tech-consultation-error" role="alert">${escapeHtml(loadError)}</p>`:''}
+      <div class="tech-table-wrap"><table class="tech-table tech-consultations-table"><thead><tr><th>WAKTU PENGAJUAN</th><th>NAMA</th><th>NO. WHATSAPP</th><th>TOPIK KONSULTASI</th><th>DESKRIPSI PERMASALAHAN</th><th>LAMPIRAN PENDUKUNG</th><th>BIDANG USAHA</th><th>JAWABAN</th><th>STATUS</th><th>AKSI</th></tr></thead><tbody>${visibleRecords.map(item=>`<tr data-search="${escapeHtml([item.name,item.customer_name,item.phone,item.whatsapp,item.topic,item.description,item.priority,item.business,item.answer,item.date,item.timestamp].join(' ').toLowerCase())}"><td>${escapeHtml(item.date||item.timestamp||'-')}</td><td>${escapeHtml(item.name||item.customer_name||'-')}</td><td>${escapeHtml(item.phone||item.whatsapp||'-')}</td><td>${escapeHtml(item.topic||'-')}</td><td class="tech-consultation-description">${escapeHtml(item.description||'-')}</td><td>${typeof consultationAttachmentHtml==='function'?consultationAttachmentHtml(item.attachment):escapeHtml(item.attachment||'-')}</td><td>${escapeHtml(item.business||'-')}</td><td class="tech-consultation-answer">${item.answer?escapeHtml(item.answer).replace(/\r?\n/g,'<br>'):'Belum dijawab'}</td><td><span class="tech-consultation-pending ${item.completed?'is-completed':''}">${item.completed?'Selesai':'Perlu Ditangani'}</span></td><td><button type="button" class="tech-btn" data-consultation-reply="${escapeHtml(item.key)}">${item.answer?'Ubah Jawaban':'Jawab'}</button></td></tr>`).join('')||`<tr><td colspan="10"><div class="tech-empty">${emptyMessage}</div></td></tr>`}</tbody></table></div>
     </div>`;
   }
 
@@ -7770,6 +7985,16 @@ function techSession(){
     document.querySelectorAll('[data-tech-menu]').forEach(b=>b.classList.toggle('active',b.dataset.techMenu===page));
     const shell=document.getElementById('technicianShell'); if(shell) shell.dataset.techPage=page;
     saveRolePage('technician', page);
+  }
+
+  function loadTechConsultations(force=false){
+    const request=refreshConsultationsFromSpreadsheet(force);
+    renderTechView('consultations',{fromBack:true});
+    return request.catch(error=>{
+      if(document.getElementById('technicianShell')?.dataset.techPage==='consultations') renderTechView('consultations',{fromBack:true});
+      showToast(error?.message||'Data konsultasi gagal dimuat.','error');
+      throw error;
+    });
   }
 
 
@@ -7912,6 +8137,7 @@ function techSession(){
     window.__LERESSAE_TECH_HISTORY=[targetPage];
     panel.innerHTML=techPageShell(targetPage);
     renderTechView(targetPage,{resetHistory:true});
+    if(targetPage==='consultations') loadTechConsultations(false).catch(()=>{});
     document.querySelectorAll('.page-view').forEach(page => {
       const isTech = page.id === 'page-technician';
       page.classList.toggle('active', isTech);
@@ -7940,11 +8166,23 @@ function techSession(){
     const detail=e.target.closest('[data-tech-detail-job]');
     const update=e.target.closest('[data-tech-update]');
     const refresh=e.target.closest('[data-tech-refresh]');
+    const consultationTab=e.target.closest('[data-tech-consultation-tab]');
+    const consultationSync=e.target.closest('[data-refresh-consultations]');
     const customerMedia=e.target.closest('[data-tech-customer-media]');
     if(customerMedia){openTechCustomerMedia(customerMedia.dataset.techCustomerMedia);return;}
+    if(consultationTab){
+      window.__TECH_CONSULTATION_TAB__=consultationTab.dataset.techConsultationTab;
+      renderTechView('consultations',{fromBack:true});
+      return;
+    }
+    if(consultationSync){
+      consultationSync.disabled=true;
+      loadTechConsultations(true).then(()=>showToast('Data konsultasi berhasil disinkronkan.','success')).catch(()=>{});
+      return;
+    }
     if(open){document.getElementById('technicianShell')?.classList.add('tech-menu-open');return;}
     if(close){document.getElementById('technicianShell')?.classList.remove('tech-menu-open');return;}
-    if(menu){renderTechView(menu.dataset.techMenu);document.getElementById('technicianShell')?.classList.remove('tech-menu-open');return;}
+    if(menu){renderTechView(menu.dataset.techMenu);document.getElementById('technicianShell')?.classList.remove('tech-menu-open');if(menu.dataset.techMenu==='consultations')loadTechConsultations(false).catch(()=>{});return;}
     if(logout){logoutTechnician();return;}
     if(detail){openTechJob(detail.dataset.techDetailJob,false);return;}
     if(update){openTechJob(update.dataset.techUpdate,true);return;}
@@ -7954,6 +8192,11 @@ function techSession(){
     if(e.target.id==='techClientSearch'){
       const q=e.target.value.toLowerCase().trim();
       document.querySelectorAll('#techClientRows tr[data-search]').forEach(row=>row.style.display=!q||row.dataset.search.includes(q)?'':'none');
+    }
+    if(e.target.id==='techConsultationSearch'){
+      const q=e.target.value.toLowerCase().trim();
+      window.__TECH_CONSULTATION_FILTER__=e.target.value;
+      document.querySelectorAll('.tech-consultations-table tbody tr[data-search]').forEach(row=>row.style.display=!q||row.dataset.search.includes(q)?'':'none');
     }
   });
 })();

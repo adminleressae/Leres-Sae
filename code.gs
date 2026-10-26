@@ -7,8 +7,10 @@ const CONFIG = {
   // Folder MEDIA yang dipakai bersama oleh upload dan getMedia.
   MEDIA_FOLDER_ID: '1FKMEU6a7aukoWoN90cLJQYwpCAqGMwd9',
   NEWS_FOLDER_ID: '1J2P3hpb7XoRkv_pRw8hhEf-OUtVVFeTS',
+  CONSULTATION_RESPONSES_GID: '1998776970',
 
   SHEETS: {
+    SERVICE_RESPONSES: 'Form Servis',
     SERVICES: 'SERVICES',
     HISTORY: 'SERVICE_HISTORY',
     USERS: 'TEKNISI DAN ADMIN',
@@ -88,7 +90,7 @@ const HISTORY_HEADERS = [
   'timestamp'
 ];
 
-const CONSULTATION_STATUS_HEADERS = ['consultation_key', 'completed_at', 'completed_by'];
+const CONSULTATION_STATUS_HEADERS = ['consultation_key', 'completed_at', 'completed_by', 'answer', 'answered_by'];
 const AGENDA_HEADERS = ['id', 'date', 'title', 'description', 'created_at', 'updated_at', 'updated_by', 'google_event_id'];
 
 const USER_HEADERS = [
@@ -140,7 +142,7 @@ function doGet(e) {
   return json_({
     success: true,
     message: 'LERES SAE API aktif',
-    version: 'FINAL-1.4-MEDIA-TITLE-DESCRIPTION-SYNC',
+    version: 'FINAL-1.6-CONSULTATION-ANSWERS',
     time: new Date().toISOString()
   });
 }
@@ -187,6 +189,9 @@ function doPost(e) {
 
       case 'getServiceStatus':
         return json_(getServiceStatus_(body.phone));
+
+      case 'getPublicConsultationStatus':
+        return json_(getPublicConsultationStatus_(body.phone));
 
       case 'getDashboard':
         return json_(getDashboard_(body));
@@ -235,15 +240,18 @@ function doPost(e) {
         return json_(getMedia_());
 
       case 'getConsultationAttachment':
-        requireToken_(body.token, ['admin']);
+        requireToken_(body.token, ['admin', 'teknisi']);
         return json_(getConsultationAttachment_(body.fileId));
 
       case 'getCompletedConsultations':
-        requireToken_(body.token, ['admin']);
+        requireToken_(body.token, ['admin', 'teknisi']);
         return json_(getCompletedConsultations_());
 
       case 'completeConsultation':
         return json_(completeConsultation_(body, requireToken_(body.token, ['admin'])));
+
+      case 'saveConsultationAnswer':
+        return json_(saveConsultationAnswer_(body, requireToken_(body.token, ['admin', 'teknisi', 'technician'])));
 
       case 'diagnoseMediaSync':
         requireToken_(body.token, ['admin']);
@@ -854,17 +862,29 @@ function onFormSubmit(e) {
   lock.waitLock(30000);
 
   try {
+    return processServiceFormResponse_(e);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function processServiceFormResponse_(e) {
+  try {
     if (!e) throw new Error('Event Form Submit tidak tersedia.');
 
     const named = e.namedValues || {};
     const values = e.values || [];
     const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
     const sheet = ensureServicesSheet_(ss);
+    const responseSheet = getServiceResponseSheet_(ss);
 
-    if (!sheet) throw new Error('Sheet SERVICES tidak ditemukan.');
-
-    const responseSheet =
-      ss.getSheetByName('Form Responses 1') || findResponseSheet_(ss);
+    if (e.range && e.range.getSheet().getSheetId() !== responseSheet.getSheetId()) {
+      return {
+        success: true,
+        skipped: true,
+        message: 'Respons bukan berasal dari tab Form Servis.'
+      };
+    }
 
     let formRow = e.range ? e.range.getRow() : 0;
 
@@ -908,10 +928,10 @@ function onFormSubmit(e) {
       customer_name: pickAnswer_(named, [
         'nama', 'nama lengkap', 'nama pelanggan', 'nama pemohon', 'customer'
       ]),
-      phone: normalizePhone_(pickAnswer_(named, [
+      phone: pickAnswer_(named, [
         'whatsapp', 'no whatsapp', 'nomor whatsapp', 'nomor wa',
         'no wa', 'telepon', 'no telepon', 'nomor telepon', 'phone'
-      ])),
+      ]),
       service_type: pickAnswer_(named, [
         'jenis layanan', 'jenis servis', 'jenis layanan ',
         'layanan', 'service', 'service type'
@@ -1034,8 +1054,6 @@ function onFormSubmit(e) {
   } catch (error) {
     console.error('onFormSubmit error: ' + error.message);
     throw error;
-  } finally {
-    lock.releaseLock();
   }
 }
 
@@ -1057,7 +1075,7 @@ function repairServiceItemNames() {
     const formRowColumn = findHeaderIndex_(headers, ['form_row']);
     if (itemColumn < 0) throw new Error('Kolom item_name tidak ditemukan di sheet SERVICES.');
 
-    const responseSheet = ss.getSheetByName('Form Responses 1') || findResponseSheet_(ss);
+    const responseSheet = getServiceResponseSheet_(ss);
     const responseData = responseSheet && responseSheet.getLastRow() > 0
       ? responseSheet.getDataRange().getDisplayValues()
       : [];
@@ -1234,27 +1252,18 @@ function syncAllFormResponses_(options) {
       };
     }
 
-    scriptProperties.setProperty('LAST_FORM_SYNC_TS', String(now));
-
     const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-    const responseSheet =
-      ss.getSheetByName('Form Responses 1') || findResponseSheet_(ss);
-
-    if (!responseSheet) {
-      return {
-        success: false,
-        message:
-          'Sheet respons Google Form belum ditemukan. ' +
-          'Pastikan Google Form terhubung ke spreadsheet ini.'
-      };
-    }
-
+    const responseSheet = getServiceResponseSheet_(ss);
+    const services = ss.getSheetByName(CONFIG.SHEETS.SERVICES);
+    if (!services) throw new Error('Sheet SERVICES tidak ditemukan.');
     const data = responseSheet.getDataRange().getValues();
+    reconcileServiceRowsWithResponses_(services, data);
 
     if (data.length < 2) {
+      scriptProperties.setProperty('LAST_FORM_SYNC_TS', String(now));
       return {
         success: true,
-        message: 'Belum ada respons Google Form.',
+        message: 'Belum ada respons pada tab Form Servis.',
         data: [],
         count: 0
       };
@@ -1263,9 +1272,6 @@ function syncAllFormResponses_(options) {
     const headers = data[0].map(function(value) {
       return String(value || '').trim();
     });
-
-    const services = ss.getSheetByName(CONFIG.SHEETS.SERVICES);
-    if (!services) throw new Error('Sheet SERVICES tidak ditemukan.');
 
     let count = 0;
     let inserted = 0;
@@ -1287,7 +1293,7 @@ function syncAllFormResponses_(options) {
       const existingId = findServiceIdByFormRow_(services, formRow);
 
       try {
-        const result = onFormSubmit({
+        const result = processServiceFormResponse_({
           namedValues: named,
           values: data[r],
           suppressEmail: true,
@@ -1315,10 +1321,14 @@ function syncAllFormResponses_(options) {
     }
 
     SpreadsheetApp.flush();
+    const hasFailures = results.some(function(result) { return result.success === false; });
+    scriptProperties.setProperty('LAST_FORM_SYNC_TS', hasFailures ? '0' : String(Date.now()));
 
     return {
-      success: true,
-      message: 'Sinkronisasi Form selesai tanpa membuat duplikasi.',
+      success: !hasFailures,
+      message: hasFailures
+        ? 'Sinkronisasi Form Servis selesai dengan baris yang gagal. Periksa detail hasil.'
+        : 'Sinkronisasi Form Servis selesai tanpa membuat duplikasi.',
       count: count,
       inserted: inserted,
       updated: updated,
@@ -1341,14 +1351,12 @@ function cleanupDuplicateServices() {
   try {
     const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
     const services = ss.getSheetByName(CONFIG.SHEETS.SERVICES);
-    const responseSheet =
-      ss.getSheetByName('Form Responses 1') || findResponseSheet_(ss);
+    const responseSheet = getServiceResponseSheet_(ss);
 
     if (!services) throw new Error('Sheet SERVICES tidak ditemukan.');
-    if (!responseSheet) {
-      throw new Error('Sheet Form Responses 1 tidak ditemukan.');
-    }
 
+    const responseData = responseSheet.getDataRange().getValues();
+    const mapped = reconcileServiceRowsWithResponses_(services, responseData);
     let data = services.getDataRange().getValues();
     if (data.length < 2) {
       return {
@@ -1359,57 +1367,7 @@ function cleanupDuplicateServices() {
     }
 
     const headers = data[0].map(String);
-    const idCol = findHeaderIndex_(headers, ['ID', 'id', 'service_id']);
     const formRowCol = findHeaderIndex_(headers, ['form_row', 'FORM_ROW']);
-    const createdCol = findHeaderIndex_(headers, ['created_at', 'CREATED_AT']);
-    const phoneCol = findHeaderIndex_(headers, ['phone', 'PHONE']);
-    const nameCol = findHeaderIndex_(headers, ['customer_name', 'CUSTOMER_NAME']);
-
-    const responseData = responseSheet.getDataRange().getValues();
-    const responseHeaders = responseData[0].map(String);
-    const responseTimestampCol =
-      findHeaderIndex_(responseHeaders, ['Timestamp', 'timestamp']);
-
-    const responseRowsByTimestamp = {};
-
-    for (let r = 1; r < responseData.length; r++) {
-      if (responseTimestampCol < 0) continue;
-
-      const key = normalizeTimestampKey_(
-        responseData[r][responseTimestampCol]
-      );
-
-      if (key) responseRowsByTimestamp[key] = r + 1;
-    }
-
-    let mapped = 0;
-
-    // Hubungkan data lama ke source row Form berdasarkan timestamp.
-    for (let r = 1; r < data.length; r++) {
-      const rowNumber = r + 1;
-      const currentFormRow =
-        formRowCol >= 0 ? String(data[r][formRowCol] || '').trim() : '';
-
-      if (currentFormRow) continue;
-      if (createdCol < 0 || responseTimestampCol < 0) continue;
-
-      const key = normalizeTimestampKey_(data[r][createdCol]);
-      const sourceRow = responseRowsByTimestamp[key];
-
-      if (sourceRow) {
-        if (formRowCol >= 0) {
-          services.getRange(rowNumber, formRowCol + 1)
-            .setValue(Number(sourceRow));
-        }
-
-        if (idCol >= 0) {
-          services.getRange(rowNumber, idCol + 1)
-            .setValue(createFormServiceId_(sourceRow));
-        }
-
-        mapped++;
-      }
-    }
 
     SpreadsheetApp.flush();
 
@@ -1455,39 +1413,104 @@ function cleanupDuplicateServices() {
   }
 }
 
-function findResponseSheet_(ss) {
-  const formUrl = ss.getFormUrl();
+function getServiceResponseSheet_(ss) {
+  const sheet = ss.getSheetByName(CONFIG.SHEETS.SERVICE_RESPONSES);
+  if (!sheet) {
+    throw new Error('Tab sumber "' + CONFIG.SHEETS.SERVICE_RESPONSES + '" tidak ditemukan.');
+  }
+  return sheet;
+}
 
-  if (formUrl) {
-    const sheets = ss.getSheets();
-    for (let i = 0; i < sheets.length; i++) {
-      const sheet = sheets[i];
+function reconcileServiceRowsWithResponses_(services, responseData) {
+  const serviceData = services.getDataRange().getValues();
+  if (serviceData.length < 2) return 0;
+
+  const serviceHeaders = serviceData[0].map(String);
+  const formRowColumn = findHeaderIndex_(serviceHeaders, ['form_row', 'FORM_ROW']);
+  const rawColumn = findHeaderIndex_(serviceHeaders, ['raw_form_data']);
+  const timestampColumn = findHeaderIndex_(serviceHeaders, ['created_at', 'timestamp']);
+  const nameColumn = findHeaderIndex_(serviceHeaders, ['customer_name', 'nama']);
+  const phoneColumn = findHeaderIndex_(serviceHeaders, ['phone', 'no whatsapp', 'whatsapp']);
+  if (formRowColumn < 0) throw new Error('Kolom form_row tidak ditemukan di sheet SERVICES.');
+
+  const responseHeaders = responseData.length ? responseData[0].map(String) : [];
+  const responseTimestampColumn = findHeaderIndex_(responseHeaders, ['Timestamp', 'timestamp']);
+  if (responseData.length && responseTimestampColumn < 0) {
+    throw new Error('Kolom Timestamp tidak ditemukan pada tab Form Servis.');
+  }
+
+  const responsesByTimestamp = {};
+  for (let rowIndex = 1; rowIndex < responseData.length; rowIndex++) {
+    const row = responseData[rowIndex];
+    if (row.every(function(value) { return String(value || '').trim() === ''; })) continue;
+
+    const named = {};
+    responseHeaders.forEach(function(header, columnIndex) {
+      if (header) named[header] = [row[columnIndex]];
+    });
+    const timestampKey = normalizeTimestampKey_(row[responseTimestampColumn]);
+    if (!timestampKey) continue;
+    if (!responsesByTimestamp[timestampKey]) responsesByTimestamp[timestampKey] = [];
+    responsesByTimestamp[timestampKey].push({
+      row: rowIndex + 1,
+      name: normalizeText_(pickAnswer_(named, ['nama', 'nama lengkap', 'nama pelanggan'])),
+      phone: normalizePhone_(pickAnswer_(named, ['whatsapp', 'no whatsapp', 'nomor whatsapp', 'nomor wa', 'no wa']))
+    });
+  }
+
+  const assignments = [];
+  const claimedRows = {};
+  let mapped = 0;
+  for (let rowIndex = 1; rowIndex < serviceData.length; rowIndex++) {
+    let raw = {};
+    const rawValue = rawColumn >= 0 ? serviceData[rowIndex][rawColumn] : '';
+    if (rawValue) {
       try {
-        if (sheet.getFormUrl() === formUrl) {
-          return sheet;
-        }
-      } catch (error) {}
+        raw = typeof rawValue === 'string' ? JSON.parse(rawValue) : rawValue;
+      } catch (error) {
+        throw new Error('raw_form_data tidak valid pada baris ' + (rowIndex + 1) + '. Tidak ada perubahan dilakukan.');
+      }
+    }
+
+    const sourceTimestamp = pickAnswer_(raw, ['Timestamp', 'timestamp'])
+      || (timestampColumn >= 0 ? serviceData[rowIndex][timestampColumn] : '');
+    const candidates = responsesByTimestamp[normalizeTimestampKey_(sourceTimestamp)] || [];
+    const sourceName = normalizeText_(pickAnswer_(raw, ['nama', 'nama lengkap', 'nama pelanggan'])
+      || (nameColumn >= 0 ? serviceData[rowIndex][nameColumn] : ''));
+    const sourcePhone = normalizePhone_(pickAnswer_(raw, ['whatsapp', 'no whatsapp', 'nomor whatsapp', 'nomor wa', 'no wa'])
+      || (phoneColumn >= 0 ? serviceData[rowIndex][phoneColumn] : ''));
+
+    let matches = candidates.filter(function(candidate) {
+      return !claimedRows[candidate.row]
+        && (!sourceName || candidate.name === sourceName)
+        && (!sourcePhone || candidate.phone === sourcePhone);
+    });
+    if (matches.length !== 1) {
+      matches = candidates.filter(function(candidate) {
+        return !claimedRows[candidate.row]
+          && ((sourcePhone && candidate.phone === sourcePhone)
+            || (sourceName && candidate.name === sourceName));
+      });
+    }
+
+    const match = matches.length === 1 ? matches[0] : null;
+    assignments.push([match ? match.row : '']);
+    if (match) {
+      claimedRows[match.row] = true;
+      mapped++;
     }
   }
 
-  const sheets = ss.getSheets();
-  for (let i = 0; i < sheets.length; i++) {
-    if (/form responses|tanggapan formulir|respons/i.test(sheets[i].getName())) {
-      return sheets[i];
-    }
-  }
-
-  return null;
+  services.getRange(2, formRowColumn + 1, assignments.length, 1).setValues(assignments);
+  return mapped;
 }
 
 /* ==========================================================
    SERVICES
    ========================================================== */
 
-function getServices_(payload) {
-  // Form submissions are written by onFormSubmit. Do not rescan the entire
-  // response sheet while serving a read request; that creates a second writer
-  // which can race with the installable form-submit trigger.
+function getServices_() {
+  // Reads must not trigger a full form resync or contend with spreadsheet writers.
   const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEETS.SERVICES);
 
   if (!sheet || sheet.getLastRow() < 2) {
@@ -1503,7 +1526,7 @@ function getServices_(payload) {
       return objectFromRow_(headers, row);
     })
     .filter(function(item) {
-      return item.ID || item.id;
+      return (item.ID || item.id) && Number(item.form_row) > 1;
     });
 
   return { success: true, data: rows };
@@ -1519,7 +1542,7 @@ function getMyServices_(body) {
 
   const records = role === 'teknisi'
     ? getVisibleServicesForUser_(username, role)
-    : getServices_({ skipSync: true, role: role, username: username, forceSync: false }).data || [];
+    : getServices_().data || [];
   return { success: true, data: records };
 }
 
@@ -1527,7 +1550,7 @@ function getServiceStatus_(phone) {
   const clean = normalizePhone_(phone);
   if (!clean) return { success: true, data: [] };
 
-  const all = getServices_({ skipSync: true }).data || [];
+  const all = getServices_().data || [];
   const rows = all.filter(function(item) {
     return normalizePhone_(item.phone) === clean;
   });
@@ -1535,9 +1558,76 @@ function getServiceStatus_(phone) {
   return { success: true, data: rows };
 }
 
+function getPublicConsultationStatus_(phone) {
+  const cleanPhone = normalizePhone_(phone);
+  if (!cleanPhone) return { success: true, data: [] };
+
+  const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  const sheet = spreadsheet.getSheets().find(function(item) {
+    return String(item.getSheetId()) === String(CONFIG.CONSULTATION_RESPONSES_GID);
+  });
+  if (!sheet || sheet.getLastRow() < 2) {
+    throw new Error('Tab respons konsultasi tidak ditemukan atau belum memiliki data.');
+  }
+
+  const values = sheet.getDataRange().getDisplayValues();
+  const normalizeHeader = function(value) {
+    return String(value || '').replace(/^\uFEFF/, '').trim().toLowerCase().replace(/\s+/g, ' ');
+  };
+  const headerIndex = values.findIndex(function(row) {
+    const headers = row.map(normalizeHeader);
+    return headers.indexOf('timestamp') >= 0
+      && headers.indexOf('nama') >= 0
+      && headers.indexOf('no whatsapp') >= 0
+      && headers.indexOf('topik konsultasi') >= 0
+      && headers.indexOf('deskripsi permasalahan') >= 0;
+  });
+  if (headerIndex < 0) {
+    throw new Error('Kolom konsultasi pada Spreadsheet tidak ditemukan atau berubah.');
+  }
+
+  const headers = values[headerIndex].map(normalizeHeader);
+  const columns = {
+    timestamp: headers.indexOf('timestamp'),
+    name: headers.indexOf('nama'),
+    phone: headers.indexOf('no whatsapp'),
+    topic: headers.indexOf('topik konsultasi'),
+    description: headers.indexOf('deskripsi permasalahan')
+  };
+  const consultationStatuses = getConsultationStatuses_();
+  const matches = [];
+
+  values.slice(headerIndex + 1).forEach(function(row) {
+    if (normalizePhone_(row[columns.phone]) !== cleanPhone) return;
+    const identity = JSON.stringify([
+      String(row[columns.timestamp] || '').trim(),
+      String(row[columns.name] || '').trim(),
+      String(row[columns.phone] || '').trim(),
+      String(row[columns.topic] || '').trim(),
+      String(row[columns.description] || '').trim()
+    ]);
+    const digest = Utilities.computeDigest(
+      Utilities.DigestAlgorithm.SHA_256,
+      identity,
+      Utilities.Charset.UTF_8
+    );
+    const key = digest.map(function(byte) {
+      return ('0' + ((byte < 0 ? byte + 256 : byte).toString(16))).slice(-2);
+    }).join('');
+    matches.push({
+      timestamp: String(row[columns.timestamp] || '').trim(),
+      topic: String(row[columns.topic] || '').trim(),
+      completed: consultationStatuses.completedKeys.has(key),
+      answer: consultationStatuses.answers[key] || ''
+    });
+  });
+
+  return { success: true, data: matches };
+}
+
 function getDashboard_(body) {
   const session = requireToken_(body && body.token, ['admin']);
-  const records = getServices_({ skipSync: true }).data || [];
+  const records = getServices_().data || [];
 
   const waitingStatuses = ['Barang Diterima', 'Menunggu Pemeriksaan', 'Menunggu Persetujuan'];
   const progressStatuses = ['Sedang Diperiksa', 'Sedang Dikerjakan', 'Menunggu Sparepart'];
@@ -2714,18 +2804,74 @@ function driveDirectUrl_(fileId) {
 }
 
 function getCompletedConsultations_() {
+  const statuses = getConsultationStatuses_();
+  return { success: true, data: { completedKeys: Array.from(statuses.completedKeys), answers: statuses.answers } };
+}
+
+function getConsultationStatuses_() {
   const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   const sheet = ensureSheet_(spreadsheet, CONFIG.SHEETS.CONSULTATION_STATUS, CONSULTATION_STATUS_HEADERS);
   const values = sheet.getDataRange().getValues();
   const headers = values[0].map(String);
   const keyColumn = findHeaderIndex_(headers, ['consultation_key']);
-  if (keyColumn < 0) throw new Error('Kolom consultation_key tidak ditemukan.');
-  const completedKeys = values.slice(1).map(function(row) {
-    return String(row[keyColumn] || '');
-  }).filter(function(key) {
-    return key !== '';
+  const completedAtColumn = findHeaderIndex_(headers, ['completed_at']);
+  const answerColumn = findHeaderIndex_(headers, ['answer']);
+  if (keyColumn < 0 || completedAtColumn < 0 || answerColumn < 0) throw new Error('Kolom status konsultasi tidak ditemukan.');
+  const completedKeys = new Set();
+  const answers = {};
+  values.slice(1).forEach(function(row) {
+    const key = String(row[keyColumn] || '');
+    if (!key) return;
+    if (String(row[completedAtColumn] || '')) completedKeys.add(key);
+    const answer = String(row[answerColumn] || '').trim();
+    if (answer) answers[key] = answer;
   });
-  return { success: true, data: { completedKeys: completedKeys } };
+  return { completedKeys: completedKeys, answers: answers };
+}
+
+function saveConsultationAnswer_(body, session) {
+  const key = String(body.consultationKey || '').trim();
+  const answer = String(body.answer || '').trim();
+  if (!/^[a-f0-9]{64}$/i.test(key)) throw new Error('Identitas konsultasi tidak valid.');
+  if (!answer) throw new Error('Isi jawaban konsultasi terlebih dahulu.');
+  if (answer.length > 5000) throw new Error('Jawaban maksimal 5000 karakter.');
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    const sheet = ensureSheet_(spreadsheet, CONFIG.SHEETS.CONSULTATION_STATUS, CONSULTATION_STATUS_HEADERS);
+    const values = sheet.getDataRange().getValues();
+    const headers = values[0].map(String);
+    const keyColumn = findHeaderIndex_(headers, ['consultation_key']);
+    const completedAtColumn = findHeaderIndex_(headers, ['completed_at']);
+    const completedByColumn = findHeaderIndex_(headers, ['completed_by']);
+    const answerColumn = findHeaderIndex_(headers, ['answer']);
+    const answeredByColumn = findHeaderIndex_(headers, ['answered_by']);
+    if ([keyColumn, completedAtColumn, completedByColumn, answerColumn, answeredByColumn].some(function(column) { return column < 0; })) {
+      throw new Error('Kolom status konsultasi tidak lengkap.');
+    }
+
+    const now = new Date().toISOString();
+    let targetRow = -1;
+    for (let rowIndex = 1; rowIndex < values.length; rowIndex++) {
+      if (String(values[rowIndex][keyColumn] || '') === key) {
+        targetRow = rowIndex + 1;
+        break;
+      }
+    }
+    if (targetRow < 0) {
+      targetRow = sheet.getLastRow() + 1;
+      sheet.getRange(targetRow, keyColumn + 1).setValue(key);
+    }
+    sheet.getRange(targetRow, completedAtColumn + 1).setValue(now);
+    sheet.getRange(targetRow, completedByColumn + 1).setValue(String(session.username || ''));
+    sheet.getRange(targetRow, answerColumn + 1).setValue(answer);
+    sheet.getRange(targetRow, answeredByColumn + 1).setValue(String(session.username || ''));
+    return { success: true, data: { consultationKey: key, answer: answer, completedAt: now } };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function completeConsultation_(body, session) {
@@ -2750,7 +2896,7 @@ function completeConsultation_(body, session) {
       }
     }
 
-    sheet.appendRow([key, new Date().toISOString(), String(session.username || 'ADMIN')]);
+    sheet.appendRow([key, new Date().toISOString(), String(session.username || 'ADMIN'), '', '']);
     return { success: true, alreadyCompleted: false };
   } finally {
     lock.releaseLock();
@@ -2936,8 +3082,8 @@ function deleteAgenda_(payload) {
 function getLocations_() {
   // Tabel lokasi admin bersumber langsung dari jawaban Google Form.
   const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-  const sheet = ss.getSheetByName('Form Responses 1') || findResponseSheet_(ss);
-  if (!sheet || sheet.getLastRow() < 2) return { success: true, data: [] };
+  const sheet = getServiceResponseSheet_(ss);
+  if (sheet.getLastRow() < 2) return { success: true, data: [] };
 
   const values = sheet.getDataRange().getDisplayValues();
   const headers = values[0].map(normalizeText_);
@@ -3118,10 +3264,18 @@ function findServiceIdByFormRow_(sheet, formRow) {
 }
 
 function getServiceById_(serviceId) {
-  const data = getServices_({ skipSync: true }).data || [];
-  return data.find(function(item) {
-    return String(item.ID || item.id || '') === String(serviceId);
-  }) || {};
+  const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEETS.SERVICES);
+  if (!sheet || sheet.getLastRow() < 2) return {};
+  const values = sheet.getDataRange().getValues();
+  const headers = values[0].map(String);
+  const idColumn = findHeaderIndex_(headers, ['ID', 'id', 'service_id']);
+  if (idColumn < 0) throw new Error('Kolom ID tidak ditemukan di sheet SERVICES.');
+  for (let rowIndex = 1; rowIndex < values.length; rowIndex++) {
+    if (String(values[rowIndex][idColumn] || '') === String(serviceId)) {
+      return objectFromRow_(headers, values[rowIndex]);
+    }
+  }
+  return {};
 }
 
 function objectFromRow_(headers, row) {
@@ -3310,6 +3464,7 @@ function normalizePhone_(value) {
   let phone = String(value || '').replace(/\D/g, '');
   if (phone.indexOf('62') === 0) return phone;
   if (phone.indexOf('0') === 0) return '62' + phone.slice(1);
+  if (phone.indexOf('8') === 0) return '62' + phone;
   return phone;
 }
 
@@ -3358,7 +3513,7 @@ function hashPassword_(password) {
 }
 
 function getVisibleServicesForUser_(username, role) {
-  const records = getServices_({ skipSync: true }).data || [];
+  const records = getServices_().data || [];
   const normalizedRole = String(role || '').trim().toLowerCase();
   if (normalizedRole === 'admin') return records;
   if (normalizedRole !== 'teknisi' && normalizedRole !== 'technician') return [];
