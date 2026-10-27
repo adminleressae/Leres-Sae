@@ -1,5 +1,6 @@
 const CONFIG = {
   SPREADSHEET_ID: '1q5nXDOtpHZ588WoudqPqFSIxqUE6y9l7bdOuH0JyfeY',
+  TIMEZONE: 'Asia/Jakarta',
   FORM_URL: 'https://forms.gle/11gDFYxD5HDBCaU9A',
   // Isi dengan URL EDIT Google Form konsultasi yang berbeda dari form reservasi.
   // Contoh: https://docs.google.com/forms/d/FORM_ID/edit
@@ -17,7 +18,8 @@ const CONFIG = {
     NEWS: 'NEWS',
     MEDIA: 'MEDIA',
     CONSULTATION_STATUS: 'CONSULTATION_STATUS',
-    AGENDA: 'AGENDA'
+    AGENDA: 'AGENDA',
+    VISITORS: 'PUBLIC_VISITORS'
   },
 
   DEFAULT_STATUS: 'Barang Diterima',
@@ -134,6 +136,8 @@ const MEDIA_HEADERS = [
   'MIME_TYPE'
 ];
 
+const VISITOR_HEADERS = ['visitor_id', 'visited_at', 'visit_date'];
+
 /* ==========================================================
    WEB APP
    ========================================================== */
@@ -192,6 +196,9 @@ function doPost(e) {
 
       case 'getPublicConsultationStatus':
         return json_(getPublicConsultationStatus_(body.phone));
+
+      case 'getPublicVisitorStats':
+        return json_(getPublicVisitorStats_(body.visitorId));
 
       case 'getDashboard':
         return json_(getDashboard_(body));
@@ -386,6 +393,7 @@ function ensureProjectSheets_() {
   ensureSheet_(ss, CONFIG.SHEETS.MEDIA, MEDIA_HEADERS);
   ensureSheet_(ss, CONFIG.SHEETS.CONSULTATION_STATUS, CONSULTATION_STATUS_HEADERS);
   ensureSheet_(ss, CONFIG.SHEETS.AGENDA, AGENDA_HEADERS);
+  ensureSheet_(ss, CONFIG.SHEETS.VISITORS, VISITOR_HEADERS);
   ['LOCATIONS', 'SETTINGS', 'STOCK_MASTER', 'STOCK_HISTORY'].forEach(function(name) {
     const deprecatedSheet = ss.getSheetByName(name);
     if (deprecatedSheet) ss.deleteSheet(deprecatedSheet);
@@ -1203,7 +1211,7 @@ function normalizeTimestampKey_(value) {
   );
 
   if (m) {
-    const timezone = Session.getScriptTimeZone() || 'Asia/Jakarta';
+    const timezone = CONFIG.TIMEZONE || Session.getScriptTimeZone() || 'Asia/Jakarta';
     const normalized =
       m[1] + '/' + m[2] + '/' + m[3] + ' ' +
       m[4] + ':' + m[5] + ':' + (m[6] || '00');
@@ -2106,6 +2114,72 @@ function requireToken_(token, allowedRoles) {
   }
 
   return session;
+}
+
+/* ==========================================================
+   PUBLIC VISITOR STATISTICS
+   ========================================================== */
+
+function getPublicVisitorStats_(visitorId) {
+  const id = String(visitorId || '').trim();
+  if (!/^[A-Za-z0-9_-]{16,80}$/.test(id)) {
+    throw new Error('ID pengunjung tidak valid.');
+  }
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const timezone = Session.getScriptTimeZone() || 'Asia/Jakarta';
+    const now = new Date();
+    const today = Utilities.formatDate(now, timezone, 'yyyy-MM-dd');
+    const weekStart = Utilities.formatDate(new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000), timezone, 'yyyy-MM-dd');
+    const sheet = ensureSheet_(
+      SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID),
+      CONFIG.SHEETS.VISITORS,
+      VISITOR_HEADERS
+    );
+    const rows = sheet.getLastRow() > 1
+      ? sheet.getRange(2, 1, sheet.getLastRow() - 1, VISITOR_HEADERS.length).getValues()
+      : [];
+    const hasVisitedToday = rows.some(function(row) {
+      return String(row[0] || '') === id && visitorDateString_(row[2], timezone) === today;
+    });
+
+    if (!hasVisitedToday) {
+      sheet.appendRow([id, now, today]);
+      rows.push([id, now, today]);
+    }
+
+    const totalVisitors = Object.create(null);
+    const todayVisitors = Object.create(null);
+    const weeklyVisitors = Object.create(null);
+    rows.forEach(function(row) {
+      const visitor = String(row[0] || '');
+      const visitDate = visitorDateString_(row[2], timezone);
+      if (!visitor || !visitDate) return;
+      totalVisitors[visitor] = true;
+      if (visitDate === today) todayVisitors[visitor] = true;
+      if (visitDate >= weekStart && visitDate <= today) weeklyVisitors[visitor] = true;
+    });
+
+    return {
+      success: true,
+      data: {
+        today: Object.keys(todayVisitors).length,
+        weekly: Object.keys(weeklyVisitors).length,
+        total: Object.keys(totalVisitors).length
+      }
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function visitorDateString_(value, timezone) {
+  if (value instanceof Date && !isNaN(value.getTime())) {
+    return Utilities.formatDate(value, timezone, 'yyyy-MM-dd');
+  }
+  return String(value || '').trim().slice(0, 10);
 }
 
 /* ==========================================================

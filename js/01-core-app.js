@@ -24,7 +24,7 @@ const CONFIG = {
             'assignServiceTechnician',
             'syncFormResponses','cleanupDuplicateServices','updateServiceStatus','getStock','getStockAdditional','getStockHistory',
             'stockIn','stockOut','getNews','addNews','updateNews','deleteNews','getLocations','getAgenda','saveAgenda','deleteAgenda',
-            'getMedia','uploadFileToDrive','uploadMedia','addMedia','updateMedia','deleteMedia', 'syncMediaMetadata', 'migrateExistingMediaMetadata'
+            'getMedia','getPublicVisitorStats','uploadFileToDrive','uploadMedia','addMedia','updateMedia','deleteMedia', 'syncMediaMetadata', 'migrateExistingMediaMetadata'
         ]); // Expanded only after a successful action response.
 
 
@@ -7134,6 +7134,41 @@ function renderReportsPage() {
             navigateTo('page-media-detail');
         }
 
+        function getPublicVisitorId() {
+            const storageKey = 'leressae_public_visitor_id';
+            try {
+                let visitorId = localStorage.getItem(storageKey);
+                if (!visitorId) {
+                    visitorId = window.crypto && typeof window.crypto.randomUUID === 'function'
+                        ? window.crypto.randomUUID()
+                        : 'visitor_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2);
+                    localStorage.setItem(storageKey, visitorId);
+                }
+                return visitorId;
+            } catch (error) {
+                throw new Error('Penyimpanan browser tidak tersedia untuk menghitung pengunjung.');
+            }
+        }
+
+        async function loadPublicVisitorStats() {
+            const statusNode = document.getElementById('publicVisitorStatus');
+            if (!statusNode) return;
+            try {
+                const result = await apiRequest('getPublicVisitorStats', { visitorId: getPublicVisitorId() });
+                const stats = result && result.data;
+                if (!stats || !Number.isFinite(Number(stats.today)) || !Number.isFinite(Number(stats.weekly)) || !Number.isFinite(Number(stats.total))) {
+                    throw new Error('Data statistik pengunjung dari server tidak valid.');
+                }
+                document.getElementById('publicVisitorToday').textContent = Number(stats.today).toLocaleString('id-ID');
+                document.getElementById('publicVisitorWeekly').textContent = Number(stats.weekly).toLocaleString('id-ID');
+                document.getElementById('publicVisitorCount').textContent = Number(stats.total).toLocaleString('id-ID');
+                statusNode.textContent = 'Total dihitung sejak statistik mulai dicatat.';
+            } catch (error) {
+                console.error('Statistik pengunjung gagal dimuat:', error);
+                statusNode.textContent = 'Statistik belum dapat dimuat. Silakan coba muat ulang halaman.';
+            }
+        }
+
 
         function openNewsEditor(id) {
             const current = (window.__NEWS_CACHE__ || []).find(x => x.id === id) || { status: 'DRAFT' };
@@ -7158,31 +7193,8 @@ function renderReportsPage() {
             if (wrapper && !document.getElementById('page-media-detail')) wrapper.insertAdjacentHTML('beforeend', '<section id="page-media-detail" class="page-view news-detail-page media-detail-page"><div class="news-detail-layout media-detail-layout"><main class="media-detail-main"></main><aside class="news-detail-sidebar media-detail-sidebar"><h2>Media Terbaru</h2><div class="media-detail-latest-list"></div></aside></div></section>');
             const dashboard = document.getElementById('page-dashboard');
             if (dashboard && !document.getElementById('homeMediaSpotlight')) dashboard.insertAdjacentHTML('beforeend', '<section id="homeMediaSpotlight" class="home-media-spotlight" aria-label="Sorotan dokumentasi media"><div class="media-spotlight-head"><div><h2 class="media-spotlight-title">Sorotan Media</h2><p class="media-spotlight-subtitle">Momen kegiatan, praktik, dan kolaborasi terbaru BPTI Disperindag DIY.</p></div></div><div class="home-media-content"><div class="home-media-empty">Memuat dokumentasi foto…</div></div></section>');
-            if (dashboard && !document.getElementById('publicVisitorCounter')) dashboard.insertAdjacentHTML('beforeend', '<section id="publicVisitorCounter" class="public-visitor-counter" aria-label="Statistik pengunjung"><div class="public-visitor-heading"><span class="public-visitor-label">STATISTIK PENGUNJUNG</span><h2>Pengunjung LERES SAE</h2><p>Informasi kunjungan website public secara ringkas.</p></div><div class="public-visitor-stats"><div class="public-visitor-stat"><span class="public-visitor-icon" aria-hidden="true">◷</span><div><span>Pengunjung Hari Ini</span><strong id="publicVisitorToday">0</strong></div></div><div class="public-visitor-stat"><span class="public-visitor-icon" aria-hidden="true">▥</span><div><span>Pengunjung Mingguan</span><strong id="publicVisitorWeekly">0</strong></div></div><div class="public-visitor-stat"><span class="public-visitor-icon" aria-hidden="true">◉</span><div><span>Total Pengunjung</span><strong id="publicVisitorCount">0</strong></div></div></div></section>');
-            const visitorCountNode = document.getElementById('publicVisitorCount');
-            if (visitorCountNode) {
-                const visitorKey = 'leressae_public_visitor_count';
-                if (!sessionStorage.getItem('leressae_public_visited')) {
-                    const nextCount = Number(localStorage.getItem(visitorKey) || 0) + 1;
-                    localStorage.setItem(visitorKey, String(nextCount));
-                    sessionStorage.setItem('leressae_public_visited', '1');
-                }
-                visitorCountNode.textContent = Number(localStorage.getItem(visitorKey) || 0).toLocaleString('id-ID');
-                const todayNode = document.getElementById('publicVisitorToday');
-                const weeklyNode = document.getElementById('publicVisitorWeekly');
-                const todayKey = `leressae_public_visitor_day_${new Date().toISOString().slice(0,10)}`;
-                const weekDate = new Date();
-                const weekStart = new Date(weekDate.getFullYear(), 0, 1);
-                const weekNumber = Math.ceil((((weekDate - weekStart) / 86400000) + weekStart.getDay() + 1) / 7);
-                const weekKey = `leressae_public_visitor_week_${weekDate.getFullYear()}-${weekNumber}`;
-                if (!sessionStorage.getItem('leressae_public_visited_day')) {
-                    localStorage.setItem(todayKey, String(Number(localStorage.getItem(todayKey) || 0) + 1));
-                    localStorage.setItem(weekKey, String(Number(localStorage.getItem(weekKey) || 0) + 1));
-                    sessionStorage.setItem('leressae_public_visited_day', '1');
-                }
-                if (todayNode) todayNode.textContent = Number(localStorage.getItem(todayKey) || 0).toLocaleString('id-ID');
-                if (weeklyNode) weeklyNode.textContent = Number(localStorage.getItem(weekKey) || 0).toLocaleString('id-ID');
-            }
+            if (dashboard && !document.getElementById('publicVisitorCounter')) dashboard.insertAdjacentHTML('beforeend', '<section id="publicVisitorCounter" class="public-visitor-counter" aria-label="Statistik pengunjung"><div class="public-visitor-heading"><span class="public-visitor-label">STATISTIK PENGUNJUNG</span><h2>Pengunjung LERES SAE</h2><p>Pengunjung unik berdasarkan browser, tanpa menyimpan identitas pribadi.</p><p id="publicVisitorStatus" class="public-visitor-status" role="status" aria-live="polite">Menghubungkan statistik…</p></div><div class="public-visitor-stats"><div class="public-visitor-stat"><span class="public-visitor-icon" aria-hidden="true">◷</span><div><span>Pengunjung Hari Ini</span><strong id="publicVisitorToday">—</strong></div></div><div class="public-visitor-stat"><span class="public-visitor-icon" aria-hidden="true">▥</span><div><span>7 Hari Terakhir</span><strong id="publicVisitorWeekly">—</strong></div></div><div class="public-visitor-stat"><span class="public-visitor-icon" aria-hidden="true">◉</span><div><span>Total Pengunjung</span><strong id="publicVisitorCount">—</strong></div></div></div></section>');
+            loadPublicVisitorStats();
             if (dashboard && !document.getElementById('homeNewsList')) {
                 const newsSection = document.createElement('div');
                 newsSection.className = 'dashboard-section';

@@ -10,6 +10,7 @@
 .public-visitor-counter { display:grid; grid-template-columns:minmax(220px,.8fr) minmax(0,1.7fr); align-items:center; gap:28px; margin:0 0 4px; padding:26px 28px; border:1px solid #dcebe3; border-radius:18px; background:#fff; box-shadow:0 10px 24px rgba(25,55,58,.05); color:#123b37; }
 .public-visitor-heading h2 { margin:6px 0 4px; color:#0b3a32; font-size:1.35rem; }
 .public-visitor-heading p { margin:0; color:#60756f; font-size:.88rem; }
+.public-visitor-heading .public-visitor-status { margin-top:5px; font-size:.75rem; }
 .public-visitor-icon { display:grid; place-items:center; flex:0 0 auto; width:46px; height:46px; border-radius:14px; background:#e3f3eb; color:#087f70; font-size:1.25rem; }
 .public-visitor-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
 .public-visitor-stat { display:flex; align-items:center; gap:11px; min-width:0; padding:15px 13px; border:1px solid #e1eee8; border-radius:14px; background:#f8fcfa; }
