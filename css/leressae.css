@@ -5472,6 +5472,115 @@ body.dark-mode .tech-whatsapp-link {
   animation: leres-principle-float 7s ease-in-out infinite;
   transition: transform .35s ease, border-color .35s ease, box-shadow .35s ease;
 }
+
+/* Main-page branding lockup: keeps the LERES SAE identity prominent above the hero title. */
+.public-region-notice {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  max-width: 1120px;
+  margin: 24px auto 0;
+  padding: 22px 26px;
+  border: 1px solid rgba(23, 128, 102, .18);
+  border-left: 5px solid #0b8f78;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #f0fbf6, #fffdf4);
+  box-shadow: 0 10px 28px rgba(26, 87, 68, .08);
+}
+.public-region-notice-icon {
+  display: grid;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: #0b8f78;
+  font-weight: 900;
+  font-size: 1.1rem;
+}
+.public-region-notice-copy { min-width: 0; }
+.public-region-notice-kicker {
+  color: #087367;
+  font-size: .72rem;
+  font-weight: 850;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.public-region-notice h2 {
+  margin: 5px 0 8px;
+  color: #153d39;
+  font-size: clamp(1.05rem, 1.7vw, 1.35rem);
+}
+.public-region-notice p {
+  margin: 0 0 8px;
+  color: #536e70;
+  line-height: 1.6;
+}
+.public-region-notice-address { font-size: .92rem; }
+.public-region-notice-link {
+  display: inline-block;
+  color: #087367;
+  font-weight: 800;
+  text-decoration: none;
+}
+.public-region-notice-link:hover { text-decoration: underline; }
+
+#page-dashboard .hero-branding {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 clamp(18px, 2.2vw, 28px);
+  padding: 8px 16px 8px 9px;
+  border: 1px solid rgba(255, 255, 255, .78);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .58);
+  box-shadow: 0 10px 26px rgba(24, 90, 69, .09), inset 0 1px 0 rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(12px) saturate(135%);
+  backdrop-filter: blur(12px) saturate(135%);
+}
+#page-dashboard .hero-branding-logo {
+  display: block;
+  width: clamp(42px, 4.5vw, 58px);
+  height: clamp(42px, 4.5vw, 58px);
+  object-fit: contain;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 6px 14px rgba(21, 91, 69, .14);
+}
+#page-dashboard .hero-branding-name {
+  color: #087367;
+  font-size: clamp(1.15rem, 2.1vw, 1.65rem);
+  font-weight: 900;
+  letter-spacing: .12em;
+  line-height: 1;
+}
+
+/* Branding utama pada header dibuat lebih mudah terbaca. */
+.navbar .brand .logo-img {
+  width: 112px !important;
+  height: 112px !important;
+  max-width: none !important;
+  transform: scale(3.15) !important;
+  transform-origin: center center !important;
+  object-fit: contain !important;
+}
+.navbar .brand .brand-title {
+  font-size: clamp(1.7rem, 2vw, 2.35rem) !important;
+}
+.navbar .brand .brand-sub {
+  font-size: clamp(.92rem, 1.05vw, 1.1rem) !important;
+}
+
+@media (max-width: 560px) {
+  .public-region-notice { gap: 12px; padding: 18px; border-radius: 16px; }
+  .public-region-notice-icon { flex-basis: 30px; width: 30px; height: 30px; }
+  #page-dashboard .hero-branding { gap: 10px; padding-right: 13px; }
+  #page-dashboard .hero-branding-name { letter-spacing: .08em; }
+  .navbar .brand .logo-img { width: 76px !important; height: 76px !important; transform: scale(2.25) !important; }
+  .navbar .brand .brand-title { font-size: 1.3rem !important; }
+  .navbar .brand .brand-sub { font-size: .76rem !important; }
+}
 #page-dashboard .hero-slogan-card::before {
   content: "";
   position: absolute;
@@ -17191,11 +17300,11 @@ body.dark-mode {
 
 .navbar .logo-img { transform: none !important; max-width: 86px; height: 68px; }
 .navbar { min-height: 104px !important; height: 104px !important; padding: 8px 18px 8px 24px !important; overflow: visible !important; }
-.navbar .brand .logo-img { width: 82px !important; height: 82px !important; max-width: 82px !important; transform: none !important; }
+.navbar .brand .logo-img { width: 120px !important; height: 120px !important; max-width: 120px !important; transform: none !important; }
 .navbar .brand { gap: 18px !important; height: 88px !important; align-items: center !important; }
 @media (max-width: 768px) {
   .navbar { min-height: 84px !important; height: 84px !important; padding: 6px 12px !important; }
-  .navbar .brand .logo-img { width: 68px !important; height: 68px !important; max-width: 68px !important; }
+  .navbar .brand .logo-img { width: 85px !important; height: 85px !important; max-width: 85px !important; }
   .navbar .brand { height: 72px !important; }
   .navbar .brand { gap: 16px !important; }
 }
