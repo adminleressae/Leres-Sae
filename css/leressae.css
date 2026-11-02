@@ -6588,6 +6588,27 @@ html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) .navbar :is(.dro
         width:100%;
     }
 }
+
+/* Public dashboard visitor metrics: remove light cards leaking into dark mode. */
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #publicVisitorCounter .public-visitor-stat {
+  background: linear-gradient(145deg, #17352d, #122a23) !important;
+  border-color: #3d6c5c !important;
+  color: #e8fff6 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #publicVisitorCounter .public-visitor-stat > div > span {
+  color: #b9d8cd !important;
+  -webkit-text-fill-color: #b9d8cd !important;
+}
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #publicVisitorCounter .public-visitor-stat strong {
+  color: #effff9 !important;
+  -webkit-text-fill-color: #effff9 !important;
+}
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #publicVisitorCounter .public-visitor-icon {
+  background: #1f5145 !important;
+  border-color: #4a8873 !important;
+  color: #9ff4d8 !important;
+}
 body.admin-mode .admin-content > .leressae-back-row, body.technician-mode .technician-content > .leressae-back-row, #page-admin > .leressae-back-row, #page-technician > .leressae-back-row {
     display:none !important;
 }
@@ -21036,6 +21057,43 @@ html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard 
   display: none !important;
 }
 
+/* Keep dark dashboard geometry identical to the public light dashboard. */
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .hero-section {
+  min-height: clamp(430px, 40vw, 570px) !important;
+  grid-template-columns: minmax(0, 1.12fr) minmax(330px, .88fr) !important;
+  align-items: center !important;
+  gap: clamp(30px, 4vw, 64px) !important;
+  padding: clamp(36px, 5vw, 76px) !important;
+  border-radius: clamp(24px, 2.2vw, 34px) !important;
+}
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .hero-title {
+  margin-bottom: 20px !important; font-size: clamp(3.1rem, 5.4vw, 5.25rem) !important; line-height: .98 !important; letter-spacing: -.055em !important;
+}
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .hero-desc {
+  max-width: 620px !important; margin-bottom: 30px !important; font-size: clamp(1rem, 1.35vw, 1.18rem) !important; line-height: 1.65 !important;
+}
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .hero-actions {
+  display: grid !important; grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap:12px !important; max-width:760px !important;
+}
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .hero-actions > :is(.btn-primary,.btn-secondary) {
+  min-width:0 !important; min-height:54px !important; padding:13px 16px !important; border-radius:14px !important; font-size:.94rem !important; line-height:1.25 !important; white-space:normal !important;
+}
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .hero-slogan-card {
+  min-height:0 !important; padding:clamp(28px,3vw,42px) !important; border-radius:24px !important;
+}
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .slogan-main { font-size:clamp(1.55rem,2.2vw,2.1rem) !important; line-height:1.18 !important; letter-spacing:-.035em !important; }
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .slogan-sub { margin-top:16px !important; font-size:clamp(.92rem,1.05vw,1.02rem) !important; line-height:1.68 !important; }
+@media (max-width:900px) {
+  :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .hero-section { min-height:0 !important; grid-template-columns:minmax(0,1fr) !important; gap:26px !important; padding:clamp(30px,6vw,54px) !important; }
+}
+@media (max-width:600px) {
+  :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .hero-section { gap:22px !important; padding:26px 20px !important; border-radius:22px !important; }
+  :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .hero-title { font-size:clamp(2.8rem,13vw,4rem) !important; }
+  :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .hero-actions { grid-template-columns:minmax(0,1fr) !important; }
+  :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .hero-actions > :is(.btn-primary,.btn-secondary) { width:100% !important; }
+  :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .hero-slogan-card { padding:24px 20px !important; }
+}
+
 #page-pendaftaran .public-back-button { margin-bottom:42px; padding:9px 16px; border:0; border-radius:8px; background:#1d2d45; color:#fff; font-weight:700; cursor:pointer; box-shadow:0 4px 10px rgba(15,23,42,.18); }
 #page-pendaftaran .public-application-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; margin-top:54px; }
 #page-pendaftaran .public-application-card { display:flex; flex-direction:column; min-height:270px; padding:30px 28px 28px; border:1px solid #e1e9e5; border-radius:18px; background:#fff; box-shadow:0 10px 24px rgba(25,55,58,.06); }
@@ -21058,6 +21116,53 @@ html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard 
 .tech-consultations-page .tech-consultation-tabs button.active { border-bottom-color:#18764f; }
 .tech-consultations-page .tech-consultation-tabs button:focus-visible { outline:2px solid #18764f; outline-offset:3px; border-radius:3px; }
 .tech-consultations-page .tech-consultation-tabs button:disabled { cursor:wait; opacity:.65; }
+
+/* Final public-theme consistency and mobile controls. */
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .public-region-notice {
+  background: linear-gradient(145deg, #142d2a, #10231f) !important;
+  border-color: #31584f !important;
+  color: #e8fff6 !important;
+  box-shadow: 0 14px 30px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .public-region-notice :is(h2,p,.public-region-notice-address) {
+  color: #b9d8cd !important;
+  -webkit-text-fill-color: #b9d8cd !important;
+}
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .public-region-notice h2 {
+  color: #effff9 !important;
+  -webkit-text-fill-color: #effff9 !important;
+}
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .public-region-notice :is(.public-region-notice-kicker,.public-region-notice-link) {
+  color: #8fe4c0 !important;
+  -webkit-text-fill-color: #8fe4c0 !important;
+}
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .public-region-notice-icon { background: #087f70 !important; color: #fff !important; }
+
+/* Compact, consistently placed back control. */
+.leressae-detail-back-row .leressae-back-btn,
+.leressae-back-row .leressae-back-btn {
+  width: auto !important;
+  min-width: 118px;
+  min-height: 40px;
+  padding: 9px 16px !important;
+  border-radius: 10px !important;
+  background: #475569 !important;
+  border: 1px solid #64748b !important;
+  color: #fff !important;
+}
+.leressae-detail-back-row { justify-content: flex-start; }
+
+@media (max-width: 640px) {
+  #page-status .public-status-tab { min-height: 92px; padding: 14px 12px !important; gap: 10px; }
+  #page-status .public-status-tab-icon { width: 50px; height: 50px; flex: 0 0 50px; }
+  #page-status .public-status-tab strong { font-size: .94rem; }
+  #page-status .public-status-tab small { font-size: .76rem; line-height: 1.35; }
+  #page-status .public-status-arrow { margin-left: auto; }
+  #page-status .status-form button,
+  #page-status .consultation-status-form button { min-height: 48px; padding: 11px 16px; font-size: .9rem; }
+  .leressae-detail-back-row .leressae-back-btn,
+  .leressae-back-row .leressae-back-btn { min-width: 104px; min-height: 38px; padding: 8px 13px !important; font-size: .82rem; }
+}
 .tech-consultations-page .tech-consultation-error { margin:8px 0; color:#a83232; font-weight:600; }
 .tech-consultations-page .tech-client-filters { margin:12px 0; }
 .tech-consultations-page .tech-consultations-table th { background:#eff8f2; color:#275b4b; }
@@ -21719,4 +21824,124 @@ html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-m
 @media (prefers-reduced-motion: reduce) {
   #publicVisitorCounter .public-visitor-stat { transition: none !important; }
   #publicVisitorCounter .public-visitor-stat:hover { transform: none !important; }
+}
+
+/* Final overrides: keep public surfaces synchronized across both theme selectors. */
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .public-region-notice { background: linear-gradient(145deg,#142d2a,#10231f) !important; border-color:#31584f !important; color:#e8fff6 !important; }
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .public-region-notice :is(h2,p,.public-region-notice-address) { color:#b9d8cd !important; -webkit-text-fill-color:#b9d8cd !important; }
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .public-region-notice h2 { color:#effff9 !important; -webkit-text-fill-color:#effff9 !important; }
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .public-region-notice :is(.public-region-notice-kicker,.public-region-notice-link) { color:#8fe4c0 !important; -webkit-text-fill-color:#8fe4c0 !important; }
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .public-region-notice-icon { background:#087f70 !important; color:#fff !important; }
+.leressae-detail-back-row .leressae-back-btn, .leressae-back-row .leressae-back-btn { width:auto !important; min-width:118px; min-height:40px; padding:9px 16px !important; border-radius:10px !important; background:#475569 !important; border:1px solid #64748b !important; color:#fff !important; }
+.leressae-detail-back-row { justify-content:flex-start; }
+@media (max-width:640px) {
+  #page-status .public-status-tab { min-height:92px; padding:14px 12px !important; gap:10px; }
+  #page-status .public-status-tab-icon { width:50px; height:50px; flex:0 0 50px; }
+  #page-status .public-status-tab strong { font-size:.94rem; }
+  #page-status .public-status-tab small { font-size:.76rem; line-height:1.35; }
+  #page-status .public-status-arrow { margin-left:auto; }
+  #page-status .status-form button, #page-status .consultation-status-form button { min-height:48px; padding:11px 16px; font-size:.9rem; }
+  .leressae-detail-back-row .leressae-back-btn, .leressae-back-row .leressae-back-btn { min-width:104px; min-height:38px; padding:8px 13px !important; font-size:.82rem; }
+}
+
+/* Public dashboard parity: the dark theme uses the same card geometry as light. */
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .public-region-notice {
+  display: grid !important;
+  grid-template-columns: 54px minmax(0, 1fr) !important;
+  align-items: start !important;
+  gap: clamp(16px, 2vw, 28px) !important;
+  width: min(100% - 48px, 1480px) !important;
+  max-width: 1480px !important;
+  margin: clamp(26px, 3vw, 44px) auto 0 !important;
+  padding: clamp(24px, 3.1vw, 42px) !important;
+  border-radius: 26px !important;
+}
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .public-region-notice-icon {
+  width: 54px !important;
+  height: 54px !important;
+  border-radius: 17px !important;
+}
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .public-region-notice h2 {
+  max-width: 68ch !important;
+  margin: 13px 0 10px !important;
+  font-size: clamp(1.24rem, 1.9vw, 1.72rem) !important;
+  line-height: 1.3 !important;
+}
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .public-region-notice p {
+  max-width: 105ch !important;
+  margin: 0 0 12px !important;
+  font-size: clamp(.96rem, 1.08vw, 1.08rem) !important;
+  line-height: 1.72 !important;
+}
+@media (max-width:600px) {
+  :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .public-region-notice {
+    grid-template-columns: 42px minmax(0, 1fr) !important;
+    gap: 12px !important;
+    width: calc(100% - 28px) !important;
+    margin-top: 22px !important;
+    padding: 20px 16px !important;
+    border-radius: 20px !important;
+  }
+  :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .public-region-notice-icon { width:42px !important; height:42px !important; border-radius:14px !important; }
+}
+
+/* Public dashboard only: theme switching must be paint-only, never reflow the UI. */
+#page-dashboard,
+#page-dashboard *,
+#page-dashboard *::before,
+#page-dashboard *::after {
+  box-sizing: border-box;
+}
+#page-dashboard .hero-section,
+#page-dashboard .hero-content,
+#page-dashboard .hero-slogan-card,
+#page-dashboard .hero-actions,
+#page-dashboard .dashboard-section,
+#page-dashboard .services-dashboard-grid,
+#page-dashboard .home-news-card,
+#page-dashboard .tutorial-card,
+#page-dashboard .service-item-card,
+#page-dashboard .public-region-notice,
+#page-dashboard .dashboard-hours-card {
+  transform: none;
+}
+#page-dashboard .hero-section,
+#page-dashboard .hero-content,
+#page-dashboard .hero-slogan-card,
+#page-dashboard .hero-actions,
+#page-dashboard .dashboard-section,
+#page-dashboard .services-dashboard-grid,
+#page-dashboard .home-news-card,
+#page-dashboard .tutorial-card,
+#page-dashboard .service-item-card,
+#page-dashboard .public-region-notice,
+#page-dashboard .dashboard-hours-card {
+  zoom: 1;
+}
+
+/* Public application card secondary action must follow dark mode too. */
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-pendaftaran .public-application-card .btn-secondary {
+  background: #173b35 !important;
+  border: 1px solid #4f8978 !important;
+  color: #e8fff6 !important;
+  -webkit-text-fill-color: #e8fff6 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05) !important;
+}
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-pendaftaran .public-application-card .btn-secondary:hover {
+  background: #1f5147 !important;
+  border-color: #78c8ae !important;
+}
+
+/* Mobile back button: content-sized instead of stretching across the card. */
+@media (max-width:640px) {
+  .leressae-back-row,
+  .leressae-detail-back-row { width:fit-content; max-width:100%; }
+  .leressae-detail-back-row .leressae-back-btn,
+  .leressae-back-row .leressae-back-btn {
+    display:inline-flex !important;
+    width:fit-content !important;
+    max-width:150px !important;
+    min-width:112px !important;
+    justify-content:center !important;
+  }
 }
