@@ -6573,6 +6573,7 @@ function renderReportsPage() {
             renderHomeMediaSlideshow();
         }
         let homeMediaTimer = null;
+        let homeVideoTimer = null;
 
 
         function renderHomeMediaSlideshow() {
@@ -6585,6 +6586,27 @@ function renderReportsPage() {
             try { photos = sortPublicByNewest(getMediaRecords().filter(item => String(item.TYPE || '').toUpperCase() === 'FOTO' && String(item.STATUS || '').toUpperCase() === 'AKTIF' && mediaImageViewUrl(item))); } catch (e) { console.warn('Gagal memuat sorotan media:', e); }
             if (!photos.length) { host.innerHTML = '<div class="home-media-empty"><div><strong>Dokumentasi foto belum tersedia.</strong><br><span>Foto yang berstatus aktif akan tampil otomatis di sini.</span></div></div>'; return; }
             host.innerHTML = `<div class="home-media-stage" aria-roledescription="carousel" aria-label="Sorotan foto dokumentasi"><div class="home-media-track">${photos.map((item, i) => `<article class="home-media-slide" aria-hidden="${i < 3 ? 'false' : 'true'}"><img src="${escapeHtml(mediaImageViewUrl(item))}" alt="${escapeHtml(item.JUDUL || 'Dokumentasi kegiatan LERESSAE')}" loading="${i < 3 ? 'eager' : 'lazy'}" onerror="this.onerror=null;this.closest('.home-media-slide')?.classList.add('image-unavailable');this.alt='Gambar tidak dapat dimuat. Periksa URL dan izin akses Google Drive.'"><div class="home-media-caption"><h3>${escapeHtml(item.JUDUL || 'Dokumentasi kegiatan')}</h3><p>${escapeHtml(item.DESKRIPSI || 'Dokumentasi kegiatan praktik dan kolaborasi LERESSAE.')}</p></div></article>`).join('')}</div></div><div class="home-media-tools"><div class="home-media-dots" aria-label="Pilih foto">${photos.map((_,i)=>`<button type="button" class="home-media-dot${i===0?' is-active':''}" data-home-media-go="${i}" aria-label="Tampilkan foto ${i+1}" aria-current="${i===0?'true':'false'}"></button>`).join('')}</div><div class="home-media-actions"><button type="button" class="home-media-arrow" data-home-media-step="-1" aria-label="Foto sebelumnya">‹</button><button type="button" class="home-media-arrow" data-home-media-step="1" aria-label="Foto berikutnya">›</button></div></div>`;
+            const videos = sortPublicByNewest(getMediaRecords().filter(item => String(item.TYPE || '').toUpperCase() === 'VIDEO' && String(item.STATUS || '').toUpperCase() === 'AKTIF' && (item.FILE_URL || item.file_url)));
+            if (videos.length) {
+                const videoSlides = videos.map((item, i) => {
+                    const youtubeId = mediaYoutubeVideoId(item.FILE_URL || item.file_url);
+                    const visual = youtubeId
+                        ? `<button type="button" class="home-media-video-preview" data-play-youtube="${escapeHtml(youtubeId)}" data-video-url="${escapeHtml(mediaYoutubeWatchUrl(item))}" aria-label="Putar video ${escapeHtml(item.JUDUL || 'dokumentasi')}"><img src="https://i.ytimg.com/vi/${encodeURIComponent(youtubeId)}/hqdefault.jpg" alt=""><span class="home-media-play" aria-hidden="true">▶</span></button>`
+                        : `<iframe src="${escapeHtml(mediaDrivePreviewUrl(item))}" title="${escapeHtml(item.JUDUL || 'Video dokumentasi')}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>`;
+                    return `<article class="home-video-slide${i === 0 ? ' is-active' : ''}" aria-hidden="${i === 0 ? 'false' : 'true'}">${visual}<div class="home-media-caption"><span class="eyebrow">Video</span><h3>${escapeHtml(item.JUDUL || 'Video dokumentasi')}</h3><p>${escapeHtml(item.DESKRIPSI || 'Dokumentasi video kegiatan.')}</p></div></article>`;
+                }).join('');
+                host.insertAdjacentHTML('beforeend', `<div class="home-video-carousel" aria-roledescription="carousel" aria-label="Sorotan video"><div class="home-video-track">${videoSlides}</div><div class="home-media-tools"><div class="home-media-dots" aria-label="Pilih video">${videos.map((_, i) => `<button type="button" class="home-media-dot${i === 0 ? ' is-active' : ''}" data-home-video-go="${i}" aria-label="Tampilkan video ${i + 1}" aria-current="${i === 0 ? 'true' : 'false'}"></button>`).join('')}</div><div class="home-media-actions"><button type="button" class="home-media-arrow" data-home-video-step="-1" aria-label="Video sebelumnya">‹</button><button type="button" class="home-media-arrow" data-home-video-step="1" aria-label="Video berikutnya">›</button></div></div></div>`);
+                const videoRoot = host.querySelector('.home-video-carousel');
+                const videoSlidesEl = Array.from(videoRoot.querySelectorAll('.home-video-slide'));
+                const videoDots = Array.from(videoRoot.querySelectorAll('[data-home-video-go]'));
+                let videoIndex = 0;
+                const videoUpdate = next => { videoIndex = (next + videoSlidesEl.length) % videoSlidesEl.length; videoSlidesEl.forEach((slide, i) => { const active = i === videoIndex; slide.classList.toggle('is-active', active); slide.setAttribute('aria-hidden', active ? 'false' : 'true'); }); videoDots.forEach((dot, i) => { const active = i === videoIndex; dot.classList.toggle('is-active', active); dot.setAttribute('aria-current', active ? 'true' : 'false'); }); };
+                const videoPause = () => { if (homeVideoTimer) clearInterval(homeVideoTimer); homeVideoTimer = null; };
+                const videoStart = () => { videoPause(); if (videos.length > 1 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) homeVideoTimer = setInterval(() => videoUpdate(videoIndex + 1), 5000); };
+                videoRoot.addEventListener('click', event => { const target = event.target.closest('[data-home-video-step], [data-home-video-go]'); if (!target) return; videoUpdate(target.dataset.homeVideoStep ? videoIndex + Number(target.dataset.homeVideoStep) : Number(target.dataset.homeVideoGo)); videoStart(); });
+                videoRoot.addEventListener('mouseenter', videoPause); videoRoot.addEventListener('mouseleave', videoStart); videoRoot.addEventListener('focusin', videoPause); videoRoot.addEventListener('focusout', event => { if (!videoRoot.contains(event.relatedTarget)) videoStart(); });
+                videoStart();
+            }
             const slides = Array.from(host.querySelectorAll('.home-media-slide'));
             const dots = Array.from(host.querySelectorAll('[data-home-media-go]'));
             let index = 0;
@@ -7265,7 +7287,7 @@ function renderReportsPage() {
                     return;
                 }
                 const videoFrame = document.createElement('iframe');
-                videoFrame.src = 'https://www.youtube.com/embed/' + encodeURIComponent(youtubeTrigger.dataset.playYoutube) + '?autoplay=1';
+                videoFrame.src = 'https://www.youtube.com/embed/' + encodeURIComponent(youtubeTrigger.dataset.playYoutube) + '?autoplay=1&controls=1&rel=0&playsinline=1';
                 videoFrame.title = youtubeTrigger.getAttribute('aria-label') || 'Video dokumentasi';
                 videoFrame.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen');
                 videoFrame.setAttribute('allowfullscreen', '');
@@ -7445,7 +7467,7 @@ function renderReportsPage() {
             const publicNews = event.target.closest('[data-public-news]'); if (publicNews) { const n = (window.__PUBLIC_NEWS_CACHE__ || []).find(x => String(x.id ?? '') === String(publicNews.dataset.publicNews ?? '')); if (n) openPublicNewsModal(n); }
             const publicMedia = event.target.closest('[data-public-media], .home-media-slide');
             if (publicMedia && (!event.target.closest('button') || publicMedia.classList.contains('media-latest-item'))) {
-                const records = getMediaRecords().filter(x => String(x.TYPE || '').toUpperCase() === 'FOTO');
+                const records = getMediaRecords().filter(x => ['FOTO','VIDEO'].includes(String(x.TYPE || '').toUpperCase()));
                 const media = publicMedia.dataset.publicMedia ? records.find(x => String(x.ID_MEDIA || '') === String(publicMedia.dataset.publicMedia)) : records.find(x => String(x.JUDUL || '') === String(publicMedia.querySelector('h3, .title')?.textContent || ''));
                 if (media) openPublicMediaDetail(media);
             }
