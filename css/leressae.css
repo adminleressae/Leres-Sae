@@ -975,6 +975,68 @@ body.login-modal-open {
     display: block;
 }
 
+.media-video-trigger {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 10px;
+    background: #111827;
+    cursor: pointer;
+}
+.media-video-trigger img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.media-video-trigger span,
+.media-admin-youtube-preview span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: grid;
+    width: 54px;
+    height: 38px;
+    place-items: center;
+    transform: translate(-50%, -50%);
+    border-radius: 10px;
+    background: #ff0033;
+    color: #fff;
+    font-size: 20px;
+}
+.media-video-trigger:hover img {
+    transform: none;
+}
+.media-video-trigger:focus-visible,
+.media-admin-youtube-preview:focus-visible {
+    outline: 3px solid #2563eb;
+    outline-offset: 3px;
+}
+.media-admin-youtube-preview {
+    position: relative;
+    display: inline-block;
+    width: 100px;
+    height: 64px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #111827;
+    vertical-align: middle;
+}
+.media-admin-youtube-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.media-admin-youtube-preview span {
+    width: 34px;
+    height: 25px;
+    border-radius: 7px;
+    font-size: 14px;
+}
+
 .video-player video {
     width: 100%;
     height: 200px;

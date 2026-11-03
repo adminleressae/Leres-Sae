@@ -6329,14 +6329,38 @@ function renderReportsPage() {
         }
 
 
+        function mediaYoutubeVideoId(url) {
+            try {
+                const parsed = new URL(String(url || '').trim());
+                const hostname = parsed.hostname.toLowerCase().replace(/^www\./, '');
+                let videoId = '';
+                if (hostname === 'youtu.be') {
+                    videoId = parsed.pathname.split('/').filter(Boolean)[0] || '';
+                } else if (['youtube.com', 'm.youtube.com', 'youtube-nocookie.com'].includes(hostname)) {
+                    videoId = parsed.searchParams.get('v') || (parsed.pathname.match(/^\/(?:embed|shorts|live)\/([^/?]+)/i) || [])[1] || '';
+                }
+                return /^[\w-]{6,}$/.test(videoId) ? videoId : '';
+            } catch (error) {
+                return '';
+            }
+        }
+
+
         function mediaDrivePreviewUrl(item) {
             const fileUrl = item && (item.FILE_URL || item.fileUrl || item.file_url || item.URL || item.url || item.LINK || item.link) || '';
-            const youtube = String(fileUrl).match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([\w-]{6,})/i);
-            if (youtube) return 'https://www.youtube.com/embed/' + encodeURIComponent(youtube[1]);
+            const youtubeVideoId = mediaYoutubeVideoId(fileUrl);
+            if (youtubeVideoId) return 'https://www.youtube.com/embed/' + encodeURIComponent(youtubeVideoId);
             const fileId = String(item && (item.FILE_ID || item.fileId || item.file_id || item.ID_FILE || item.idFile) || extractDriveFileIdFromUrl(fileUrl) || '').trim();
             return fileId
                 ? 'https://drive.google.com/file/d/' + encodeURIComponent(fileId) + '/preview'
                 : String(fileUrl || '');
+        }
+
+
+        function mediaYoutubeWatchUrl(item) {
+            const fileUrl = item && (item.FILE_URL || item.fileUrl || item.file_url || item.URL || item.url || item.LINK || item.link) || '';
+            const videoId = mediaYoutubeVideoId(fileUrl);
+            return videoId ? 'https://www.youtube.com/watch?v=' + encodeURIComponent(videoId) : '';
         }
 
 
@@ -6527,9 +6551,18 @@ function renderReportsPage() {
             if (videoHost) {
                 videoHost.innerHTML = videos.length ? videos.map(item => `
                     <figure class="media-item media-video" data-full-desc="${escapeHtml(item.DESKRIPSI || '')}">
-                        <div class="video-player" style="width:100%; aspect-ratio:16 / 9;">
-                            <iframe src="${escapeHtml(mediaDrivePreviewUrl(item))}" title="${escapeHtml(item.JUDUL || item.FILE_NAME || 'Video dokumentasi')}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy" style="width:100%; height:100%; border:0; border-radius:12px; background:#111827;"></iframe>
-                        </div>
+                        ${mediaYoutubeVideoId(item.FILE_URL) ? `
+                            <div class="video-player media-video-preview">
+                                <button type="button" class="media-video-trigger" data-play-youtube="${escapeHtml(mediaYoutubeVideoId(item.FILE_URL))}" data-video-url="${escapeHtml(mediaYoutubeWatchUrl(item))}" aria-label="Putar video ${escapeHtml(item.JUDUL || 'dokumentasi')}">
+                                    <img src="https://i.ytimg.com/vi/${encodeURIComponent(mediaYoutubeVideoId(item.FILE_URL))}/hqdefault.jpg" alt="" loading="lazy">
+                                    <span aria-hidden="true">▶</span>
+                                </button>
+                            </div>
+                        ` : `
+                            <div class="video-player" style="width:100%; aspect-ratio:16 / 9;">
+                                <iframe src="${escapeHtml(mediaDrivePreviewUrl(item))}" title="${escapeHtml(item.JUDUL || item.FILE_NAME || 'Video dokumentasi')}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin" style="width:100%; height:100%; border:0; border-radius:12px; background:#111827;"></iframe>
+                            </div>
+                        `}
                         <figcaption>
                             <div class="title">${escapeHtml(item.JUDUL || 'Judul belum diisi')}</div>
                             <div class="desc">${escapeHtml(item.DESKRIPSI || 'Deskripsi belum diisi')}</div>
@@ -6697,7 +6730,9 @@ function renderReportsPage() {
                                     <tbody>
                                         ${videos.length ? videos.map(item => `
                                             <tr>
-                                                <td><iframe src="${escapeHtml(mediaDrivePreviewUrl(item))}" title="Pratinjau ${escapeHtml(item.FILE_NAME || 'video')}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy" style="width:100px;height:64px;border:0;border-radius:8px;background:#111827;"></iframe></td>
+                                                <td>${mediaYoutubeVideoId(item.FILE_URL)
+                                                    ? `<a class="media-admin-youtube-preview" href="${escapeHtml(mediaYoutubeWatchUrl(item))}" target="_blank" rel="noopener noreferrer" aria-label="Tonton ${escapeHtml(item.JUDUL || 'video')} di YouTube"><img src="https://i.ytimg.com/vi/${encodeURIComponent(mediaYoutubeVideoId(item.FILE_URL))}/default.jpg" alt=""><span aria-hidden="true">▶</span></a>`
+                                                    : `<iframe src="${escapeHtml(mediaDrivePreviewUrl(item))}" title="Pratinjau ${escapeHtml(item.FILE_NAME || 'video')}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin" style="width:100px;height:64px;border:0;border-radius:8px;background:#111827;"></iframe>`}</td>
                                                 <td>${escapeHtml(item.JUDUL || '-')}</td>
                                                 <td>${escapeHtml(item.DESKRIPSI || '-')}</td>
                                                 <td><span class="status-badge ${String(item.STATUS || 'AKTIF').toUpperCase() === 'AKTIF' ? 'done' : 'pending'}">${escapeHtml(item.STATUS || 'AKTIF')}</span></td>
@@ -7218,6 +7253,27 @@ function renderReportsPage() {
             document.getElementById('consultationMediaModal')?.classList.remove('open');
         });
         document.addEventListener('click', async event => {
+            const youtubeTrigger = event.target.closest('[data-play-youtube]');
+            if (youtubeTrigger) {
+                event.preventDefault();
+                event.stopPropagation();
+                const watchUrl = youtubeTrigger.dataset.videoUrl;
+                if (window.location.protocol === 'file:') {
+                    const openedWindow = window.open(watchUrl, '_blank');
+                    if (openedWindow) openedWindow.opener = null;
+                    if (!openedWindow) window.location.assign(watchUrl);
+                    return;
+                }
+                const videoFrame = document.createElement('iframe');
+                videoFrame.src = 'https://www.youtube.com/embed/' + encodeURIComponent(youtubeTrigger.dataset.playYoutube) + '?autoplay=1';
+                videoFrame.title = youtubeTrigger.getAttribute('aria-label') || 'Video dokumentasi';
+                videoFrame.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen');
+                videoFrame.setAttribute('allowfullscreen', '');
+                videoFrame.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+                videoFrame.style.cssText = 'width:100%;height:100%;min-height:200px;border:0;border-radius:12px;background:#111827;';
+                youtubeTrigger.replaceWith(videoFrame);
+                return;
+            }
             const consultationMedia = event.target.closest('[data-consultation-media]');
             if (consultationMedia) {
                 openConsultationMedia(consultationMedia.dataset.consultationMedia);
@@ -7536,12 +7592,12 @@ function renderReportsPage() {
                 window.__ADMIN_CURRENT_PAGE__ = 'media';
                 window.__ADMIN_MEDIA_FORM_BUSY__ = false;
                 showAdminPage('media', { fromBack: true });
-                showToast(
-                    mode === 'edit'
+                const successMessage = mediaType === 'VIDEO' && youtubeUrl
+                    ? (mode === 'edit' ? 'Video berhasil diperbarui.' : 'Video berhasil ditambahkan.')
+                    : (mode === 'edit'
                         ? 'Media berhasil diperbarui dan tersimpan di Google Drive.'
-                        : 'Media berhasil diupload ke Google Drive.',
-                    'success'
-                );
+                        : 'Media berhasil diupload ke Google Drive.');
+                showToast(successMessage, 'success');
             } catch (error) {
                 console.error('Media upload error:', error);
                 window.__ADMIN_CURRENT_PAGE__ = 'media';

@@ -2299,6 +2299,7 @@ function getMedia_() {
   if (!sheet) throw new Error('Sheet MEDIA tidak ditemukan.');
 
   const rowsByFileId = {};
+  const externalRecords = [];
   let headers = MEDIA_HEADERS;
 
   if (sheet.getLastRow() >= 1) {
@@ -2315,7 +2316,37 @@ function getMedia_() {
     refreshedValues.slice(1).forEach(function(row) {
       const item = objectFromRow_(headers, row);
       const fileId = fileIdCol >= 0 ? String(row[fileIdCol] || '').trim() : '';
-      if (fileId) rowsByFileId[fileId] = item;
+      if (fileId) {
+        rowsByFileId[fileId] = item;
+        return;
+      }
+
+      const fileUrl = String(item.FILE_URL || item.file_url || '').trim();
+      const mimeType = String(item.MIME_TYPE || item.mime_type || '').trim();
+      const type = String(item.TYPE || item.type || '').trim().toUpperCase();
+      if (!fileUrl || (type !== 'VIDEO' && mimeType !== 'video/youtube')) return;
+
+      const legacyMeta = decodeLegacyMediaMetadata_(item.KETERANGAN || item.DESKRIPSI || '');
+      const fileName = String(item.FILE_NAME || item.file_name || '').trim();
+      const judul = String(item.JUDUL || item.judul || item.TITLE || item.title || legacyMeta.judul || fileName).trim();
+      const deskripsi = String(item.DESKRIPSI || item.deskripsi || item.DESCRIPTION || item.description || legacyMeta.deskripsi || item.KETERANGAN || '').trim();
+      externalRecords.push({
+        ID_MEDIA: item.ID_MEDIA || item.id_media || '',
+        TYPE: type || 'VIDEO',
+        JUDUL: judul,
+        DESKRIPSI: deskripsi,
+        TITLE: judul,
+        DESCRIPTION: deskripsi,
+        FILE_ID: '',
+        FILE_URL: fileUrl,
+        THUMBNAIL_URL: item.THUMBNAIL_URL || item.thumbnail_url || fileUrl,
+        KETERANGAN: deskripsi,
+        STATUS: String(item.STATUS || item.status || 'AKTIF').toUpperCase(),
+        CREATED_AT: item.CREATED_AT || item.created_at || '',
+        UPDATED_AT: item.UPDATED_AT || item.updated_at || '',
+        FILE_NAME: fileName,
+        MIME_TYPE: mimeType || 'video/youtube'
+      });
     });
   } else {
     ensureSheet_(SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID), CONFIG.SHEETS.MEDIA, MEDIA_HEADERS);
@@ -2355,11 +2386,12 @@ function getMedia_() {
     };
   }).filter(Boolean);
 
-  if (indexedRecords.length) {
-    indexedRecords.sort(function(a, b) {
+  const sheetRecords = indexedRecords.concat(externalRecords);
+  if (sheetRecords.length) {
+    sheetRecords.sort(function(a, b) {
       return String(b.CREATED_AT).localeCompare(String(a.CREATED_AT));
     });
-    return cacheMediaResult_({ success: true, data: indexedRecords });
+    return cacheMediaResult_({ success: true, data: sheetRecords });
   }
 
   // Folder media harus sama dengan folder yang digunakan uploadFileToDrive_().
