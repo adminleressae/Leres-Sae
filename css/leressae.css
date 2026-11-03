@@ -21921,6 +21921,9 @@ html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-m
 #page-media #publicMediaVideoGrid .video-player iframe{pointer-events:auto!important;touch-action:auto!important}
 #page-media #publicMediaVideoGrid .media-video .video-player{position:relative;z-index:1}
 #page-media #publicMediaVideoGrid .media-video .video-player iframe{position:relative!important;z-index:3!important;pointer-events:auto!important;touch-action:manipulation!important}
+#homeMediaSpotlight .home-media-slide .home-media-caption{display:block!important}
+#homeMediaSpotlight .home-video-slide .home-media-caption{display:none!important}
+.home-media-subheading{margin:22px 0 10px;color:#17343a;font-size:1.05rem;font-weight:800}.home-media-subheading:first-child{margin-top:0}:is(html[data-leressae-theme="dark"],html[data-theme="dark"],body.dark-mode) #homeMediaSpotlight .home-media-subheading{color:#d8eee1}
 
 /* Public dashboard parity: the dark theme uses the same card geometry as light. */
 :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-dashboard .public-region-notice {
