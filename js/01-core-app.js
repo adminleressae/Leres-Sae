@@ -6552,11 +6552,11 @@ function renderReportsPage() {
                 videoHost.innerHTML = videos.length ? videos.map(item => `
                     <figure class="media-item media-video" data-full-desc="${escapeHtml(item.DESKRIPSI || '')}">
                         ${mediaYoutubeVideoId(item.FILE_URL) ? `
-                            <div class="video-player media-video-preview">
-                                <button type="button" class="media-video-trigger" data-play-youtube="${escapeHtml(mediaYoutubeVideoId(item.FILE_URL))}" data-video-url="${escapeHtml(mediaYoutubeWatchUrl(item))}" aria-label="Putar video ${escapeHtml(item.JUDUL || 'dokumentasi')}">
+                            <div class="video-player media-video-preview" style="pointer-events:auto;">
+                                <iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(mediaYoutubeVideoId(item.FILE_URL))}?controls=1&rel=0&playsinline=1&enablejsapi=1" title="${escapeHtml(item.JUDUL || 'Video dokumentasi')}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin" style="position:relative;z-index:3;width:100%;height:100%;border:0;border-radius:12px;background:#111827;pointer-events:auto;touch-action:auto;">
                                     <img src="https://i.ytimg.com/vi/${encodeURIComponent(mediaYoutubeVideoId(item.FILE_URL))}/hqdefault.jpg" alt="" loading="lazy">
                                     <span aria-hidden="true">▶</span>
-                                </button>
+                                </iframe>
                             </div>
                         ` : `
                             <div class="video-player" style="width:100%; aspect-ratio:16 / 9;">
