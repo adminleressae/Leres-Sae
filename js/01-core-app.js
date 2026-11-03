@@ -6680,7 +6680,7 @@ function renderReportsPage() {
                             </div>
                             <form id="mediaVideoForm" class="media-admin-form" data-media-type="VIDEO" style="display:none;">
                                 <div class="media-modal-header"><h3 class="media-modal-title">Tambah Video</h3><button type="button" class="media-modal-close" data-media-cancel="VIDEO" aria-label="Tutup">×</button></div>
-                                <div class="field-row"><label>Link URL YouTube</label><input type="url" name="youtube_url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off" /></div>
+                                <div class="field-row"><label>Link URL YouTube</label><input type="url" name="youtube_url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off" required /><small class="field-help">Masukkan link video YouTube yang valid.</small></div>
                                 <div class="field-row"><label>Judul</label><input type="text" name="judul" placeholder="Judul video" autocomplete="off" /></div>
                                 <div class="field-row"><label>Deskripsi</label><textarea name="deskripsi" rows="3" placeholder="Deskripsi video"></textarea></div>
                                 <div class="field-row"><label>Status</label><select name="status"><option value="AKTIF">Aktif</option><option value="NONAKTIF">Nonaktif</option></select></div>
