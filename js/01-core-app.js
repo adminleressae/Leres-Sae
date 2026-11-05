@@ -22,8 +22,7 @@ const CONFIG = {
         const API_ACTIONS = new Set([
             'healthCheck','loginAdmin','loginUser','saveTechnician','syncTechnicians','getTechnicians','getServices','getServiceStatus','getDashboard',
             'assignServiceTechnician',
-            'syncFormResponses','cleanupDuplicateServices','updateServiceStatus','getStock','getStockAdditional','getStockHistory',
-            'stockIn','stockOut','getNews','addNews','updateNews','deleteNews','getLocations','getAgenda','saveAgenda','deleteAgenda',
+            'syncFormResponses','cleanupDuplicateServices','updateServiceStatus','getNews','addNews','updateNews','deleteNews','getLocations','getAgenda','saveAgenda','deleteAgenda',
             'getMedia','getPublicVisitorStats','uploadFileToDrive','uploadMedia','addMedia','updateMedia','deleteMedia', 'syncMediaMetadata', 'migrateExistingMediaMetadata'
         ]); // Expanded only after a successful action response.
 
@@ -712,7 +711,7 @@ const CONFIG = {
             }
             const protectedActions = [
                 'syncFormResponses', 'cleanupDuplicateServices', 'updateServiceStatus', 'assignServiceTechnician', 'saveTechnician', 'syncTechnicians',
-                'getTechnicians', 'addStock', 'stockIn', 'stockOut',
+                'getTechnicians',
                 'addNews', 'updateNews', 'deleteNews', 'saveAgenda', 'deleteAgenda',
                 'uploadFileToDrive', 'uploadMedia', 'addMedia', 'updateMedia', 'deleteMedia', 'syncMediaMetadata', 'migrateExistingMediaMetadata',
                 'getConsultationAttachment', 'getCompletedConsultations', 'completeConsultation', 'saveConsultationAnswer'
@@ -1376,7 +1375,7 @@ function openServiceDetail(serviceId) {
 
         function restoreSavedRolePage() {
             if (isAdminLoggedIn()) {
-                const allowed = ['dashboard', 'services', 'running', 'completed', 'customers', 'technicians', 'stock', 'locations', 'media', 'news', 'reports', 'settings'];
+                const allowed = ['dashboard', 'services', 'running', 'completed', 'customers', 'technicians', 'locations', 'media', 'news', 'reports', 'settings'];
                 const saved = getSavedRolePage('admin');
                 const target = allowed.includes(saved) ? saved : 'dashboard';
                 if (document.querySelector('.admin-shell')) {
@@ -1388,7 +1387,7 @@ function openServiceDetail(serviceId) {
                 return true;
             }
             if (isTechnicianLoggedIn()) {
-                const allowed = ['dashboard', 'clients', 'status', 'stock', 'profile'];
+                const allowed = ['dashboard', 'clients', 'status', 'profile'];
                 const saved = getSavedRolePage('technician');
                 const target = allowed.includes(saved) ? saved : 'dashboard';
                 if (document.getElementById('page-technician')) {
@@ -1467,64 +1466,6 @@ function openServiceDetail(serviceId) {
             window.__STOCK_ADDITIONAL_CACHE__ = Array.isArray(records)
                 ? records.map(normalizeStockRecord)
                 : [];
-        }
-
-
-        async function refreshStockDataFromApi() {
-            const apiReady = !!(CONFIG.API_URL && CONFIG.API_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL');
-            if (!apiReady) {
-                saveStockRecords([]);
-                saveStockAdditionalRecords([]);
-                saveStockHistory([]);
-                return { stock: [], additional: [], history: [] };
-            }
-            try {
-                const responses = await Promise.allSettled([
-                    apiRequest('getStock', {}),
-                    apiRequest('getStockAdditional', {}),
-                    apiRequest('getStockHistory', {})
-                ]);
-                const getData = index => {
-                    const result = responses[index];
-                    return result && result.status === 'fulfilled' ? result.value : null;
-                };
-                const stockResponse = getData(0);
-                const additionalResponse = getData(1);
-                const historyResponse = getData(2);
-                const stock = Array.isArray(stockResponse?.data) ? stockResponse.data : [];
-                const additional = Array.isArray(additionalResponse?.data) ? additionalResponse.data : [];
-                const history = Array.isArray(historyResponse?.data) ? historyResponse.data : [];
-                window.__STOCK_SUMMARY_CACHE__ = null;
-                if (stockResponse) saveStockRecords(stock);
-                if (additionalResponse) saveStockAdditionalRecords(additional);
-                if (historyResponse) saveStockHistory(history);
-                return {
-                    stock: getStockRecords(),
-                    additional: getStockAdditionalRecords(),
-                    history: getStockHistory()
-                };
-            } catch (error) {
-                console.warn('Unable to refresh stock data:', error);
-                return {
-                    stock: getStockRecords(),
-                    additional: getStockAdditionalRecords(),
-                    history: getStockHistory()
-                };
-            }
-        }
-
-
-        function refreshStockInBackground() {
-            if (window.__STOCK_REQUEST__) return window.__STOCK_REQUEST__;
-            window.__STOCK_LOADING__ = true;
-            window.__STOCK_REQUEST__ = refreshStockDataFromApi().finally(() => {
-                window.__STOCK_LOADING__ = false;
-                window.__STOCK_REQUEST__ = null;
-                if (window.__ADMIN_CURRENT_PAGE__ === 'stock') {
-                    showAdminPage('stock', { fromBack: true, skipStockRefresh: true });
-                }
-            });
-            return window.__STOCK_REQUEST__;
         }
 
 
@@ -4116,10 +4057,6 @@ function renderReportsPage() {
             if (page === 'settings' && !options.skipIntegrationCheck) {
                 refreshGoogleIntegrationStatus();
             }
-            if (page === 'stock') {
-                refreshStockSheetsFromGoogle();
-                if (!options.skipStockRefresh) refreshStockInBackground();
-            }
             if (page === 'news' && isApiConfigured() && !options.skipNewsRefresh) {
                 apiRequest('getNews').then(response => {
                     window.__NEWS_CACHE__ = Array.isArray(response?.data) ? response.data : [];
@@ -4147,6 +4084,9 @@ function renderReportsPage() {
                         showAdminPage('media', { fromBack: true, skipMediaRefresh: true });
                     }
                 });
+            }
+            if (page === 'stock' && !options.skipStockSheetRefresh) {
+                refreshStockSheetsFromGoogle();
             }
             if (page === 'technicians' && isApiConfigured() && !options.skipTechnicianRefresh) {
                 Promise.all([refreshTechniciansFromBackend(), refreshServiceCacheFromApi()]).then(() => {
@@ -4197,32 +4137,7 @@ function renderReportsPage() {
 
 
         async function handleStockTransaction() {
-            const stockId = document.getElementById('stockCodeInput')?.value.trim();
-            const stockName = document.getElementById('stockNameInput')?.value.trim();
-            const unit = document.getElementById('stockSatuanInput')?.value.trim() || 'pcs';
-            const stock = Number(document.getElementById('stockAwalInput')?.value || 0);
-            const minStock = Number(document.getElementById('stockMinInput')?.value || 0);
-            const source = stockModal.dataset.source || 'utama';
-            if (!stockId || !stockName) {
-                showToast('ID barang dan nama barang wajib diisi.', 'error');
-                return;
-            }
-            try {
-                await apiRequest('addStock', {
-                    id: stockId,
-                    name: stockName,
-                    unit,
-                    stock,
-                    min_stock: minStock,
-                    source
-                });
-                showToast('Master barang berhasil disimpan.', 'success');
-                await refreshStockDataFromApi();
-                renderAdminDashboard();
-            } catch (err) {
-                console.error('addStock error', err);
-                showToast(err.message || 'Gagal menyimpan master barang.', 'error');
-            }
+            showToast('Penambahan stok tidak tersedia dari aplikasi. Perbarui data melalui Spreadsheet.', 'error');
         }
 
 
@@ -5521,16 +5436,7 @@ function renderReportsPage() {
 
 
         function openStockInOutModal(mode, code) {
-            stockInOutModal.classList.add('show');
-            stockInOutModal.setAttribute('aria-hidden', 'false');
-            const title = stockInOutModal.querySelector('#stockIOTitle');
-            title.textContent = mode === 'in' ? 'Barang Masuk' : 'Barang Keluar';
-            const stockList = getStockRecords();
-            stockIOKodeSelect.innerHTML = stockList.map(i => `<option value="${escapeHtml(i.code)}">${escapeHtml(i.code)} — ${escapeHtml(i.name)}</option>`).join('');
-            if (code) stockIOKodeSelect.value = String(code).toUpperCase();
-            stockInOutModal.dataset.mode = mode;
-            const dateInput = stockInOutModal.querySelector('#stockIODate');
-            dateInput.value = new Date().toISOString().slice(0,16);
+            showToast('Transaksi stok tidak tersedia dari aplikasi. Perbarui data melalui Spreadsheet.', 'error');
         }
 
 
@@ -5544,32 +5450,7 @@ function renderReportsPage() {
         document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && stockInOutModal.classList.contains('show')) closeStockInOutModal(); });
         stockIOForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            const mode = stockInOutModal.dataset.mode || 'in';
-            const kode = stockIOKodeSelect.value;
-            const jumlah = Number(stockInOutModal.querySelector('#stockIOQty').value || 0);
-            const tanggal = stockInOutModal.querySelector('#stockIODate').value || new Date().toISOString();
-            const supplier = stockInOutModal.querySelector('#stockIOSupplier').value.trim() || '';
-            const petugas = stockInOutModal.querySelector('#stockIOPetugas').value.trim() || 'ADMIN';
-            const catatan = stockInOutModal.querySelector('#stockIOCatatan').value.trim() || '';
-            if (!kode || jumlah <= 0) { showToast('Pilih barang dan masukkan jumlah yang valid.', 'error'); return; }
-            try {
-                const resp = await apiRequest('getStockDetail', { kode });
-                const current = resp && resp.data ? Number(resp.data.stokSaatIni || resp.data.STOK_SAAT_INI || 0) : null;
-                if (mode === 'out' && current !== null && jumlah > current) {
-                    if (!confirm('Jumlah keluar melebihi stok saat ini. Lanjutkan dan biarkan stok menjadi negatif?')) {
-                        return;
-                    }
-                }
-                const action = mode === 'in' ? 'stockIn' : 'stockOut';
-                await apiRequest(action, { kode, jumlah, keperluan: supplier || catatan, petugas, tanggal, catatan });
-                showToast('Transaksi tercatat di server.', 'success');
-                await refreshStockDataFromApi();
-                renderAdminDashboard();
-                closeStockInOutModal();
-            } catch (err) {
-                console.error('stockIO error', err);
-                showToast('Gagal menyimpan transaksi. Periksa koneksi API.', 'error');
-            }
+            showToast('Transaksi stok tidak tersedia dari aplikasi. Perbarui data melalui Spreadsheet.', 'error');
         });
         document.addEventListener('click', function(event) {
             const roleItem =
@@ -5812,7 +5693,7 @@ function renderReportsPage() {
 
         async function deprecatedApiRequestOverride(action, payload = {}) {
             if (!CONFIG.API_URL || CONFIG.API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL') throw new Error('Koneksi ke server gagal. API_URL belum diatur.');
-            const protectedActions = ['updateService', 'updateServiceStatus', 'addStock', 'updateStock', 'stockIn', 'stockOut', 'getLocations', 'getLocationDetail', 'uploadNewsImage', 'addNews', 'updateNews', 'deleteNews', 'publishNews'];
+            const protectedActions = ['updateService', 'updateServiceStatus', 'getLocations', 'getLocationDetail', 'uploadNewsImage', 'addNews', 'updateNews', 'deleteNews', 'publishNews'];
             const requestPayload = { ...payload };
             if (protectedActions.includes(action) && !requestPayload.token) requestPayload.token = getAdminToken();
             if (action === 'getNews' && isAdminLoggedIn() && !requestPayload.token) requestPayload.token = getAdminToken();
@@ -6961,8 +6842,8 @@ function renderReportsPage() {
             if (!checkAdminSession()) return;
             window.__ADMIN_SYNC_STATE__ = { label: 'Sinkronisasi', text: 'Mengambil data terbaru...' };
             try {
-                const [dashboard, services, stock, history, extra] = await Promise.all([apiRequest('getDashboard'), apiRequest('getServices'), apiRequest('getStock'), apiRequest('getStockHistory'), refreshExtendedData()]);
-                setServiceCache(Array.isArray(services.data) ? services.data : []); saveStockRecords(Array.isArray(stock.data) ? stock.data : []); saveStockHistory(Array.isArray(history.data) ? history.data : []);
+                const [services] = await Promise.all([apiRequest('getServices'), refreshExtendedData()]);
+                setServiceCache(Array.isArray(services.data) ? services.data : []);
                 window.__ADMIN_SYNC_STATE__ = { label: 'Terhubung', text: 'Terakhir diperbarui ' + new Date().toLocaleTimeString('id-ID') };
             } catch (error) { window.__ADMIN_SYNC_STATE__ = { label: 'Gagal terhubung', text: 'Gagal mengambil data dari server.' }; showToast('Gagal mengambil data dari server.', 'error'); }
             renderAdminDashboard();
@@ -7853,7 +7734,6 @@ function techSession(){
     const active=jobs.filter(x=>getServiceDisplayStatus(x.status)==='Sedang Diproses');
     const latestJobs=active.sort((a,b)=>{const da=techClientDateValue(a),db=techClientDateValue(b);return (new Date(db).getTime()||0)-(new Date(da).getTime()||0);}).slice(0,5);
     const done=jobs.filter(x=>getServiceDisplayStatus(x.status)==='Selesai');
-    const stock=getStockRecords(), low=stock.filter(x=>x.status==='MENIPIS'||Number(x.stokSaatIni||0)<=Number(x.minimum||0)).length;
     const s=techSession(), u=techUser(), name=s.name||u?.NAMA||'Teknisi LERES SAE', accountStatus=s.status||u?.STATUS||'AKTIF';
     const accountStatusClass=String(accountStatus).trim().toUpperCase()==='AKTIF'?'safe':'low';
     const initials=String(name).trim().charAt(0).toUpperCase()||'T';
@@ -7865,7 +7745,7 @@ function techSession(){
         <div class="tech-stat is-progress"><span class="tech-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2M6 6l1.5 1.5M16.5 16.5 18 18M18 6l-1.5 1.5M7.5 16.5 6 18"/><circle cx="12" cy="12" r="5"/></svg></span><div class="tech-stat-content"><span class="label">Sedang Diproses</span><span class="value">${active.length}</span></div></div>
         <div class="tech-stat is-done"><span class="tech-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.2 4.2L19 7"/></svg></span><div class="tech-stat-content"><span class="label">Selesai</span><span class="value">${done.length}</span></div></div>
       </div>
-      <section class="tech-section tech-dashboard-jobs-card"><div class="tech-section-header"><div><h3>Pekerjaan Terbaru</h3><p>Servis yang ditugaskan kepada Anda dan masih dalam proses.</p></div><span class="tech-status-badge ${low?'low':'safe'}">${low} stok perlu perhatian</span></div>
+      <section class="tech-section tech-dashboard-jobs-card"><div class="tech-section-header"><div><h3>Pekerjaan Terbaru</h3><p>Servis yang ditugaskan kepada Anda dan masih dalam proses.</p></div></div>
                 <div class="tech-table-wrap"><table class="tech-table tech-client-table tech-dashboard-jobs-table"><thead><tr><th>ID SERVIS</th><th>TANGGAL</th><th>CUSTOMER</th><th>BARANG</th><th>STATUS</th></tr></thead><tbody>${latestJobs.map(r=>{const form=getServiceFormFields(r),dateValue=form.tanggal&&form.tanggal!=='-'?form.tanggal:techClientDateValue(r),status=getServiceDisplayStatus(r.status);return `<tr><td><strong>${escapeHtml(r.id||'-')}</strong></td><td>${escapeHtml(formatDate(dateValue))}</td><td>${escapeHtml(form.nama||r.customer_name||'-')}</td><td>${escapeHtml(form.barang||r.item_name||'-')}</td><td>${techStatusBadge(status)}</td></tr>`;}).join('')||'<tr><td colspan="5"><div class="tech-empty">Tidak ada pekerjaan yang sedang diproses untuk akun Anda.</div></td></tr>'}</tbody></table></div></section></div>
     </div>`;
   }
@@ -8055,24 +7935,28 @@ function techSession(){
 
 
   function renderTechView(page='dashboard', options={} ){
+    if(page==='stock') page='dashboard';
     const history=window.__LERESSAE_TECH_HISTORY || (window.__LERESSAE_TECH_HISTORY=['dashboard']);
     if(options.resetHistory){history.length=0;history.push(page);} else if(!options.fromBack && history[history.length-1]!==page){history.push(page);}
     const view=document.getElementById('technicianView'), title=document.getElementById('techPageTitle');
     if(!view) return;
     document.querySelectorAll('.technician-content > .leressae-back-row').forEach(el=>el.remove());
     view.querySelectorAll(':scope > .leressae-back-row').forEach(el=>el.remove());
-    const titles={dashboard:'Dashboard Teknisi',clients:'Lihat Client',consultations:'Konsultasi',status:'Update Status',stock:'Cek Stok',profile:'Profil Teknisi'};
+    if(page==='stock'){
+      showToast('Fitur stok sedang tidak tersedia.','error');
+      page='dashboard';
+    }
+    const titles={dashboard:'Dashboard Teknisi',clients:'Lihat Client',consultations:'Konsultasi',status:'Update Status',profile:'Profil Teknisi'};
     if(title) title.textContent=titles[page]||'Dashboard';
     const subtitles={
       dashboard:'Ringkasan servis yang ditugaskan kepada akun teknisi ini, termasuk pekerjaan aktif dan yang telah selesai.',
       clients:'Data pelanggan dan servis yang ditugaskan kepada Anda, beserta informasi kontak, lokasi, barang, keluhan, dan media.',
       consultations:'Tinjau konsultasi pelanggan dan tindak lanjuti pertanyaan teknis yang masuk.',
       status:'Daftar pekerjaan yang belum selesai. Perbarui progres, keterangan pekerjaan, bukti foto, dan biaya servis melalui detail pekerjaan.',
-      stock:'Informasi stok barang untuk membantu pemeriksaan ketersediaan dan status jumlah stok.',
       profile:'Informasi identitas dan status akun teknisi yang sedang digunakan.'
     };
     const subtitle=document.getElementById('techPageSubtitle'); if(subtitle) subtitle.textContent=subtitles[page]||'Operasional teknisi terhubung dengan data Admin LERES SAE.';
-    view.innerHTML=page==='clients'?techClients():page==='consultations'?techConsultations():page==='status'?techStatusPage():page==='profile'?techProfile():page==='stock'?techStockPage():techDashboard();
+    view.innerHTML=page==='clients'?techClients():page==='consultations'?techConsultations():page==='status'?techStatusPage():page==='profile'?techProfile():techDashboard();
     view.querySelectorAll(':scope > .leressae-back-row').forEach(el=>el.remove());
     document.querySelectorAll('[data-tech-menu]').forEach(b=>b.classList.toggle('active',b.dataset.techMenu===page));
     const shell=document.getElementById('technicianShell'); if(shell) shell.dataset.techPage=page;
@@ -8146,7 +8030,6 @@ function techSession(){
     if(isApiConfigured()){
       try{
         await refreshServiceCacheFromApi();
-        await refreshStockDataFromApi();
       }catch(e){
         console.warn('Sync teknisi gagal',e);
       }
@@ -8223,7 +8106,7 @@ function techSession(){
       panel.className='technician-panel-wrap';
       techPage.appendChild(panel);
     }
-    const allowed=['dashboard','clients','consultations','status','stock','profile'];
+    const allowed=['dashboard','clients','consultations','status','profile'];
     const saved=getSavedRolePage('technician');
     const targetPage=allowed.includes(saved)?saved:'dashboard';
     window.__LERESSAE_TECH_HISTORY=[targetPage];

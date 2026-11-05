@@ -23,7 +23,7 @@
                 return;
             }
             if(typeof window.isTechnicianLoggedIn==='function' && window.isTechnicianLoggedIn()) {
-                const allowed=['dashboard','clients','status','stock','profile'];
+                const allowed=['dashboard','clients','status','profile'];
                 const saved=typeof window.getSavedRolePage==='function' ? window.getSavedRolePage('technician') : '';
                 const target=allowed.includes(saved)?saved:'dashboard';
                 window.__LERESSAE_TECH_HISTORY=[target];
@@ -51,5 +51,4 @@
     }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',restoreRoleAfterRefresh,{once:true});
     else restoreRoleAfterRefresh();
-    window.addEventListener('load',restoreRoleAfterRefresh,{once:true});
 })();

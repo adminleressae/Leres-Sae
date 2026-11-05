@@ -3,6 +3,7 @@
   if (!root) return;
   let cursor = new Date(); cursor.setDate(1);
   let agenda = [];
+  let loadError = '';
   const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
   const weekdays = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
   function render() {
@@ -21,11 +22,34 @@
     }
     const monthItems = agenda.filter(item => String(item.date || '').startsWith(`${y}-${String(m + 1).padStart(2, '0')}`));
     root.innerHTML = `<div class="public-agenda-toolbar"><button type="button" data-agenda-prev aria-label="Bulan sebelumnya">‹</button><strong>${months[m]} ${y}</strong><button type="button" data-agenda-next aria-label="Bulan berikutnya">›</button></div><div class="public-agenda-body"><div class="public-agenda-calendar-grid"><div class="public-agenda-weekdays">${weekdays.map(x => `<span>${x}</span>`).join('')}</div><div class="public-agenda-days">${cells.join('')}</div></div><aside class="public-agenda-events"><h3>Kegiatan</h3>${monthItems.length ? monthItems.map(item => `<div class="public-agenda-event"><strong>${escapeText(item.date)}</strong><p>${escapeText(item.title)}</p></div>`).join('') : '<p>Belum ada agenda kegiatan pada bulan ini.</p>'}</aside></div>`;
+    if (loadError) {
+      const errorMessage = document.createElement('p');
+      errorMessage.className = 'public-agenda-error';
+      errorMessage.setAttribute('role', 'status');
+      errorMessage.textContent = loadError;
+      root.insertBefore(errorMessage, root.children[1] || null);
+    }
     root.querySelector('[data-agenda-prev]').onclick = () => { cursor.setMonth(m - 1); render(); };
     root.querySelector('[data-agenda-next]').onclick = () => { cursor.setMonth(m + 1); render(); };
   }
   function escapeText(value) { return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
   window.renderPublicAgenda = render;
   render();
-  if (typeof apiRequest === 'function') apiRequest('getAgenda').then(response => { agenda = Array.isArray(response?.data) ? response.data : []; render(); }).catch(() => {});
+  if (typeof apiRequest === 'function') {
+    apiRequest('getAgenda')
+      .then(response => {
+        if (response?.success === false) throw new Error(response.message || 'Data agenda gagal dimuat.');
+        agenda = Array.isArray(response?.data) ? response.data : [];
+        loadError = '';
+        render();
+      })
+      .catch(error => {
+        loadError = error?.message || 'Agenda gagal dimuat. Periksa koneksi lalu coba lagi.';
+        render();
+        console.warn('Gagal memuat agenda publik:', error);
+      });
+  } else {
+    loadError = 'Layanan agenda belum tersedia.';
+    render();
+  }
 })();
