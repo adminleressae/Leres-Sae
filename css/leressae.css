@@ -12,6 +12,7 @@
 .public-visitor-heading p { margin:0; color:#60756f; font-size:.88rem; }
 .public-visitor-heading .public-visitor-status { margin-top:5px; font-size:.75rem; }
 .public-visitor-icon { display:grid; place-items:center; flex:0 0 auto; width:46px; height:46px; border-radius:14px; background:#e3f3eb; color:#087f70; font-size:1.25rem; }
+.public-visitor-icon svg { display:block; width:23px; height:23px; fill:none; stroke:currentColor; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; }
 .public-visitor-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
 .public-visitor-stat { display:flex; align-items:center; gap:11px; min-width:0; padding:15px 13px; border:1px solid #e1eee8; border-radius:14px; background:#f8fcfa; }
 .public-visitor-stat > div { min-width:0; }
@@ -11776,6 +11777,10 @@ body.admin-mode>.wrapper{width:100%!important;max-width:1380px!important;min-wid
   margin-left:0!important;
   margin-right:0!important;
   scrollbar-width:thin;
+}
+
+#page-admin :is(.admin-table-wrap, .admin-customers-table-wrap, .admin-tech-management-wrap, .admin-activity-table-wrap) {
+  overscroll-behavior-y: auto !important;
 }
 
 

@@ -104,15 +104,33 @@ const CONFIG = {
 
         function formatDate(value) {
             if (!value) return '-';
-            const date = new Date(value);
+            const date = parseServiceDate(value);
             if (Number.isNaN(date.getTime())) {
-                return value;
+                return String(value);
             }
             return date.toLocaleDateString('id-ID', {
+                timeZone: 'Asia/Jakarta',
                 day: '2-digit',
                 month: 'short',
                 year: 'numeric'
             });
+        }
+
+        function parseServiceDate(value) {
+            if (value instanceof Date) return value;
+            const text = String(value).trim();
+            const dateOnly = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (dateOnly) {
+                return new Date(`${dateOnly[1]}-${dateOnly[2]}-${dateOnly[3]}T12:00:00+07:00`);
+            }
+            const formTimestamp = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:,?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+            if (formTimestamp) {
+                const [, day, month, year, hour = '12', minute = '00', second = '00'] = formTimestamp;
+                return new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour.padStart(2, '0')}:${minute}:${second}+07:00`);
+            }
+            const localTimestamp = text.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(?::\d{2})?)(?:\.\d+)?$/);
+            if (localTimestamp) return new Date(`${localTimestamp[1]}T${localTimestamp[2]}+07:00`);
+            return new Date(text);
         }
 
 
@@ -148,9 +166,13 @@ const CONFIG = {
 
         function formatDateTimeValue(value) {
             if (!value) return '-';
-            const d = new Date(value);
+            const text = String(value).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(text) || /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(text)) {
+                return formatDate(value);
+            }
+            const d = parseServiceDate(value);
             if (Number.isNaN(d.getTime())) return String(value);
-            return d.toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+            return d.toLocaleString('id-ID', {timeZone:'Asia/Jakarta',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
         }
 
 
@@ -1471,30 +1493,48 @@ function openServiceDetail(serviceId) {
 
         function getFilteredServices(records, filters = {}) {
             const keyword = (filters.keyword || '').trim().toLowerCase();
+            const phoneKeyword = normalizePhoneSearch(keyword);
             const selectedStatus = filters.status || 'all';
             const selectedDate = filters.date || 'all';
             const tech = filters.technician || 'all';
+            const today = serviceDateOrdinal(new Date());
             return records.filter(item => {
-                const matchesText = !keyword || [item.id, item.customer_name, item.phone, item.item_name, item.merk, item.tipe].some(value => String(value || '').toLowerCase().includes(keyword));
+                const formPhone = getServiceFormFieldsWithoutMaps(item).whatsapp;
+                const searchableValues = [item.id, item.customer_name, formPhone, item.phone, item.item_name, item.merk, item.tipe];
+                const matchesText = !keyword || searchableValues.some(value => String(value || '').toLowerCase().includes(keyword))
+                    || (!!phoneKeyword && [formPhone, item.phone].some(value => normalizePhoneSearch(value).includes(phoneKeyword)));
                 const matchesStatus = selectedStatus === 'all' || getServiceDisplayStatus(item.status) === selectedStatus;
                 const matchesTech = tech === 'all' || String(item.technician || '').toLowerCase() === tech.toLowerCase();
                 let matchesDate = true;
                 if (selectedDate !== 'all') {
-                    const itemDate = new Date(item.created_at || item.tanggal_masuk || item.timestamp || new Date());
-                    if (!Number.isNaN(itemDate.getTime())) {
-                        const today = new Date();
-                        const diffDays = Math.floor((today - itemDate) / (1000 * 60 * 60 * 24));
-                        if (selectedDate === 'today') matchesDate = diffDays === 0;
-                        else if (selectedDate === 'yesterday') matchesDate = diffDays === 1;
-                        else if (selectedDate === '7') matchesDate = diffDays <= 7;
-                        else if (selectedDate === '30') matchesDate = diffDays <= 30;
-                        else if (selectedDate === '90') matchesDate = diffDays <= 90;
-                        else if (selectedDate === '180') matchesDate = diffDays <= 180;
-                        else if (selectedDate === '365') matchesDate = diffDays <= 365;
-                    }
+                    const itemDate = parseServiceDate(item.created_at || item.tanggal_masuk || item.timestamp);
+                    const itemDay = Number.isNaN(itemDate.getTime()) ? NaN : serviceDateOrdinal(itemDate);
+                    const diffDays = today - itemDay;
+                    if (selectedDate === 'today') matchesDate = diffDays === 0;
+                    else if (selectedDate === 'yesterday') matchesDate = diffDays === 1;
+                    else if (/^\d+$/.test(selectedDate)) matchesDate = diffDays >= 0 && diffDays < Number(selectedDate);
                 }
                 return matchesText && matchesStatus && matchesDate && matchesTech;
             });
+        }
+
+        function serviceDateOrdinal(date) {
+            const parts = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'Asia/Jakarta',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            }).formatToParts(date);
+            const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+            return Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day)) / 86400000;
+        }
+
+        function normalizePhoneSearch(value) {
+            const digits = normalizePhone(value);
+            if (!digits) return '';
+            if (digits.startsWith('62')) return '0' + digits.slice(2);
+            if (digits.startsWith('8')) return '0' + digits;
+            return digits;
         }
 
 
@@ -1920,10 +1960,8 @@ function openServiceDetail(serviceId) {
             const current = window.__ADMIN_SERVICE_FILTERS__ || {};
             return {
                 keyword: String(current.keyword || document.getElementById('adminSearchInput')?.value || '').trim(),
-                // Halaman Data Servis admin memang khusus untuk permohonan yang
-                // belum ditugaskan, sehingga status dan rentangnya sengaja dikunci.
-                status: 'Sedang Diproses',
-                date: 'all'
+                status: String(current.status || document.getElementById('adminFilterStatus')?.value || 'Sedang Diproses'),
+                date: String(current.date || document.getElementById('adminFilterDate')?.value || 'all')
             };
         }
 
@@ -1971,11 +2009,20 @@ function openServiceDetail(serviceId) {
                     </div>
                     <div class="filter-grid">
                         <input id="adminSearchInput" type="text" placeholder="Cari nama, WhatsApp, ID" value="${escapeHtml(filters.keyword)}">
-                        <select id="adminFilterStatus" disabled aria-label="Status terkunci: Sedang Diproses">
-                            <option value="Sedang Diproses" selected>Sedang Diproses</option>
+                        <select id="adminFilterStatus" aria-label="Filter status servis">
+                            <option value="all" ${filters.status === 'all' ? 'selected' : ''}>Semua status</option>
+                            <option value="Sedang Diproses" ${filters.status === 'Sedang Diproses' ? 'selected' : ''}>Sedang Diproses</option>
+                            <option value="Selesai" ${filters.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
                         </select>
-                        <select id="adminFilterDate" disabled aria-label="Rentang terkunci: Semua rentang">
-                            <option value="all" selected>Semua rentang</option>
+                        <select id="adminFilterDate" aria-label="Filter rentang tanggal servis">
+                            <option value="all" ${filters.date === 'all' ? 'selected' : ''}>Semua rentang</option>
+                            <option value="today" ${filters.date === 'today' ? 'selected' : ''}>Hari ini</option>
+                            <option value="yesterday" ${filters.date === 'yesterday' ? 'selected' : ''}>Kemarin</option>
+                            <option value="7" ${filters.date === '7' ? 'selected' : ''}>7 hari terakhir</option>
+                            <option value="30" ${filters.date === '30' ? 'selected' : ''}>30 hari terakhir</option>
+                            <option value="90" ${filters.date === '90' ? 'selected' : ''}>90 hari terakhir</option>
+                            <option value="180" ${filters.date === '180' ? 'selected' : ''}>180 hari terakhir</option>
+                            <option value="365" ${filters.date === '365' ? 'selected' : ''}>365 hari terakhir</option>
                         </select>
                     </div>
                     <div class="admin-table-wrap">
@@ -2221,8 +2268,36 @@ function openServiceDetail(serviceId) {
         }
 
 
-        function getAdminCustomerGroups() {
-            const records = loadServiceRecords();
+        function getCustomerServiceMonthKey(item) {
+            const value = item.created_at || item.tanggal_masuk || item.timestamp || getServiceFormFieldsWithoutMaps(item).tanggal;
+            const date = parseServiceDate(value);
+            if (Number.isNaN(date.getTime())) return '';
+            const parts = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'Asia/Jakarta',
+                year: 'numeric',
+                month: '2-digit'
+            }).formatToParts(date);
+            const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+            return `${values.year}-${values.month}`;
+        }
+
+        function getCustomerServiceMonthOptions(records) {
+            const months = [...new Set(records.map(getCustomerServiceMonthKey).filter(Boolean))].sort().reverse();
+            return months.map(key => {
+                const [year, month] = key.split('-').map(Number);
+                const label = new Intl.DateTimeFormat('id-ID', {
+                    timeZone: 'Asia/Jakarta',
+                    month: 'long',
+                    year: 'numeric'
+                }).format(new Date(Date.UTC(year, month - 1, 15, 5)));
+                return { key, label };
+            });
+        }
+
+        function getAdminCustomerGroups(monthKey = 'all') {
+            const records = loadServiceRecords().filter(item =>
+                monthKey === 'all' || getCustomerServiceMonthKey(item) === monthKey
+            );
             const groups = new Map();
 
             records.forEach(item => {
@@ -2240,7 +2315,7 @@ function openServiceDetail(serviceId) {
                         active: 0,
                         completed: 0,
                         totalRevenue: 0,
-                        lastDate: null
+                        lastDateValue: null
                     });
                 }
 
@@ -2253,20 +2328,20 @@ function openServiceDetail(serviceId) {
                 const revenueValue = Number(String(item.biaya ?? item.BIAYA ?? item.total_biaya ?? item.totalBiaya ?? '').replace(/[^0-9]/g, '')) || 0;
                 customer.totalRevenue += revenueValue;
 
-                const last = parseDateValue(item.created_at || item.tanggal_masuk || item.timestamp_update || item.updated_at || '');
-                if (last && (!customer.lastDate || last > customer.lastDate)) {
-                    customer.lastDate = last;
+                const last = parseServiceDate(item.created_at || item.tanggal_masuk || item.timestamp || '');
+                if (!Number.isNaN(last.getTime()) && (!customer.lastDateValue || last > customer.lastDateValue)) {
+                    customer.lastDateValue = last;
                 }
             });
 
             return Array.from(groups.values())
                 .map(customer => ({
                     ...customer,
-                    lastDate: customer.lastDate ? formatDate(customer.lastDate) : '-'
+                    lastDate: customer.lastDateValue ? formatDate(customer.lastDateValue) : '-'
                 }))
                 .sort((a, b) => {
-                    const aTime = a.lastDate && a.lastDate !== '-' ? new Date(a.lastDate).getTime() : 0;
-                    const bTime = b.lastDate && b.lastDate !== '-' ? new Date(b.lastDate).getTime() : 0;
+                    const aTime = a.lastDateValue ? a.lastDateValue.getTime() : 0;
+                    const bTime = b.lastDateValue ? b.lastDateValue.getTime() : 0;
                     return bTime - aTime;
                 });
         }
@@ -2301,7 +2376,10 @@ function openServiceDetail(serviceId) {
 
 
         function renderCustomersPage() {
-            const customers = getAdminCustomerGroups();
+            const records = loadServiceRecords();
+            const monthOptions = getCustomerServiceMonthOptions(records);
+            const selectedMonth = window.__ADMIN_CUSTOMER_MONTH__ || 'all';
+            const customers = getAdminCustomerGroups(selectedMonth);
             const table = customers.map(customer => `
                 <tr>
                     <td><strong>${escapeHtml(customer.name)}</strong></td>
@@ -2321,6 +2399,15 @@ function openServiceDetail(serviceId) {
                         <button class="btn-primary admin-report-export-button" type="button" data-export-customers="true" aria-label="Ekspor Excel data pelanggan">Export Excel</button>
                         <span class="admin-user-chip">${customers.length} pelanggan</span>
                     </div>
+                    <div class="admin-service-filter-bar">
+                        <div class="admin-service-filter-group">
+                            <label for="customerMonthFilter" style="font-weight:700;">Bulan servis:</label>
+                            <select id="customerMonthFilter" class="admin-service-period-select" aria-label="Filter pelanggan berdasarkan bulan servis">
+                                <option value="all" ${selectedMonth === 'all' ? 'selected' : ''}>Semua bulan</option>
+                                ${monthOptions.map(month => `<option value="${escapeHtml(month.key)}" ${selectedMonth === month.key ? 'selected' : ''}>${escapeHtml(month.label)}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
                     <div class="admin-table-wrap admin-customers-table-wrap">
                         <table class="admin-table admin-customers-table">
                             <thead><tr><th>Customer</th><th>No. WhatsApp</th><th>Jumlah Servis</th><th>Servis Aktif</th><th>Servis Selesai</th><th>Total Transaksi</th><th>Servis Terakhir</th><th>Aksi</th></tr></thead>
@@ -2332,7 +2419,8 @@ function openServiceDetail(serviceId) {
         }
 
         function exportCustomersExcel() {
-            const customers = getAdminCustomerGroups();
+            const selectedMonth = window.__ADMIN_CUSTOMER_MONTH__ || 'all';
+            const customers = getAdminCustomerGroups(selectedMonth);
             const headers = ['Customer', 'No. WhatsApp', 'Jumlah Servis', 'Servis Aktif', 'Servis Selesai', 'Total Transaksi', 'Servis Terakhir'];
             const rows = customers.map(customer => [
                 customer.name || '',
@@ -2344,12 +2432,16 @@ function openServiceDetail(serviceId) {
                 customer.lastDate || '-'
             ]);
             const date = new Date().toISOString().slice(0, 10);
+            const monthLabel = selectedMonth === 'all'
+                ? 'Semua bulan'
+                : getCustomerServiceMonthOptions(loadServiceRecords()).find(month => month.key === selectedMonth)?.label || selectedMonth;
+            const monthSuffix = selectedMonth === 'all' ? 'semua-bulan' : selectedMonth;
             downloadStyledExcelTable({
                 title: 'DATA PELANGGAN',
-                subtitle: `Daftar pelanggan · ${rows.length} data · Diekspor ${new Date().toLocaleString('id-ID')}`,
+                subtitle: `Daftar pelanggan · ${monthLabel} · ${rows.length} data · Diekspor ${new Date().toLocaleString('id-ID')}`,
                 sheetName: 'Data Pelanggan',
                 tableName: 'DataPelanggan',
-                filename: `data-pelanggan-${date}.xlsx`,
+                filename: `data-pelanggan-${monthSuffix}-${date}.xlsx`,
                 headers,
                 rows,
                 columnWidths: [30, 22, 18, 16, 18, 22, 20]
@@ -4830,6 +4922,10 @@ function renderReportsPage() {
             });
             document.addEventListener('change', function (event) {
                 const target = event.target;
+                if (target && target.id === 'customerMonthFilter') {
+                    window.__ADMIN_CUSTOMER_MONTH__ = target.value || 'all';
+                    showAdminPage('customers', { skipCustomerSpreadsheetRefresh: true });
+                }
                 if ((target && target.id === 'adminFilterStatus') || (target && target.id === 'adminFilterDate')) {
                     window.__ADMIN_SERVICE_FILTERS__ = {
                         keyword: document.getElementById('adminSearchInput')?.value || '',
@@ -7133,7 +7229,7 @@ function renderReportsPage() {
             if (wrapper && !document.getElementById('page-media-detail')) wrapper.insertAdjacentHTML('beforeend', '<section id="page-media-detail" class="page-view news-detail-page media-detail-page"><div class="news-detail-layout media-detail-layout"><main class="media-detail-main"></main><aside class="news-detail-sidebar media-detail-sidebar"><h2>Media Terbaru</h2><div class="media-detail-latest-list"></div></aside></div></section>');
             const dashboard = document.getElementById('page-dashboard');
             if (dashboard && !document.getElementById('homeMediaSpotlight')) dashboard.insertAdjacentHTML('beforeend', '<section id="homeMediaSpotlight" class="home-media-spotlight" aria-label="Sorotan dokumentasi media"><div class="media-spotlight-head"><div><h2 class="media-spotlight-title">Sorotan Media</h2><p class="media-spotlight-subtitle">Momen kegiatan, praktik, dan kolaborasi terbaru BPTI Disperindag DIY.</p></div></div><div class="home-media-content"><div class="home-media-empty">Memuat dokumentasi foto…</div></div></section>');
-            if (dashboard && !document.getElementById('publicVisitorCounter')) dashboard.insertAdjacentHTML('beforeend', '<section id="publicVisitorCounter" class="public-visitor-counter" aria-label="Statistik pengunjung"><div class="public-visitor-heading"><span class="public-visitor-label">STATISTIK PENGUNJUNG</span><h2>Pengunjung LERES SAE</h2><p>Informasi Kunjungan Website LERES SAE secara real time</p><p id="publicVisitorStatus" class="public-visitor-status" role="status" aria-live="polite">Menghubungkan statistik…</p></div><div class="public-visitor-stats"><div class="public-visitor-stat"><span class="public-visitor-icon" aria-hidden="true">◷</span><div><span>Pengunjung Hari Ini</span><strong id="publicVisitorToday">—</strong></div></div><div class="public-visitor-stat"><span class="public-visitor-icon" aria-hidden="true">▥</span><div><span>7 Hari Terakhir</span><strong id="publicVisitorWeekly">—</strong></div></div><div class="public-visitor-stat"><span class="public-visitor-icon" aria-hidden="true">◉</span><div><span>Total Pengunjung</span><strong id="publicVisitorCount">—</strong></div></div></div></section>');
+            if (dashboard && !document.getElementById('publicVisitorCounter')) dashboard.insertAdjacentHTML('beforeend', '<section id="publicVisitorCounter" class="public-visitor-counter" aria-label="Statistik pengunjung"><div class="public-visitor-heading"><span class="public-visitor-label">STATISTIK PENGUNJUNG</span><h2>Pengunjung LERES SAE</h2><p>Informasi Kunjungan Website LERES SAE secara real time</p><p id="publicVisitorStatus" class="public-visitor-status" role="status" aria-live="polite">Menghubungkan statistik…</p></div><div class="public-visitor-stats"><div class="public-visitor-stat"><span class="public-visitor-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="8.25"></circle><path d="M12 7.5v4.8l3.2 1.9"></path></svg></span><div><span>Pengunjung Hari Ini</span><strong id="publicVisitorToday">—</strong></div></div><div class="public-visitor-stat"><span class="public-visitor-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><rect x="3.75" y="5.25" width="16.5" height="15" rx="2.25"></rect><path d="M7.5 3.75v3M16.5 3.75v3M3.75 9.25h16.5M8 13h2M14 13h2M8 16.5h2M14 16.5h2"></path></svg></span><div><span>7 Hari Terakhir</span><strong id="publicVisitorWeekly">—</strong></div></div><div class="public-visitor-stat"><span class="public-visitor-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="9" cy="8" r="3.1"></circle><path d="M3.75 19v-1.1A4.9 4.9 0 0 1 8.65 13h.7a4.9 4.9 0 0 1 4.9 4.9V19"></path><path d="M15.5 5.2a3.1 3.1 0 0 1 0 5.9M16.25 13.3a4.85 4.85 0 0 1 4 4.8V19"></path></svg></span><div><span>Total Pengunjung</span><strong id="publicVisitorCount">—</strong></div></div></div></section>');
             loadPublicVisitorStats();
             if (dashboard && !document.getElementById('homeNewsList')) {
                 const newsSection = document.createElement('div');

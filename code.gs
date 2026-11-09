@@ -1849,7 +1849,9 @@ function updateServiceStatus_(body) {
     biaya_keterangan: costNote,
     admin_update: String(data.admin_update || data.updated_by || session.username || 'ADMIN_1'),
     timestamp_update: now,
-    tanggal_selesai: (newStatus === 'Selesai' || newStatus === 'Sudah Diambil') ? (data.tanggal_selesai || now.slice(0, 10)) : (oldRecord.tanggal_selesai || ''),
+    tanggal_selesai: (newStatus === 'Selesai' || newStatus === 'Sudah Diambil')
+      ? (oldRecord.tanggal_selesai || Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd'))
+      : (oldRecord.tanggal_selesai || ''),
     bukti_foto: proofUrl
   });
 
@@ -2129,7 +2131,7 @@ function getPublicVisitorStats_(visitorId) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    const timezone = Session.getScriptTimeZone() || 'Asia/Jakarta';
+    const timezone = CONFIG.TIMEZONE || Session.getScriptTimeZone() || 'Asia/Jakarta';
     const now = new Date();
     const today = Utilities.formatDate(now, timezone, 'yyyy-MM-dd');
     const weekStart = Utilities.formatDate(new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000), timezone, 'yyyy-MM-dd');

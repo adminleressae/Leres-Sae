@@ -76,6 +76,35 @@
         ];
         return data;
     };
+    window.buildAdminOperationalItemData=function(records){
+        const counts=new Map();
+        (Array.isArray(records)?records:[]).forEach(row=>{
+            let itemName=row?.item_name || row?.itemName || row?.ITEM_NAME || '';
+            if(!itemName && row?.raw_form_data){
+                try {
+                    const raw=typeof row.raw_form_data==='string' ? JSON.parse(row.raw_form_data) : row.raw_form_data;
+                    if(raw && typeof raw==='object' && !Array.isArray(raw)){
+                        const itemEntry=Object.entries(raw).find(([key])=>
+                            ['mesinyangdiservis','namabarang','namamesin','jenisbarang','namaalat','barang']
+                                .includes(String(key).toLowerCase().replace(/[^a-z0-9]/g,''))
+                        );
+                        itemName=itemEntry ? itemEntry[1] : '';
+                    }
+                } catch(error) {
+                    console.warn('Data jenis barang pada formulir tidak dapat dibaca:',error);
+                }
+            }
+            const label=String(Array.isArray(itemName)?itemName[0]||'':itemName||'')
+                .trim()
+                .replace(/\s+/g,' ');
+            if(!label || label==='-') return;
+            const key=label.toLocaleLowerCase('id-ID');
+            const existing=counts.get(key);
+            if(existing) existing.value++;
+            else counts.set(key,{label,value:1});
+        });
+        return [...counts.values()].sort((a,b)=>b.value-a.value || a.label.localeCompare(b.label,'id-ID'));
+    };
     window.buildAdminOperationalHistogramData=function(lineData, records){
         const p=window.__ADMIN_CHART_PERIOD__ || '7d';
         const source=Array.isArray(records)?records:[];
