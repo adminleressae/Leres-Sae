@@ -6551,6 +6551,34 @@ function renderReportsPage() {
         }
         let homeMediaTimer = null;
         let homeVideoTimer = null;
+        let homeDashboardVideoPlaying = false;
+
+        function setHomeDashboardVideoPlaying(isPlaying) {
+            homeDashboardVideoPlaying = !!isPlaying;
+            const section = document.getElementById('homeMediaSpotlight');
+            if (section && typeof section.__setMediaPlaying === 'function') section.__setMediaPlaying(homeDashboardVideoPlaying);
+        }
+
+        // Sinkronkan slideshow dengan state player YouTube pada video dashboard.
+        if (!window.__homeDashboardVideoSyncBound) {
+            window.__homeDashboardVideoSyncBound = true;
+            window.addEventListener('message', event => {
+                if (!event.origin || !/youtube(-nocookie)?\.com$/i.test(new URL(event.origin).hostname)) return;
+                let data;
+                try { data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data; } catch (e) { return; }
+                const state = data && data.info;
+                if (typeof state === 'number') setHomeDashboardVideoPlaying(state === 1 || state === 3);
+            });
+            document.addEventListener('play', event => {
+                if (event.target instanceof HTMLVideoElement && event.target.closest('#homeMediaSpotlight')) setHomeDashboardVideoPlaying(true);
+            }, true);
+            document.addEventListener('pause', event => {
+                if (event.target instanceof HTMLVideoElement && event.target.closest('#homeMediaSpotlight')) setHomeDashboardVideoPlaying(false);
+            }, true);
+            document.addEventListener('ended', event => {
+                if (event.target instanceof HTMLVideoElement && event.target.closest('#homeMediaSpotlight')) setHomeDashboardVideoPlaying(false);
+            }, true);
+        }
 
 
         function renderHomeMediaSlideshow() {
@@ -6601,7 +6629,7 @@ function renderReportsPage() {
                 dots.forEach((dot,i) => { const active = i === index; dot.classList.toggle('is-active',active); dot.setAttribute('aria-current',active?'true':'false'); });
             };
             const pause = () => { if (homeMediaTimer) clearInterval(homeMediaTimer); homeMediaTimer = null; };
-            const start = () => { pause(); if (slides.length > visibleCount() && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) homeMediaTimer = setInterval(() => { const maxIndex = Math.max(0, slides.length - visibleCount()); update(index >= maxIndex ? 0 : index + 1); }, 2500); };
+            const start = () => { pause(); if (!homeDashboardVideoPlaying && slides.length > visibleCount() && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) homeMediaTimer = setInterval(() => { const maxIndex = Math.max(0, slides.length - visibleCount()); update(index >= maxIndex ? 0 : index + 1); }, 2500); };
             const onClick = e => { const target = e.target.closest('[data-home-media-step], [data-home-media-go]'); if (!target) return; if (target.hasAttribute('data-home-media-step')) update(index + Number(target.dataset.homeMediaStep)); else update(Number(target.dataset.homeMediaGo)); start(); };
             let gestureStartX = 0, gestureStartY = 0, gestureLastX = 0, gesturePointerId = null, gestureMoved = false;
             const onPointerDown = e => {
@@ -6641,14 +6669,15 @@ function renderReportsPage() {
             section.addEventListener('wheel', onWheel, {passive:false}); section.addEventListener('click', onClickGuard, true);
             window.addEventListener('resize', () => update(index));
             section.addEventListener('click',onClick); section.addEventListener('mouseenter',pause); section.addEventListener('mouseleave',start); section.addEventListener('focusin',pause); section.addEventListener('focusout',e=>{if(!section.contains(e.relatedTarget))start();});
+            section.__setMediaPlaying = playing => { if (playing) pause(); else start(); };
             section.__cleanupMedia = () => {
                 pause(); section.removeEventListener('click',onClick); section.removeEventListener('click',onClickGuard,true);
                 track.removeEventListener('pointerdown',onPointerDown); track.removeEventListener('pointermove',onPointerMove);
                 track.removeEventListener('pointerup',onPointerEnd); track.removeEventListener('pointercancel',onPointerEnd);
                 section.removeEventListener('wheel',onWheel); track.style.touchAction=''; track.style.cursor='';
-                section.removeEventListener('mouseenter',pause); section.removeEventListener('mouseleave',start); section.removeEventListener('focusin',pause);
+                section.removeEventListener('mouseenter',pause); section.removeEventListener('mouseleave',start); section.removeEventListener('focusin',pause); delete section.__setMediaPlaying;
             };
-            start();
+            if (homeDashboardVideoPlaying) pause(); else start();
         }
 
 
@@ -7266,13 +7295,14 @@ function renderReportsPage() {
                     return;
                 }
                 const videoFrame = document.createElement('iframe');
-                videoFrame.src = 'https://www.youtube.com/embed/' + encodeURIComponent(youtubeTrigger.dataset.playYoutube) + '?autoplay=1&controls=1&rel=0&playsinline=1';
+                videoFrame.src = 'https://www.youtube.com/embed/' + encodeURIComponent(youtubeTrigger.dataset.playYoutube) + '?autoplay=1&controls=1&rel=0&playsinline=1&enablejsapi=1&origin=' + encodeURIComponent(window.location.origin);
                 videoFrame.title = youtubeTrigger.getAttribute('aria-label') || 'Video dokumentasi';
                 videoFrame.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen');
                 videoFrame.setAttribute('allowfullscreen', '');
                 videoFrame.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
                 videoFrame.style.cssText = 'width:100%;height:100%;min-height:200px;border:0;border-radius:12px;background:#111827;';
                 youtubeTrigger.replaceWith(videoFrame);
+                setHomeDashboardVideoPlaying(true);
                 return;
             }
             const consultationMedia = event.target.closest('[data-consultation-media]');

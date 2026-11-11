@@ -6073,6 +6073,68 @@ html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-m
   box-shadow: 0 14px 32px rgba(24, 48, 43, .07), inset 0 1px 0 rgba(255,255,255,.95) !important;
   transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
 }
+
+#page-media-penanganan .media-asset-card video {
+  display: block;
+  width: 100%;
+  min-height: 220px;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  margin: 14px 0 12px;
+  border-radius: 12px;
+  background: #10201c;
+}
+
+#page-media-penanganan .tutorial-scroll:has(.media-asset-card) {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  align-items: stretch;
+  gap: 20px;
+}
+
+#page-media-penanganan .media-asset-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100% !important;
+  max-width: none !important;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+#page-media-penanganan .media-asset-card h3 {
+  min-height: 2.8em;
+  line-height: 1.35;
+  margin-bottom: 0;
+}
+
+#page-media-penanganan .media-asset-card video {
+  height: 360px;
+  min-height: 0;
+}
+
+#page-media-penanganan .media-asset-card p {
+  margin-top: 0;
+}
+
+@media (min-width: 901px) {
+  #page-media-penanganan .media-asset-card {
+    padding: 24px;
+  }
+  #page-media-penanganan .media-asset-card video {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  #page-media-penanganan .tutorial-scroll:has(.media-asset-card) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 16px;
+  }
+  #page-media-penanganan .media-asset-card video {
+    height: auto;
+    min-height: 220px;
+  }
+}
 html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-media-penanganan .tutorial-card {
   background: linear-gradient(145deg, #fff, #fbfcfc) !important;
 }
