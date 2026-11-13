@@ -1599,6 +1599,10 @@ function getPublicConsultationStatus_(phone) {
     timestamp: headers.indexOf('timestamp'),
     name: headers.indexOf('nama'),
     phone: headers.indexOf('no whatsapp'),
+    address: headers.findIndex(function(header) {
+      return header === 'alamat' || header.indexOf('alamat ') === 0
+        || header === 'address' || header.indexOf('address ') === 0;
+    }),
     topic: headers.indexOf('topik konsultasi'),
     description: headers.indexOf('deskripsi permasalahan')
   };
@@ -1624,6 +1628,7 @@ function getPublicConsultationStatus_(phone) {
     }).join('');
     matches.push({
       timestamp: String(row[columns.timestamp] || '').trim(),
+      address: columns.address < 0 ? '' : String(row[columns.address] || '').trim(),
       topic: String(row[columns.topic] || '').trim(),
       completed: consultationStatuses.completedKeys.has(key),
       answer: consultationStatuses.answers[key] || ''

@@ -20452,17 +20452,19 @@ body:not(.dark-mode) #homeMediaSpotlight {
 .admin-consultations-table th:nth-child(3),
 .admin-consultations-table td:nth-child(3) { width: 150px !important; }
 .admin-consultations-table th:nth-child(4),
-.admin-consultations-table td:nth-child(4) { width: 190px !important; }
+.admin-consultations-table td:nth-child(4) { width: 240px !important; }
 .admin-consultations-table th:nth-child(5),
-.admin-consultations-table td:nth-child(5) { width: 320px !important; }
+.admin-consultations-table td:nth-child(5) { width: 190px !important; }
 .admin-consultations-table th:nth-child(6),
-.admin-consultations-table td:nth-child(6) { width: 145px !important; }
+.admin-consultations-table td:nth-child(6) { width: 320px !important; }
 .admin-consultations-table th:nth-child(7),
-.admin-consultations-table td:nth-child(7) { width: 175px !important; }
+.admin-consultations-table td:nth-child(7) { width: 145px !important; }
 .admin-consultations-table th:nth-child(8),
 .admin-consultations-table td:nth-child(8) { width: 175px !important; }
 .admin-consultations-table th:nth-child(9),
-.admin-consultations-table td:nth-child(9) { width: 125px !important; text-align: center !important; }
+.admin-consultations-table td:nth-child(9) { width: 220px !important; }
+.admin-consultations-table th:nth-child(10),
+.admin-consultations-table td:nth-child(10) { width: 125px !important; text-align: center !important; }
 
 .admin-consultations-table td.admin-consultation-description {
   white-space: normal !important;
@@ -21302,11 +21304,13 @@ html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard 
 .tech-consultation-pending { display:inline-block; padding:6px 10px; border-radius:999px; background:#e8f6ee; color:#18764f; font-size:.78rem; font-weight:700; white-space:nowrap; }
 .tech-consultation-pending.is-completed { background:#e9eefb; color:#334e9a; }
 .tech-consultations-table th { white-space:normal; min-width:125px; }
-.tech-consultations-table th:nth-child(5), .tech-consultations-table td:nth-child(5) { min-width:230px; max-width:300px; white-space:normal; }
+.tech-consultations-table th:nth-child(4), .tech-consultations-table td:nth-child(4) { min-width:220px; max-width:300px; }
+.tech-consultations-table th:nth-child(5), .tech-consultations-table td:nth-child(5) { min-width:170px; }
 .tech-consultation-description { line-height:1.45; overflow-wrap:anywhere; }
-.tech-consultations-table th:nth-child(6), .tech-consultations-table td:nth-child(6) { min-width:125px; }
-.tech-consultations-table th:nth-child(7), .tech-consultations-table td:nth-child(7) { min-width:150px; }
-.tech-consultations-table th:nth-child(8), .tech-consultations-table td:nth-child(8) { min-width:135px; }
+.tech-consultations-table th:nth-child(6), .tech-consultations-table td:nth-child(6) { min-width:230px; max-width:300px; }
+.tech-consultations-table th:nth-child(7), .tech-consultations-table td:nth-child(7) { min-width:125px; }
+.tech-consultations-table th:nth-child(8), .tech-consultations-table td:nth-child(8) { min-width:150px; }
+.tech-consultations-table th:nth-child(9), .tech-consultations-table td:nth-child(9) { min-width:220px; }
 .tech-consultations-table th,
 .tech-consultations-table td { padding:14px 16px !important; vertical-align:top !important; line-height:1.55 !important; }
 .tech-consultations-table th { white-space:normal !important; overflow:visible !important; text-overflow:clip !important; overflow-wrap:normal !important; word-break:normal !important; }
@@ -21315,8 +21319,7 @@ html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard 
 .tech-consultations-table td:nth-child(1) { min-width:150px; }
 .tech-consultations-table td:nth-child(2) { min-width:130px; }
 .tech-consultations-table td:nth-child(3) { min-width:145px; }
-.tech-consultations-table td:nth-child(4) { min-width:170px; }
-.tech-consultations-table td:nth-child(9) { min-width:125px; }
+.tech-consultations-table td:nth-child(10) { min-width:125px; }
 .admin-consultations-table th,
 .admin-consultations-table td { padding:14px 16px !important; vertical-align:top !important; line-height:1.55 !important; }
 .admin-consultations-table th { white-space:normal !important; overflow:visible !important; text-overflow:clip !important; overflow-wrap:normal !important; word-break:normal !important; }
@@ -21325,12 +21328,13 @@ html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) #page-dashboard 
 .admin-consultations-table th:nth-child(1), .admin-consultations-table td:nth-child(1) { min-width:150px; }
 .admin-consultations-table th:nth-child(2), .admin-consultations-table td:nth-child(2) { min-width:130px; }
 .admin-consultations-table th:nth-child(3), .admin-consultations-table td:nth-child(3) { min-width:145px; }
-.admin-consultations-table th:nth-child(4), .admin-consultations-table td:nth-child(4) { min-width:170px; }
-.admin-consultations-table th:nth-child(5), .admin-consultations-table td:nth-child(5) { min-width:230px; max-width:300px; white-space:normal !important; }
-.admin-consultations-table th:nth-child(6), .admin-consultations-table td:nth-child(6) { min-width:125px; }
-.admin-consultations-table th:nth-child(7), .admin-consultations-table td:nth-child(7) { min-width:150px; }
-.admin-consultations-table th:nth-child(8), .admin-consultations-table td:nth-child(8) { min-width:135px; }
-.admin-consultations-table th:nth-child(9), .admin-consultations-table td:nth-child(9) { min-width:125px; }
+.admin-consultations-table th:nth-child(4), .admin-consultations-table td:nth-child(4) { min-width:220px; max-width:300px; }
+.admin-consultations-table th:nth-child(5), .admin-consultations-table td:nth-child(5) { min-width:170px; }
+.admin-consultations-table th:nth-child(6), .admin-consultations-table td:nth-child(6) { min-width:230px; max-width:300px; white-space:normal !important; }
+.admin-consultations-table th:nth-child(7), .admin-consultations-table td:nth-child(7) { min-width:125px; }
+.admin-consultations-table th:nth-child(8), .admin-consultations-table td:nth-child(8) { min-width:150px; }
+.admin-consultations-table th:nth-child(9), .admin-consultations-table td:nth-child(9) { min-width:220px; }
+.admin-consultations-table th:nth-child(10), .admin-consultations-table td:nth-child(10) { min-width:125px; }
 :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .tech-consultations-page .tech-consultation-tabs { border-color:#31584f; color:#a9f0d2; }
 :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .tech-consultations-page .tech-consultation-tabs button { color:#b9d8cd; }
 :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .tech-consultations-page .tech-consultation-tabs button:hover,
@@ -21586,15 +21590,17 @@ html:not([data-leressae-theme="dark"]):not([data-theme="dark"]) body:not(.dark-m
 .tech-consultations-table th:nth-child(3),
 .admin-consultations-table th:nth-child(3) { min-width: 155px !important; }
 .tech-consultations-table th:nth-child(4),
-.admin-consultations-table th:nth-child(4) { min-width: 180px !important; }
+.admin-consultations-table th:nth-child(4) { min-width: 220px !important; }
 .tech-consultations-table th:nth-child(5),
-.admin-consultations-table th:nth-child(5) { min-width: 240px !important; }
+.admin-consultations-table th:nth-child(5) { min-width: 180px !important; }
 .tech-consultations-table th:nth-child(6),
-.admin-consultations-table th:nth-child(6) { min-width: 190px !important; }
+.admin-consultations-table th:nth-child(6) { min-width: 240px !important; }
 .tech-consultations-table th:nth-child(7),
-.admin-consultations-table th:nth-child(7) { min-width: 155px !important; }
+.admin-consultations-table th:nth-child(7) { min-width: 125px !important; }
 .tech-consultations-table th:nth-child(8),
-.admin-consultations-table th:nth-child(8) { min-width: 110px !important; }
+.admin-consultations-table th:nth-child(8) { min-width: 155px !important; }
+.tech-consultations-table th:nth-child(9),
+.admin-consultations-table th:nth-child(9) { min-width: 220px !important; }
 
 /* Admin navigation icons use a consistent, crisp outline style. */
 #page-admin .admin-nav-item .admin-nav-icon {
