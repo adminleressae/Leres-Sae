@@ -3314,7 +3314,8 @@ function parseConsultationSpreadsheetCsv(text) {
         return headers.includes('nama') &&
             headers.includes('no whatsapp') &&
             headers.includes('topik konsultasi') &&
-            headers.includes('deskripsi permasalahan') &&
+            headers.some(header => ['deskripsi permasalahan', 'deskripsi kerusakan', 'deskripsi kerusakan mesin',
+                'deskripsi kerusakan yang dialami', 'deskripsi masalah', 'keluhan'].includes(header)) &&
             headers.includes('tingkat prioritas');
     });
     if (headerIndex < 0) {
@@ -3323,13 +3324,20 @@ function parseConsultationSpreadsheetCsv(text) {
 
     const headers = rows[headerIndex].map(normalize);
     const findColumn = name => headers.indexOf(name);
+    const findColumnByAliases = aliases => {
+        const exactMatch = aliases.map(findColumn).find(index => index >= 0);
+        return exactMatch ?? headers.findIndex(header => aliases.some(alias => header.startsWith(alias + ' ')));
+    };
     const indices = {
         timestamp: findColumn('timestamp'),
         name: findColumn('nama'),
         whatsapp: findColumn('no whatsapp'),
         address: headers.findIndex(header => header === 'alamat' || header.startsWith('alamat ') || header === 'address' || header.startsWith('address ')),
+        brand: findColumnByAliases(['merk mesin', 'merek mesin', 'merk', 'merek', 'brand']),
+        machineSpecification: findColumnByAliases(['spesifikasi mesin', 'spesifikasi alat', 'spesifikasi', 'tipe mesin']),
         topic: findColumn('topik konsultasi'),
-        description: findColumn('deskripsi permasalahan'),
+        description: findColumnByAliases(['deskripsi permasalahan', 'deskripsi kerusakan', 'deskripsi kerusakan mesin',
+            'deskripsi kerusakan yang dialami', 'deskripsi masalah', 'keluhan']),
         priority: findColumn('tingkat prioritas'),
         attachment: findColumn('lampiran pendukung'),
         business: findColumn('bidang usaha (optional)')
@@ -4436,7 +4444,7 @@ function renderReportsPage() {
                     const matches = Array.isArray(response?.data) ? response.data : [];
                     if (!result) return;
                     result.innerHTML = matches.length
-                        ? `<div class="status-list">${matches.map(item => `<article class="service-status-card"><div class="service-status-header"><h3>${escapeHtml(item.topic || 'Konsultasi')}</h3><span class="consultation-status-pill ${item.completed ? 'is-completed' : ''}">${item.completed ? 'Selesai' : 'Perlu Ditangani'}</span></div><div class="service-meta"><div><strong>Waktu pengajuan:</strong> ${escapeHtml(item.timestamp || '-')}</div><div><strong>Alamat:</strong> ${escapeHtml(item.address || '-')}</div></div>${item.answer?`<div class="consultation-public-answer"><strong>Jawaban Petugas</strong><p>${escapeHtml(item.answer).replace(/\r?\n/g,'<br>')}</p></div>`:item.completed?'<p>Konsultasi Anda telah ditandai selesai.</p>':'<p>Permohonan Anda sedang ditindaklanjuti oleh petugas.</p>'}</article>`).join('')}</div>`
+                        ? `<div class="status-list">${matches.map(item => `<article class="service-status-card"><div class="service-status-header"><h3>${escapeHtml(item.topic || 'Konsultasi')}</h3><span class="consultation-status-pill ${item.completed ? 'is-completed' : ''}">${item.completed ? 'Selesai' : 'Perlu Ditangani'}</span></div><div class="service-meta"><div><strong>Waktu pengajuan:</strong> ${escapeHtml(item.timestamp || '-')}</div><div><strong>Alamat:</strong> ${escapeHtml(item.address || '-')}</div><div><strong>Merk Mesin:</strong> ${escapeHtml(item.brand || '-')}</div><div><strong>Spesifikasi Mesin:</strong> ${escapeHtml(item.machineSpecification || '-')}</div><div><strong>Deskripsi Kerusakan:</strong> ${escapeHtml(item.description || '-').replace(/\r?\n/g,'<br>')}</div></div>${item.answer?`<div class="consultation-public-answer"><strong>Jawaban Petugas</strong><p>${escapeHtml(item.answer).replace(/\r?\n/g,'<br>')}</p></div>`:item.completed?'<p>Konsultasi Anda telah ditandai selesai.</p>':'<p>Permohonan Anda sedang ditindaklanjuti oleh petugas.</p>'}</article>`).join('')}</div>`
                         : '<div class="status-empty"><strong>Data konsultasi belum ditemukan.</strong><p>Pastikan nomor WhatsApp sama dengan yang digunakan pada formulir konsultasi.</p></div>';
                 } catch (error) {
                     if (result) result.innerHTML = `<div class="status-empty"><strong>Status konsultasi gagal dimuat.</strong><p>${escapeHtml(error?.message || 'Periksa koneksi lalu coba lagi.')}</p></div>`;
@@ -6045,6 +6053,8 @@ function renderReportsPage() {
                                     <th>Nama</th>
                                     <th>No. WhatsApp</th>
                                     <th>Alamat</th>
+                                    <th>Merk Mesin</th>
+                                    <th>Spesifikasi Mesin</th>
                                     <th>Topik Konsultasi</th>
                                     <th>Deskripsi Permasalahan</th>
                                     <th>Lampiran Pendukung</th>
@@ -6061,6 +6071,8 @@ function renderReportsPage() {
                                         <td>${escapeHtml(item.name || '-')}</td>
                                         <td>${renderWhatsAppLink(item.whatsapp || '-')}</td>
                                         <td>${escapeHtml(item.address || '-')}</td>
+                                        <td>${escapeHtml(item.brand || '-')}</td>
+                                        <td>${escapeHtml(item.machineSpecification || '-')}</td>
                                         <td>${escapeHtml(item.topic || '-')}</td>
                                         <td class="admin-consultation-description">${escapeHtml(item.description || '-')}</td>
                                         <td>${consultationAttachmentHtml(item.attachment)}</td>
@@ -6069,7 +6081,7 @@ function renderReportsPage() {
                                         <td><span class="tech-consultation-pending ${item.completed ? 'is-completed' : ''}">${item.completed ? 'Selesai' : 'Perlu Ditangani'}</span></td>
                                         <td><button class="btn-primary small" type="button" data-consultation-reply="${escapeHtml(item.key)}">${item.answer ? 'Ubah Jawaban' : 'Jawab'}</button></td>
                                     </tr>
-                                `).join('') : `<tr><td colspan="11"><div class="admin-empty-state">${loadError ? 'Data konsultasi tidak dapat dimuat. Periksa koneksi Spreadsheet lalu coba sinkronkan kembali.' : isLoading ? 'Memuat data konsultasi dari Spreadsheet…' : activeTab === 'completed' ? 'Belum ada konsultasi yang selesai.' : 'Belum ada konsultasi yang perlu ditangani.'}</div></td></tr>`}
+                                `).join('') : `<tr><td colspan="13"><div class="admin-empty-state">${loadError ? 'Data konsultasi tidak dapat dimuat. Periksa koneksi Spreadsheet lalu coba sinkronkan kembali.' : isLoading ? 'Memuat data konsultasi dari Spreadsheet…' : activeTab === 'completed' ? 'Belum ada konsultasi yang selesai.' : 'Belum ada konsultasi yang perlu ditangani.'}</div></td></tr>`}
                             </tbody>
                         </table>
                     </div>
@@ -6096,6 +6108,8 @@ function renderReportsPage() {
                 'Nama',
                 'No. WhatsApp',
                 'Alamat',
+                'Merk Mesin',
+                'Spesifikasi Mesin',
                 'Topik Konsultasi',
                 'Deskripsi Permasalahan',
                 'Tingkat Prioritas',
@@ -6110,6 +6124,8 @@ function renderReportsPage() {
                 item.name || item.customer_name || '',
                 item.whatsapp || item.phone || '',
                 item.address || '',
+                item.brand || '',
+                item.machineSpecification || '',
                 item.topic || '',
                 item.description || '',
                 item.priority || '',
@@ -6128,7 +6144,7 @@ function renderReportsPage() {
                 filename: `laporan-konsultasi-${date}.xlsx`,
                 headers,
                 rows,
-                columnWidths: [24, 26, 21, 36, 28, 44, 20, 40, 26, 50, 20, 18]
+                columnWidths: [24, 26, 21, 36, 22, 32, 28, 44, 20, 40, 26, 50, 20, 18]
             });
             showToast('File Excel laporan konsultasi berhasil diunduh.', 'success');
         }
@@ -7956,7 +7972,7 @@ function techSession(){
     const activeTab=window.__TECH_CONSULTATION_TAB__==='completed'?'completed':'pending';
     const visibleRecords=(activeTab==='completed'?completed:pending).filter(item=>{
       const query=String(window.__TECH_CONSULTATION_FILTER__||'').trim().toLowerCase();
-      return !query||[item.name,item.customer_name,item.phone,item.whatsapp,item.address,item.topic,item.description,item.priority,item.business,item.answer,item.timestamp,item.date]
+      return !query||[item.name,item.customer_name,item.phone,item.whatsapp,item.address,item.brand,item.machineSpecification,item.topic,item.description,item.priority,item.business,item.answer,item.timestamp,item.date]
         .some(value=>String(value||'').toLowerCase().includes(query));
     });
     const loading=Boolean(window.__CONSULTATIONS_LOADING__);
@@ -7973,7 +7989,7 @@ function techSession(){
       </div>
       <div class="technician-toolbar tech-client-filters"><input id="techConsultationSearch" class="tech-client-search" placeholder="Cari nama, WhatsApp, topik, atau prioritas" aria-label="Cari konsultasi" value="${escapeHtml(window.__TECH_CONSULTATION_FILTER__||'')}"></div>
       ${loadError?`<p class="tech-consultation-error" role="alert">${escapeHtml(loadError)}</p>`:''}
-      <div class="tech-table-wrap"><table class="tech-table tech-consultations-table"><thead><tr><th>WAKTU PENGAJUAN</th><th>NAMA</th><th>NO. WHATSAPP</th><th>ALAMAT</th><th>TOPIK KONSULTASI</th><th>DESKRIPSI PERMASALAHAN</th><th>LAMPIRAN PENDUKUNG</th><th>BIDANG USAHA</th><th>JAWABAN</th><th>STATUS</th><th>AKSI</th></tr></thead><tbody>${visibleRecords.map(item=>`<tr data-search="${escapeHtml([item.name,item.customer_name,item.phone,item.whatsapp,item.address,item.topic,item.description,item.priority,item.business,item.answer,item.date,item.timestamp].join(' ').toLowerCase())}"><td>${escapeHtml(item.date||item.timestamp||'-')}</td><td>${escapeHtml(item.name||item.customer_name||'-')}</td><td>${escapeHtml(item.phone||item.whatsapp||'-')}</td><td>${escapeHtml(item.address||'-')}</td><td>${escapeHtml(item.topic||'-')}</td><td class="tech-consultation-description">${escapeHtml(item.description||'-')}</td><td>${typeof consultationAttachmentHtml==='function'?consultationAttachmentHtml(item.attachment):escapeHtml(item.attachment||'-')}</td><td>${escapeHtml(item.business||'-')}</td><td class="tech-consultation-answer">${item.answer?escapeHtml(item.answer).replace(/\r?\n/g,'<br>'):'Belum dijawab'}</td><td><span class="tech-consultation-pending ${item.completed?'is-completed':''}">${item.completed?'Selesai':'Perlu Ditangani'}</span></td><td><button type="button" class="tech-btn" data-consultation-reply="${escapeHtml(item.key)}">${item.answer?'Ubah Jawaban':'Jawab'}</button></td></tr>`).join('')||`<tr><td colspan="11"><div class="tech-empty">${emptyMessage}</div></td></tr>`}</tbody></table></div>
+      <div class="tech-table-wrap"><table class="tech-table tech-consultations-table"><thead><tr><th>WAKTU PENGAJUAN</th><th>NAMA</th><th>NO. WHATSAPP</th><th>ALAMAT</th><th>MERK MESIN</th><th>SPESIFIKASI MESIN</th><th>TOPIK KONSULTASI</th><th>DESKRIPSI PERMASALAHAN</th><th>LAMPIRAN PENDUKUNG</th><th>BIDANG USAHA</th><th>JAWABAN</th><th>STATUS</th><th>AKSI</th></tr></thead><tbody>${visibleRecords.map(item=>`<tr data-search="${escapeHtml([item.name,item.customer_name,item.phone,item.whatsapp,item.address,item.brand,item.machineSpecification,item.topic,item.description,item.priority,item.business,item.answer,item.date,item.timestamp].join(' ').toLowerCase())}"><td>${escapeHtml(item.date||item.timestamp||'-')}</td><td>${escapeHtml(item.name||item.customer_name||'-')}</td><td>${escapeHtml(item.phone||item.whatsapp||'-')}</td><td>${escapeHtml(item.address||'-')}</td><td>${escapeHtml(item.brand||'-')}</td><td>${escapeHtml(item.machineSpecification||'-')}</td><td>${escapeHtml(item.topic||'-')}</td><td class="tech-consultation-description">${escapeHtml(item.description||'-')}</td><td>${typeof consultationAttachmentHtml==='function'?consultationAttachmentHtml(item.attachment):escapeHtml(item.attachment||'-')}</td><td>${escapeHtml(item.business||'-')}</td><td class="tech-consultation-answer">${item.answer?escapeHtml(item.answer).replace(/\r?\n/g,'<br>'):'Belum dijawab'}</td><td><span class="tech-consultation-pending ${item.completed?'is-completed':''}">${item.completed?'Selesai':'Perlu Ditangani'}</span></td><td><button type="button" class="tech-btn" data-consultation-reply="${escapeHtml(item.key)}">${item.answer?'Ubah Jawaban':'Jawab'}</button></td></tr>`).join('')||`<tr><td colspan="13"><div class="tech-empty">${emptyMessage}</div></td></tr>`}</tbody></table></div>
     </div>`;
   }
 

@@ -1588,13 +1588,29 @@ function getPublicConsultationStatus_(phone) {
       && headers.indexOf('nama') >= 0
       && headers.indexOf('no whatsapp') >= 0
       && headers.indexOf('topik konsultasi') >= 0
-      && headers.indexOf('deskripsi permasalahan') >= 0;
+      && headers.some(function(header) {
+        return ['deskripsi permasalahan', 'deskripsi kerusakan', 'deskripsi kerusakan mesin',
+          'deskripsi kerusakan yang dialami', 'deskripsi masalah', 'keluhan'].indexOf(header) >= 0;
+      });
   });
   if (headerIndex < 0) {
     throw new Error('Kolom konsultasi pada Spreadsheet tidak ditemukan atau berubah.');
   }
 
   const headers = values[headerIndex].map(normalizeHeader);
+  const findColumnByAliases = function(aliases) {
+    const exactMatch = aliases.map(function(alias) {
+      return headers.indexOf(alias);
+    }).find(function(index) {
+      return index >= 0;
+    });
+    if (exactMatch !== undefined) return exactMatch;
+    return headers.findIndex(function(header) {
+      return aliases.some(function(alias) {
+        return header.indexOf(alias + ' ') === 0;
+      });
+    });
+  };
   const columns = {
     timestamp: headers.indexOf('timestamp'),
     name: headers.indexOf('nama'),
@@ -1603,8 +1619,13 @@ function getPublicConsultationStatus_(phone) {
       return header === 'alamat' || header.indexOf('alamat ') === 0
         || header === 'address' || header.indexOf('address ') === 0;
     }),
+    brand: findColumnByAliases(['merk mesin', 'merek mesin', 'merk', 'merek', 'brand']),
+    machineSpecification: findColumnByAliases(['spesifikasi mesin', 'spesifikasi alat', 'spesifikasi', 'tipe mesin']),
     topic: headers.indexOf('topik konsultasi'),
-    description: headers.indexOf('deskripsi permasalahan')
+    description: findColumnByAliases([
+      'deskripsi permasalahan', 'deskripsi kerusakan', 'deskripsi kerusakan mesin',
+      'deskripsi kerusakan yang dialami', 'deskripsi masalah', 'keluhan'
+    ])
   };
   const consultationStatuses = getConsultationStatuses_();
   const matches = [];
@@ -1629,7 +1650,10 @@ function getPublicConsultationStatus_(phone) {
     matches.push({
       timestamp: String(row[columns.timestamp] || '').trim(),
       address: columns.address < 0 ? '' : String(row[columns.address] || '').trim(),
+      brand: columns.brand < 0 ? '' : String(row[columns.brand] || '').trim(),
+      machineSpecification: columns.machineSpecification < 0 ? '' : String(row[columns.machineSpecification] || '').trim(),
       topic: String(row[columns.topic] || '').trim(),
+      description: String(row[columns.description] || '').trim(),
       completed: consultationStatuses.completedKeys.has(key),
       answer: consultationStatuses.answers[key] || ''
     });
