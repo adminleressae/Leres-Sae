@@ -2051,13 +2051,7 @@ function openServiceDetail(serviceId) {
                                         <td class="admin-damage-description-cell"><span class="service-damage-description">${escapeHtml(damageDescription)}</span></td>
                                         <td><span class="status-badge ${getStatusClass(item.status)}">${escapeHtml(getServiceDisplayStatus(item.status))}</span></td>
                                         <td>
-                                            ${(() => {
-                                                const assignedTechnician = String(item.technician || (f.teknisi !== 'Belum ada' ? f.teknisi : '')).trim();
-                                                const assignedUser = activeTechnicians.find(user => [user.USERNAME, user.NAMA].some(value => String(value || '').trim().toLowerCase() === assignedTechnician.toLowerCase()));
-                                                const terminalStatus = ['selesai', 'siap diambil', 'sudah diambil', 'dibatalkan'].includes(String(item.status || '').trim().toLowerCase());
-                                                if (terminalStatus || isAdminCompleted(item)) return `<span>${escapeHtml(assignedUser?.NAMA || assignedTechnician || 'Belum ditugaskan')}</span>`;
-                                                return `<div class="admin-service-assignment"><select class="admin-service-assignment-select" data-service-technician="${escapeHtml(item.id || '')}" aria-label="Pilih teknisi untuk servis ${escapeHtml(item.id || '')}" ${activeTechnicians.length ? '' : 'disabled'}><option value="" ${assignedUser ? '' : 'selected'}>${activeTechnicians.length ? 'Pilih teknisi' : 'Tidak ada teknisi aktif'}</option>${activeTechnicians.map(user => `<option value="${escapeHtml(user.USERNAME)}" ${assignedUser && assignedUser.USERNAME.toLowerCase() === user.USERNAME.toLowerCase() ? 'selected' : ''}>${escapeHtml(user.NAMA)} (${escapeHtml(user.USERNAME)})</option>`).join('')}</select><button type="button" class="btn-secondary small admin-service-assign-button" data-assign-service="${escapeHtml(item.id || '')}" ${activeTechnicians.length ? '' : 'disabled'}>${assignedTechnician ? 'Simpan Teknisi' : 'Tugaskan'}</button></div>`;
-                                            })()}
+                                            ${renderServiceTechnicianAssignment(item, activeTechnicians)}
                                         </td>
                                     </tr>`;
                                 }).join('') : `<tr><td colspan="12"><div class="admin-empty-state">${emptyMessage}</div></td></tr>`}
@@ -2072,6 +2066,17 @@ function openServiceDetail(serviceId) {
         function isServiceTechnicianAssigned(item) {
             const assignment = String(item && (item.technician || item.id_teknisi) || '').trim().toLowerCase();
             return !!assignment && !['-', 'belum ada', 'belum ditugaskan', 'tidak ditugaskan'].includes(assignment);
+        }
+
+        function renderServiceTechnicianAssignment(item, activeTechnicians) {
+            const formFields = getServiceFormFields(item);
+            const assignedTechnician = String(item.technician || (formFields.teknisi !== 'Belum ada' ? formFields.teknisi : '')).trim();
+            const assignedUser = activeTechnicians.find(user => [user.USERNAME, user.NAMA].some(value => String(value || '').trim().toLowerCase() === assignedTechnician.toLowerCase()));
+            const terminalStatus = ['selesai', 'siap diambil', 'sudah diambil', 'dibatalkan'].includes(String(item.status || '').trim().toLowerCase());
+            if (terminalStatus || isAdminCompleted(item)) {
+                return `<span>${escapeHtml(assignedUser?.NAMA || assignedTechnician || 'Belum ditugaskan')}</span>`;
+            }
+            return `<div class="admin-service-assignment"><select class="admin-service-assignment-select" data-service-technician="${escapeHtml(item.id || '')}" aria-label="Pilih teknisi untuk servis ${escapeHtml(item.id || '')}" ${activeTechnicians.length ? '' : 'disabled'}><option value="" ${assignedUser ? '' : 'selected'}>${activeTechnicians.length ? 'Pilih teknisi' : 'Tidak ada teknisi aktif'}</option>${activeTechnicians.map(user => `<option value="${escapeHtml(user.USERNAME)}" ${assignedUser && assignedUser.USERNAME.toLowerCase() === user.USERNAME.toLowerCase() ? 'selected' : ''}>${escapeHtml(user.NAMA)} (${escapeHtml(user.USERNAME)})</option>`).join('')}</select><button type="button" class="btn-secondary small admin-service-assign-button" data-assign-service="${escapeHtml(item.id || '')}" ${activeTechnicians.length ? '' : 'disabled'}>${assignedTechnician ? 'Simpan Teknisi' : 'Tugaskan'}</button></div>`;
         }
 
 
@@ -2090,6 +2095,7 @@ function openServiceDetail(serviceId) {
 
         function renderRunningServicesPage() {
             const all = loadServiceRecords().filter(item => !isAdminCompleted(item));
+            const activeTechnicians = getTechnicianUsers().filter(user => String(user.STATUS || 'AKTIF').toUpperCase() === 'AKTIF');
             const period = window.__RUNNING_FILTER_PERIOD__ || (document.getElementById('runningPeriodFilter') ? document.getElementById('runningPeriodFilter').value : 'all');
             const keyword = (document.getElementById('runningSearchInput') ? document.getElementById('runningSearchInput').value : window.__RUNNING_FILTER__ || '').trim();
             const customFrom = window.__RUNNING_FILTER_CUSTOM_FROM__ || (document.getElementById('runningDateFrom') ? document.getElementById('runningDateFrom').value : '');
@@ -2116,7 +2122,7 @@ function openServiceDetail(serviceId) {
                     <div class="admin-card-header">
                         <div style="min-width:0;">
                             <h3>Servis Berjalan</h3>
-                            <p class="section-sub-text">Status hanya berubah dari Teknisi. Admin tidak dapat mengubah status di halaman ini.</p>
+                            <p class="section-sub-text">Status hanya berubah dari Teknisi. Untuk mengoreksi penugasan, pilih teknisi yang benar lalu klik Simpan Teknisi. Penugasan tidak dapat diubah setelah servis selesai, siap/sudah diambil, atau dibatalkan.</p>
                         </div>
                         <div class="admin-service-filter-bar">
                             <div class="admin-service-filter-group">
@@ -2170,7 +2176,7 @@ function openServiceDetail(serviceId) {
                                         <td>${f.media_customer.length ? `<button type="button" class="btn-secondary small" data-tech-customer-media="${escapeHtml(item.id || '')}">Lihat Media</button>` : 'Belum Ada'}</td>
                                         <td>${escapeHtml(f.barang)}</td>
                                         <td><span class="status-badge ${getStatusClass(item.status)}">${escapeHtml(getServiceDisplayStatus(item.status))}</span></td>
-                                        <td>${escapeHtml(getAssignedTechnicianLabel(item, f.teknisi))}</td>
+                                        <td>${renderServiceTechnicianAssignment(item, activeTechnicians)}</td>
                                         <td>
                                             <div class="admin-action-stack">
                                                 <button class="admin-confirm-service-btn ${done ? 'ready' : 'blocked'}" type="button" data-admin-complete="${escapeHtml(item.id)}" ${done ? '' : 'disabled'} title="${done ? 'Konfirmasi servis selesai' : 'Menunggu Teknisi menyelesaikan servis'}">Update</button>
@@ -4718,6 +4724,7 @@ function renderReportsPage() {
                         showToast('Data servis tidak ditemukan.', 'error');
                         return;
                     }
+                    const wasAssigned = isServiceTechnicianAssigned(records[index]);
                     assignServiceButton.disabled = true;
                     try {
                         let updatedRecord;
@@ -4751,7 +4758,9 @@ function renderReportsPage() {
                             fromBack: true,
                             skipCustomerSpreadsheetRefresh: true
                         });
-                        showToast(`Servis ${serviceId} ditugaskan kepada ${technician.NAMA}.`, 'success');
+                        showToast(wasAssigned
+                            ? `Penugasan teknisi servis ${serviceId} diperbarui menjadi ${technician.NAMA}.`
+                            : `Servis ${serviceId} ditugaskan kepada ${technician.NAMA}.`, 'success');
                     } catch (error) {
                         if (!handleTechnicianAuthError(error)) showToast(error?.message || 'Penugasan teknisi gagal disimpan.', 'error');
                         assignServiceButton.disabled = false;
