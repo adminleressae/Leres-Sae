@@ -22,6 +22,7 @@ const CONFIG = {
         const API_ACTIONS = new Set([
             'healthCheck','loginAdmin','loginUser','saveTechnician','syncTechnicians','getTechnicians','getServices','getServiceStatus','getDashboard',
             'assignServiceTechnician',
+            'getPublicConsultationStatus','saveCustomerConsultationMessage','markConsultationSatisfied',
             'syncFormResponses','cleanupDuplicateServices','updateServiceStatus','getNews','addNews','updateNews','deleteNews','getLocations','getAgenda','saveAgenda','deleteAgenda',
             'getMedia','getPublicVisitorStats','uploadFileToDrive','uploadMedia','addMedia','updateMedia','deleteMedia', 'syncMediaMetadata', 'migrateExistingMediaMetadata'
         ]); // Expanded only after a successful action response.
@@ -4450,12 +4451,69 @@ function renderReportsPage() {
                     const matches = Array.isArray(response?.data) ? response.data : [];
                     if (!result) return;
                     result.innerHTML = matches.length
-                        ? `<div class="status-list">${matches.map(item => `<article class="service-status-card"><div class="service-status-header"><h3>${escapeHtml(item.topic || 'Konsultasi')}</h3><span class="consultation-status-pill ${item.completed ? 'is-completed' : ''}">${item.completed ? 'Selesai' : 'Perlu Ditangani'}</span></div><div class="service-meta"><div><strong>Waktu pengajuan:</strong> ${escapeHtml(item.timestamp || '-')}</div><div><strong>Alamat:</strong> ${escapeHtml(item.address || '-')}</div><div><strong>Merk Mesin:</strong> ${escapeHtml(item.brand || '-')}</div><div><strong>Spesifikasi Mesin:</strong> ${escapeHtml(item.machineSpecification || '-')}</div><div><strong>Deskripsi Kerusakan:</strong> ${escapeHtml(item.description || '-').replace(/\r?\n/g,'<br>')}</div></div>${item.answer?`<div class="consultation-public-answer"><strong>Jawaban Petugas</strong><p>${escapeHtml(item.answer).replace(/\r?\n/g,'<br>')}</p></div>`:item.completed?'<p>Konsultasi Anda telah ditandai selesai.</p>':'<p>Permohonan Anda sedang ditindaklanjuti oleh petugas.</p>'}</article>`).join('')}</div>`
+                        ? `<div class="status-list">${matches.map((item, index) => {
+                            const thread = Array.isArray(item.thread) ? item.thread : (item.answer ? [{sender:'admin', message:item.answer, at:''}] : []);
+                            const messages = thread.map(message => `<div class="consultation-thread-message ${message.sender === 'admin' ? 'is-admin' : 'is-customer'}"><strong>${message.sender === 'admin' ? 'Petugas' : 'Anda'}</strong><p>${escapeHtml(message.message || '').replace(/\r?\n/g,'<br>')}</p></div>`).join('');
+                            const satisfied = item.satisfied === true;
+                            const followup = satisfied
+                                ? `<div class="consultation-satisfied-state" role="status"><span aria-hidden="true">✓</span><div><strong>Konsultasi ditutup</strong><p>Anda sudah menandai jawaban ini puas. Tidak ada pertanyaan lanjutan yang dapat dikirim.</p></div></div>`
+                                : `<form class="consultation-public-followup" data-consultation-followup="${escapeHtml(item.key)}"><label for="consultationFollowup${index}"><strong>Tanya lanjutan</strong></label><textarea id="consultationFollowup${index}" name="message" maxlength="5000" required placeholder="Tulis pertanyaan lanjutan untuk petugas..."></textarea><div class="consultation-followup-actions">${item.completed ? `<button type="button" class="consultation-satisfied-btn" data-consultation-satisfied="${escapeHtml(item.key)}"><span aria-hidden="true">✓</span> Puas dengan jawaban</button>` : ''}<button type="submit" class="btn-primary">Kirim Pertanyaan</button></div></form>`;
+                            return `<article class="service-status-card"><div class="service-status-header"><h3>${escapeHtml(item.topic || 'Konsultasi')}</h3><span class="consultation-status-pill ${item.completed ? 'is-completed' : ''}">${satisfied ? 'Sudah Selesai' : item.completed ? 'Sudah Dijawab' : 'Perlu Ditangani'}</span></div><div class="service-meta"><div><strong>Waktu pengajuan:</strong> ${escapeHtml(item.timestamp || '-')}</div><div><strong>Alamat:</strong> ${escapeHtml(item.address || '-')}</div><div><strong>Merk Mesin:</strong> ${escapeHtml(item.brand || '-')}</div><div><strong>Spesifikasi Mesin:</strong> ${escapeHtml(item.machineSpecification || '-')}</div><div><strong>Deskripsi Kerusakan:</strong> ${escapeHtml(item.description || '-').replace(/\r?\n/g,'<br>')}</div></div>${messages ? `<div class="consultation-thread"><strong>Riwayat Percakapan</strong>${messages}</div>` : '<p>Permohonan Anda sedang ditindaklanjuti oleh petugas.</p>'}${followup}</article>`;
+                        }).join('')}</div>`
                         : '<div class="status-empty"><strong>Data konsultasi belum ditemukan.</strong><p>Pastikan nomor WhatsApp sama dengan yang digunakan pada formulir konsultasi.</p></div>';
                 } catch (error) {
                     if (result) result.innerHTML = `<div class="status-empty"><strong>Status konsultasi gagal dimuat.</strong><p>${escapeHtml(error?.message || 'Periksa koneksi lalu coba lagi.')}</p></div>`;
                 } finally {
                     if (submitButton) submitButton.disabled = false;
+                }
+            });
+
+            document.getElementById('consultationStatusResult')?.addEventListener('submit', async function (event) {
+                const form = event.target.closest('[data-consultation-followup]');
+                if (!form) return;
+                event.preventDefault();
+                const phone = document.getElementById('consultationStatusPhone')?.value.trim();
+                const message = String(new FormData(form).get('message') || '').trim();
+                if (!message) {
+                    showToast('Tulis pertanyaan lanjutan terlebih dahulu.', 'error');
+                    return;
+                }
+                const submit = form.querySelector('button[type="submit"]');
+                if (submit) submit.disabled = true;
+                try {
+                    const response = await apiRequest('saveCustomerConsultationMessage', {
+                        consultationKey: form.dataset.consultationFollowup,
+                        phone,
+                        message
+                    });
+                    if (!response || response.success === false) throw new Error(response?.message || 'Pertanyaan lanjutan gagal dikirim.');
+                    showToast('Pertanyaan lanjutan berhasil dikirim. Petugas akan menjawab kembali.', 'success');
+                    document.getElementById('consultationStatusForm')?.requestSubmit();
+                } catch (error) {
+                    showToast(error?.message || 'Pertanyaan lanjutan gagal dikirim.', 'error');
+                    if (submit) submit.disabled = false;
+                }
+            });
+
+            document.getElementById('consultationStatusResult')?.addEventListener('click', async function (event) {
+                const satisfiedButton = event.target.closest('[data-consultation-satisfied]');
+                if (!satisfiedButton) return;
+                event.preventDefault();
+                const phone = document.getElementById('consultationStatusPhone')?.value.trim();
+                satisfiedButton.disabled = true;
+                satisfiedButton.textContent = 'Menutup konsultasi…';
+                try {
+                    const response = await apiRequest('markConsultationSatisfied', {
+                        consultationKey: satisfiedButton.dataset.consultationSatisfied,
+                        phone
+                    });
+                    if (!response || response.success === false) throw new Error(response?.message || 'Status kepuasan gagal disimpan.');
+                    showToast('Terima kasih. Konsultasi telah ditutup.', 'success');
+                    document.getElementById('consultationStatusForm')?.requestSubmit();
+                } catch (error) {
+                    satisfiedButton.disabled = false;
+                    satisfiedButton.innerHTML = '<span aria-hidden="true">✓</span> Puas dengan jawaban';
+                    showToast(error?.message || 'Status kepuasan gagal disimpan.', 'error');
                 }
             });
 
@@ -5971,13 +6029,16 @@ function renderReportsPage() {
             const modal = document.createElement('div');
             modal.id = 'consultationReplyModal';
             modal.className = 'stock-modal show consultation-reply-modal';
+            const thread = Array.isArray(item.thread) ? item.thread : [];
+            const threadHtml = thread.length ? `<div class="consultation-thread admin-consultation-thread">${thread.map(message => `<div class="consultation-thread-message ${message.sender === 'admin' ? 'is-admin' : 'is-customer'}"><strong>${message.sender === 'admin' ? 'Petugas' : 'Pelanggan'}</strong><p>${escapeHtml(message.message || '').replace(/\r?\n/g, '<br>')}</p></div>`).join('')}</div>` : '';
             modal.innerHTML = `<section class="stock-panel" role="dialog" aria-modal="true" aria-labelledby="consultationReplyTitle">
                 <header class="stock-panel-header"><h3 id="consultationReplyTitle">Jawab Konsultasi</h3><button type="button" class="stock-close" data-consultation-reply-close aria-label="Tutup">×</button></header>
                 <form class="stock-body" data-consultation-reply-form>
                     <p><strong>${escapeHtml(item.topic || 'Konsultasi')}</strong></p>
                     <p>${escapeHtml(item.description || '')}</p>
+                    ${threadHtml}
                     <label class="consultation-reply-label" for="consultationReplyText">Jawaban untuk pelanggan</label>
-                    <textarea id="consultationReplyText" name="answer" maxlength="5000" required placeholder="Tulis jawaban konsultasi..." aria-describedby="consultationReplyHelp">${escapeHtml(item.answer || '')}</textarea>
+                    <textarea id="consultationReplyText" name="answer" maxlength="5000" required placeholder="Tulis jawaban konsultasi..." aria-describedby="consultationReplyHelp"></textarea>
                     <small id="consultationReplyHelp">Jawaban akan disimpan dan ditampilkan pada halaman Cek Status Konsultasi.</small>
                     <div class="consultation-reply-actions"><button type="button" class="btn-secondary" data-consultation-reply-close>Batal</button><button type="submit" class="btn-primary">Kirim Jawaban</button></div>
                 </form>
@@ -6005,6 +6066,8 @@ function renderReportsPage() {
                     if (!response || response.success === false) throw new Error(response?.message || 'Jawaban konsultasi gagal disimpan.');
                     item.answer = answer;
                     item.completed = true;
+                    item.thread = Array.isArray(item.thread) ? item.thread : [];
+                    item.thread.push({ sender: 'admin', name: 'Petugas', message: answer, at: new Date().toISOString() });
                     close();
                     if (isTechnicianLoggedIn()) {
                         window.__TECH_CONSULTATION_TAB__ = 'completed';
@@ -6088,7 +6151,7 @@ function renderReportsPage() {
                                         <td>${escapeHtml(item.business || '-')}</td>
                                         <td class="admin-consultation-answer">${item.answer ? escapeHtml(item.answer).replace(/\r?\n/g, '<br>') : 'Belum dijawab'}</td>
                                         <td><span class="tech-consultation-pending ${item.completed ? 'is-completed' : ''}">${item.completed ? 'Selesai' : 'Perlu Ditangani'}</span></td>
-                                        <td><button class="btn-primary small" type="button" data-consultation-reply="${escapeHtml(item.key)}">${item.answer ? 'Ubah Jawaban' : 'Jawab'}</button></td>
+                                        <td><button class="btn-primary small" type="button" data-consultation-reply="${escapeHtml(item.key)}">Tambah Jawaban</button></td>
                                     </tr>
                                 `).join('') : `<tr><td colspan="13"><div class="admin-empty-state">${loadError ? 'Data konsultasi tidak dapat dimuat. Periksa koneksi Spreadsheet lalu coba sinkronkan kembali.' : isLoading ? 'Memuat data konsultasi dari Spreadsheet…' : activeTab === 'completed' ? 'Belum ada konsultasi yang selesai.' : 'Belum ada konsultasi yang perlu ditangani.'}</div></td></tr>`}
                             </tbody>
@@ -6965,9 +7028,12 @@ function renderReportsPage() {
                     const answers = completedResponse?.data?.answers && typeof completedResponse.data.answers === 'object'
                         ? completedResponse.data.answers
                         : {};
+                    const threads = completedResponse?.data?.threads && typeof completedResponse.data.threads === 'object'
+                        ? completedResponse.data.threads
+                        : {};
                     const consultations = await Promise.all(parseConsultationSpreadsheetCsv(csv).map(async item => {
                         const key = await consultationIdentityKey(item);
-                        return { ...item, key, completed: completedSet.has(key), answer: String(answers[key] || '') };
+                        return { ...item, key, completed: completedSet.has(key), answer: String(answers[key] || ''), thread: Array.isArray(threads[key]) ? threads[key] : [] };
                     }));
                     window.__CONSULTATIONS_CACHE__ = consultations;
                     window.__CONSULTATIONS_CACHE_UPDATED_AT__ = Date.now();
@@ -7998,7 +8064,7 @@ function techSession(){
       </div>
       <div class="technician-toolbar tech-client-filters"><input id="techConsultationSearch" class="tech-client-search" placeholder="Cari nama, WhatsApp, topik, atau prioritas" aria-label="Cari konsultasi" value="${escapeHtml(window.__TECH_CONSULTATION_FILTER__||'')}"></div>
       ${loadError?`<p class="tech-consultation-error" role="alert">${escapeHtml(loadError)}</p>`:''}
-      <div class="tech-table-wrap"><table class="tech-table tech-consultations-table"><thead><tr><th>WAKTU PENGAJUAN</th><th>NAMA</th><th>NO. WHATSAPP</th><th>ALAMAT</th><th>MERK MESIN</th><th>SPESIFIKASI MESIN</th><th>TOPIK KONSULTASI</th><th>DESKRIPSI PERMASALAHAN</th><th>LAMPIRAN PENDUKUNG</th><th>BIDANG USAHA</th><th>JAWABAN</th><th>STATUS</th><th>AKSI</th></tr></thead><tbody>${visibleRecords.map(item=>`<tr data-search="${escapeHtml([item.name,item.customer_name,item.phone,item.whatsapp,item.address,item.brand,item.machineSpecification,item.topic,item.description,item.priority,item.business,item.answer,item.date,item.timestamp].join(' ').toLowerCase())}"><td>${escapeHtml(item.date||item.timestamp||'-')}</td><td>${escapeHtml(item.name||item.customer_name||'-')}</td><td>${escapeHtml(item.phone||item.whatsapp||'-')}</td><td>${escapeHtml(item.address||'-')}</td><td>${escapeHtml(item.brand||'-')}</td><td>${escapeHtml(item.machineSpecification||'-')}</td><td>${escapeHtml(item.topic||'-')}</td><td class="tech-consultation-description">${escapeHtml(item.description||'-')}</td><td>${typeof consultationAttachmentHtml==='function'?consultationAttachmentHtml(item.attachment):escapeHtml(item.attachment||'-')}</td><td>${escapeHtml(item.business||'-')}</td><td class="tech-consultation-answer">${item.answer?escapeHtml(item.answer).replace(/\r?\n/g,'<br>'):'Belum dijawab'}</td><td><span class="tech-consultation-pending ${item.completed?'is-completed':''}">${item.completed?'Selesai':'Perlu Ditangani'}</span></td><td><button type="button" class="tech-btn" data-consultation-reply="${escapeHtml(item.key)}">${item.answer?'Ubah Jawaban':'Jawab'}</button></td></tr>`).join('')||`<tr><td colspan="13"><div class="tech-empty">${emptyMessage}</div></td></tr>`}</tbody></table></div>
+      <div class="tech-table-wrap"><table class="tech-table tech-consultations-table"><thead><tr><th>WAKTU PENGAJUAN</th><th>NAMA</th><th>NO. WHATSAPP</th><th>ALAMAT</th><th>MERK MESIN</th><th>SPESIFIKASI MESIN</th><th>TOPIK KONSULTASI</th><th>DESKRIPSI PERMASALAHAN</th><th>LAMPIRAN PENDUKUNG</th><th>BIDANG USAHA</th><th>JAWABAN</th><th>STATUS</th><th>AKSI</th></tr></thead><tbody>${visibleRecords.map(item=>`<tr data-search="${escapeHtml([item.name,item.customer_name,item.phone,item.whatsapp,item.address,item.brand,item.machineSpecification,item.topic,item.description,item.priority,item.business,item.answer,item.date,item.timestamp].join(' ').toLowerCase())}"><td>${escapeHtml(item.date||item.timestamp||'-')}</td><td>${escapeHtml(item.name||item.customer_name||'-')}</td><td>${escapeHtml(item.phone||item.whatsapp||'-')}</td><td>${escapeHtml(item.address||'-')}</td><td>${escapeHtml(item.brand||'-')}</td><td>${escapeHtml(item.machineSpecification||'-')}</td><td>${escapeHtml(item.topic||'-')}</td><td class="tech-consultation-description">${escapeHtml(item.description||'-')}</td><td>${typeof consultationAttachmentHtml==='function'?consultationAttachmentHtml(item.attachment):escapeHtml(item.attachment||'-')}</td><td>${escapeHtml(item.business||'-')}</td><td class="tech-consultation-answer">${item.answer?escapeHtml(item.answer).replace(/\r?\n/g,'<br>'):'Belum dijawab'}</td><td><span class="tech-consultation-pending ${item.completed?'is-completed':''}">${item.completed?'Selesai':'Perlu Ditangani'}</span></td><td><button type="button" class="tech-btn" data-consultation-reply="${escapeHtml(item.key)}">Tambah Jawaban</button></td></tr>`).join('')||`<tr><td colspan="13"><div class="tech-empty">${emptyMessage}</div></td></tr>`}</tbody></table></div>
     </div>`;
   }
 

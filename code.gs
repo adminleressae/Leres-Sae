@@ -92,7 +92,7 @@ const HISTORY_HEADERS = [
   'timestamp'
 ];
 
-const CONSULTATION_STATUS_HEADERS = ['consultation_key', 'completed_at', 'completed_by', 'answer', 'answered_by'];
+const CONSULTATION_STATUS_HEADERS = ['consultation_key', 'completed_at', 'completed_by', 'answer', 'answered_by', 'thread'];
 const AGENDA_HEADERS = ['id', 'date', 'title', 'description', 'created_at', 'updated_at', 'updated_by', 'google_event_id'];
 
 const USER_HEADERS = [
@@ -196,6 +196,12 @@ function doPost(e) {
 
       case 'getPublicConsultationStatus':
         return json_(getPublicConsultationStatus_(body.phone));
+
+      case 'saveCustomerConsultationMessage':
+        return json_(saveCustomerConsultationMessage_(body));
+
+      case 'markConsultationSatisfied':
+        return json_(markConsultationSatisfied_(body));
 
       case 'getPublicVisitorStats':
         return json_(getPublicVisitorStats_(body.visitorId));
@@ -1648,6 +1654,7 @@ function getPublicConsultationStatus_(phone) {
       return ('0' + ((byte < 0 ? byte + 256 : byte).toString(16))).slice(-2);
     }).join('');
     matches.push({
+      key: key,
       timestamp: String(row[columns.timestamp] || '').trim(),
       address: columns.address < 0 ? '' : String(row[columns.address] || '').trim(),
       brand: columns.brand < 0 ? '' : String(row[columns.brand] || '').trim(),
@@ -1655,7 +1662,9 @@ function getPublicConsultationStatus_(phone) {
       topic: String(row[columns.topic] || '').trim(),
       description: String(row[columns.description] || '').trim(),
       completed: consultationStatuses.completedKeys.has(key),
-      answer: consultationStatuses.answers[key] || ''
+      satisfied: consultationStatuses.satisfiedKeys.has(key),
+      answer: consultationStatuses.answers[key] || '',
+      thread: consultationStatuses.threads[key] || []
     });
   });
 
@@ -2942,7 +2951,7 @@ function driveDirectUrl_(fileId) {
 
 function getCompletedConsultations_() {
   const statuses = getConsultationStatuses_();
-  return { success: true, data: { completedKeys: Array.from(statuses.completedKeys), answers: statuses.answers } };
+  return { success: true, data: { completedKeys: Array.from(statuses.completedKeys), satisfiedKeys: Array.from(statuses.satisfiedKeys), answers: statuses.answers, threads: statuses.threads } };
 }
 
 function getConsultationStatuses_() {
@@ -2953,17 +2962,33 @@ function getConsultationStatuses_() {
   const keyColumn = findHeaderIndex_(headers, ['consultation_key']);
   const completedAtColumn = findHeaderIndex_(headers, ['completed_at']);
   const answerColumn = findHeaderIndex_(headers, ['answer']);
+  const threadColumn = findHeaderIndex_(headers, ['thread']);
   if (keyColumn < 0 || completedAtColumn < 0 || answerColumn < 0) throw new Error('Kolom status konsultasi tidak ditemukan.');
   const completedKeys = new Set();
+  const satisfiedKeys = new Set();
   const answers = {};
+  const threads = {};
   values.slice(1).forEach(function(row) {
     const key = String(row[keyColumn] || '');
     if (!key) return;
-    if (String(row[completedAtColumn] || '')) completedKeys.add(key);
+    const completedAt = String(row[completedAtColumn] || '').trim();
+    if (completedAt) completedKeys.add(key);
+    const completedByColumn = findHeaderIndex_(headers, ['completed_by']);
+    if (completedByColumn >= 0 && String(row[completedByColumn] || '').trim() === 'Pelanggan - Puas') {
+      satisfiedKeys.add(key);
+    }
     const answer = String(row[answerColumn] || '').trim();
     if (answer) answers[key] = answer;
+    if (threadColumn >= 0) {
+      try {
+        const parsed = JSON.parse(String(row[threadColumn] || ''));
+        if (Array.isArray(parsed)) threads[key] = parsed;
+      } catch (error) {
+        threads[key] = [];
+      }
+    }
   });
-  return { completedKeys: completedKeys, answers: answers };
+  return { completedKeys: completedKeys, satisfiedKeys: satisfiedKeys, answers: answers, threads: threads };
 }
 
 function saveConsultationAnswer_(body, session) {
@@ -2985,6 +3010,11 @@ function saveConsultationAnswer_(body, session) {
     const completedByColumn = findHeaderIndex_(headers, ['completed_by']);
     const answerColumn = findHeaderIndex_(headers, ['answer']);
     const answeredByColumn = findHeaderIndex_(headers, ['answered_by']);
+    let threadColumn = findHeaderIndex_(headers, ['thread']);
+    if (threadColumn < 0) {
+      threadColumn = sheet.getLastColumn();
+      sheet.getRange(1, threadColumn + 1).setValue('thread');
+    }
     if ([keyColumn, completedAtColumn, completedByColumn, answerColumn, answeredByColumn].some(function(column) { return column < 0; })) {
       throw new Error('Kolom status konsultasi tidak lengkap.');
     }
@@ -3005,7 +3035,133 @@ function saveConsultationAnswer_(body, session) {
     sheet.getRange(targetRow, completedByColumn + 1).setValue(String(session.username || ''));
     sheet.getRange(targetRow, answerColumn + 1).setValue(answer);
     sheet.getRange(targetRow, answeredByColumn + 1).setValue(String(session.username || ''));
+    let thread = [];
+    const rawThread = String(sheet.getRange(targetRow, threadColumn + 1).getValue() || '');
+    if (rawThread) {
+      try {
+        const parsed = JSON.parse(rawThread);
+        if (Array.isArray(parsed)) thread = parsed;
+      } catch (error) {}
+    }
+    thread.push({
+      sender: 'admin',
+      name: String(session.username || 'Petugas'),
+      message: answer,
+      at: now
+    });
+    sheet.getRange(targetRow, threadColumn + 1).setValue(JSON.stringify(thread));
     return { success: true, data: { consultationKey: key, answer: answer, completedAt: now } };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function markConsultationSatisfied_(body) {
+  const key = String(body.consultationKey || '').trim();
+  const phone = String(body.phone || '').trim();
+  if (!/^[a-f0-9]{64}$/i.test(key)) throw new Error('Identitas konsultasi tidak valid.');
+  if (!normalizePhone_(phone)) throw new Error('Nomor WhatsApp tidak valid.');
+
+  const publicMatches = getPublicConsultationStatus_(phone);
+  const owned = Array.isArray(publicMatches.data) && publicMatches.data.some(function(item) {
+    return item.key === key;
+  });
+  if (!owned) throw new Error('Konsultasi tidak ditemukan untuk nomor WhatsApp tersebut.');
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    const sheet = ensureSheet_(spreadsheet, CONFIG.SHEETS.CONSULTATION_STATUS, CONSULTATION_STATUS_HEADERS);
+    const values = sheet.getDataRange().getValues();
+    const headers = values[0].map(String);
+    const keyColumn = findHeaderIndex_(headers, ['consultation_key']);
+    const completedAtColumn = findHeaderIndex_(headers, ['completed_at']);
+    const completedByColumn = findHeaderIndex_(headers, ['completed_by']);
+    if (keyColumn < 0 || completedAtColumn < 0 || completedByColumn < 0) {
+      throw new Error('Kolom status konsultasi tidak ditemukan.');
+    }
+
+    let targetRow = -1;
+    for (let rowIndex = 1; rowIndex < values.length; rowIndex++) {
+      if (String(values[rowIndex][keyColumn] || '') === key) {
+        targetRow = rowIndex + 1;
+        break;
+      }
+    }
+    if (targetRow < 0) targetRow = sheet.getLastRow() + 1;
+    if (targetRow > sheet.getLastRow()) sheet.getRange(targetRow, keyColumn + 1).setValue(key);
+
+    const now = new Date().toISOString();
+    sheet.getRange(targetRow, completedAtColumn + 1).setValue(now);
+    sheet.getRange(targetRow, completedByColumn + 1).setValue('Pelanggan - Puas');
+    return { success: true, data: { consultationKey: key, satisfiedAt: now } };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function saveCustomerConsultationMessage_(body) {
+  const key = String(body.consultationKey || '').trim();
+  const phone = String(body.phone || '').trim();
+  const message = String(body.message || '').trim();
+  if (!/^[a-f0-9]{64}$/i.test(key)) throw new Error('Identitas konsultasi tidak valid.');
+  if (!normalizePhone_(phone)) throw new Error('Nomor WhatsApp tidak valid.');
+  if (!message) throw new Error('Tulis pertanyaan lanjutan terlebih dahulu.');
+  if (message.length > 5000) throw new Error('Pertanyaan lanjutan maksimal 5000 karakter.');
+
+  const publicMatches = getPublicConsultationStatus_(phone);
+  const owned = Array.isArray(publicMatches.data) && publicMatches.data.some(function(item) {
+    return item.key === key;
+  });
+  if (!owned) throw new Error('Konsultasi tidak ditemukan untuk nomor WhatsApp tersebut.');
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    const sheet = ensureSheet_(spreadsheet, CONFIG.SHEETS.CONSULTATION_STATUS, CONSULTATION_STATUS_HEADERS);
+    const values = sheet.getDataRange().getValues();
+    const headers = values[0].map(String);
+    const keyColumn = findHeaderIndex_(headers, ['consultation_key']);
+    let threadColumn = findHeaderIndex_(headers, ['thread']);
+    const completedAtColumn = findHeaderIndex_(headers, ['completed_at']);
+    const completedByColumn = findHeaderIndex_(headers, ['completed_by']);
+    if (keyColumn < 0 || completedAtColumn < 0) throw new Error('Kolom status konsultasi tidak ditemukan.');
+    if (threadColumn < 0) {
+      threadColumn = sheet.getLastColumn();
+      sheet.getRange(1, threadColumn + 1).setValue('thread');
+    }
+
+    let targetRow = -1;
+    for (let rowIndex = 1; rowIndex < values.length; rowIndex++) {
+      if (String(values[rowIndex][keyColumn] || '') === key) {
+        targetRow = rowIndex + 1;
+        break;
+      }
+    }
+    if (targetRow < 0) targetRow = sheet.getLastRow() + 1;
+    if (targetRow > sheet.getLastRow()) sheet.getRange(targetRow, keyColumn + 1).setValue(key);
+
+    const now = new Date().toISOString();
+    sheet.getRange(targetRow, completedAtColumn + 1).clearContent();
+    if (completedByColumn >= 0) sheet.getRange(targetRow, completedByColumn + 1).clearContent();
+    let thread = [];
+    const rawThread = String(sheet.getRange(targetRow, threadColumn + 1).getValue() || '');
+    if (rawThread) {
+      try {
+        const parsed = JSON.parse(rawThread);
+        if (Array.isArray(parsed)) thread = parsed;
+      } catch (error) {}
+    }
+    thread.push({
+      sender: 'customer',
+      name: 'Pelanggan',
+      message: message,
+      at: now
+    });
+    sheet.getRange(targetRow, threadColumn + 1).setValue(JSON.stringify(thread));
+    return { success: true, data: { consultationKey: key, message: message, at: now } };
   } finally {
     lock.releaseLock();
   }
