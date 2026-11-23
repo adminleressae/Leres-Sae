@@ -3031,8 +3031,6 @@ function saveConsultationAnswer_(body, session) {
       targetRow = sheet.getLastRow() + 1;
       sheet.getRange(targetRow, keyColumn + 1).setValue(key);
     }
-    sheet.getRange(targetRow, completedAtColumn + 1).setValue(now);
-    sheet.getRange(targetRow, completedByColumn + 1).setValue(String(session.username || ''));
     sheet.getRange(targetRow, answerColumn + 1).setValue(answer);
     sheet.getRange(targetRow, answeredByColumn + 1).setValue(String(session.username || ''));
     let thread = [];
@@ -3181,15 +3179,23 @@ function completeConsultation_(body, session) {
     const values = sheet.getDataRange().getValues();
     const headers = values[0].map(String);
     const keyColumn = findHeaderIndex_(headers, ['consultation_key']);
-    if (keyColumn < 0) throw new Error('Kolom consultation_key tidak ditemukan.');
+    const completedAtColumn = findHeaderIndex_(headers, ['completed_at']);
+    const completedByColumn = findHeaderIndex_(headers, ['completed_by']);
+    if (keyColumn < 0 || completedAtColumn < 0 || completedByColumn < 0) throw new Error('Kolom status konsultasi tidak lengkap.');
 
     for (let rowIndex = 1; rowIndex < values.length; rowIndex++) {
       if (String(values[rowIndex][keyColumn] || '') === key) {
-        return { success: true, alreadyCompleted: true };
+        if (String(values[rowIndex][completedAtColumn] || '').trim()) {
+          return { success: true, alreadyCompleted: true };
+        }
+        const targetRow = rowIndex + 1;
+        sheet.getRange(targetRow, completedAtColumn + 1).setValue(new Date().toISOString());
+        sheet.getRange(targetRow, completedByColumn + 1).setValue(String(session.username || 'ADMIN'));
+        return { success: true, alreadyCompleted: false };
       }
     }
 
-    sheet.appendRow([key, new Date().toISOString(), String(session.username || 'ADMIN'), '', '']);
+    sheet.appendRow([key, new Date().toISOString(), String(session.username || 'ADMIN'), '', '', '']);
     return { success: true, alreadyCompleted: false };
   } finally {
     lock.releaseLock();

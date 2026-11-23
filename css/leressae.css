@@ -9659,6 +9659,8 @@ img, video, iframe { max-width: 100%; }
 .consultation-reply-modal .consultation-reply-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:8px; }
 .consultation-reply-modal .consultation-reply-actions button { min-height:42px; padding:8px 16px; }
 .admin-consultations-table td:last-child .btn-primary { white-space:nowrap; }
+.admin-consultation-action-group { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.admin-consultation-action-group button { white-space:nowrap; }
 .tech-consultations-page .tech-consultation-answer { min-width:220px; max-width:340px; overflow-wrap:anywhere; }
 .tech-consultations-page td:last-child .tech-btn { white-space:nowrap; }
 #page-status .consultation-status-help { margin:24px 0 0; color:#36576a; }

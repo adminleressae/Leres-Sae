@@ -6065,7 +6065,6 @@ function renderReportsPage() {
                     });
                     if (!response || response.success === false) throw new Error(response?.message || 'Jawaban konsultasi gagal disimpan.');
                     item.answer = answer;
-                    item.completed = true;
                     item.thread = Array.isArray(item.thread) ? item.thread : [];
                     item.thread.push({ sender: 'admin', name: 'Petugas', message: answer, at: new Date().toISOString() });
                     close();
@@ -6151,7 +6150,7 @@ function renderReportsPage() {
                                         <td>${escapeHtml(item.business || '-')}</td>
                                         <td class="admin-consultation-answer">${item.answer ? escapeHtml(item.answer).replace(/\r?\n/g, '<br>') : 'Belum dijawab'}</td>
                                         <td><span class="tech-consultation-pending ${item.completed ? 'is-completed' : ''}">${item.completed ? 'Selesai' : 'Perlu Ditangani'}</span></td>
-                                        <td><button class="btn-primary small" type="button" data-consultation-reply="${escapeHtml(item.key)}">Tambah Jawaban</button></td>
+                                        <td><div class="admin-consultation-action-group"><button class="btn-primary small" type="button" data-consultation-reply="${escapeHtml(item.key)}">Tambah Jawaban</button>${!item.completed ? `<button class="btn-secondary small" type="button" data-consultation-done="${escapeHtml(item.key)}">Selesai</button>` : ''}</div></td>
                                     </tr>
                                 `).join('') : `<tr><td colspan="13"><div class="admin-empty-state">${loadError ? 'Data konsultasi tidak dapat dimuat. Periksa koneksi Spreadsheet lalu coba sinkronkan kembali.' : isLoading ? 'Memuat data konsultasi dari Spreadsheet…' : activeTab === 'completed' ? 'Belum ada konsultasi yang selesai.' : 'Belum ada konsultasi yang perlu ditangani.'}</div></td></tr>`}
                             </tbody>
