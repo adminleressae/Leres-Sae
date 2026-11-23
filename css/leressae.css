@@ -9599,14 +9599,17 @@ img, video, iframe { max-width: 100%; }
 #page-status .consultation-status-form button:disabled { cursor:wait; opacity:.7; }
 #page-status .consultation-status-pill { display:inline-flex; align-items:center; padding:6px 10px; border-radius:999px; background:#fff4d6; color:#805400; font-size:.78rem; font-weight:700; white-space:nowrap; }
 #page-status .consultation-status-pill.is-completed { background:#e8f6ee; color:#18764f; }
+#page-status .consultation-new-reply-notification { display:flex; align-items:center; gap:8px; margin-top:12px; padding:10px 12px; border:1px solid #f0bd35; border-radius:10px; background:#fff8df; color:#805400; }
 #page-status .consultation-public-answer { margin-top:16px; padding:14px 16px; border-left:4px solid #18764f; border-radius:8px; background:#f0f8f3; color:#23463a; }
 #page-status .consultation-public-answer p { margin:6px 0 0; line-height:1.6; overflow-wrap:anywhere; }
 #page-status .consultation-thread { display:grid; gap:10px; margin-top:16px; padding:12px; border-radius:12px; background:#edf5f2; }
 #page-status .consultation-thread-message,
 .consultation-reply-modal .consultation-thread-message { max-width:88%; padding:10px 12px; border-radius:12px; line-height:1.5; overflow-wrap:anywhere; }
-#page-status .consultation-thread-message.is-admin,
+/* Tampilan IKM: pesan IKM di kanan dan balasan petugas di kiri. */
+#page-status .consultation-thread-message.is-customer { justify-self:end; background:#0f806f; color:#ffffff; border:1px solid #0a6659; }
+#page-status .consultation-thread-message.is-admin { justify-self:start; background:#ffffff; color:#123b34; border:1px solid #8fcabd; }
+/* Tampilan modal admin/teknisi: posisi kebalikannya. */
 .consultation-reply-modal .consultation-thread-message.is-admin { justify-self:end; background:#ffffff; color:#123b34; border:1px solid #8fcabd; }
-#page-status .consultation-thread-message.is-customer,
 .consultation-reply-modal .consultation-thread-message.is-customer { justify-self:start; background:#0f806f; color:#ffffff; border:1px solid #0a6659; }
 #page-status .consultation-thread-message.is-customer strong,
 #page-status .consultation-thread-message.is-customer p { color:#ffffff; }
@@ -9624,8 +9627,16 @@ img, video, iframe { max-width: 100%; }
 :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-status .consultation-thread-message.is-admin p,
 :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .consultation-reply-modal .consultation-thread-message.is-admin strong,
 :is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .consultation-reply-modal .consultation-thread-message.is-admin p { color:#123b34 !important; -webkit-text-fill-color:#123b34 !important; }
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-status .consultation-followup-email-field label { color:#d1fae5; }
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) #page-status .consultation-followup-email-field input,
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .consultation-reply-modal .consultation-reply-email-field input { background:#0d1e1b; border-color:#2b574f; color:#e5f6f1; }
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .consultation-reply-modal .consultation-reply-summary { background:#142d28; border-color:#2b574f; color:#e5f6f1; }
+:is(html[data-leressae-theme="dark"], html[data-theme="dark"], body.dark-mode) .consultation-reply-modal .consultation-reply-email-field small { color:#94a3b8; }
 #page-status .consultation-public-followup { display:grid; gap:8px; margin-top:14px; }
-#page-status .consultation-public-followup textarea { width:100%; min-height:90px; padding:12px; border:1px solid #cce3da; border-radius:12px; font:inherit; resize:vertical; }
+#page-status .consultation-public-followup textarea { width:100%; min-height:90px; padding:12px; border:1px solid #cce3da; border-radius:12px; font:inherit; resize:vertical; box-sizing:border-box; }
+#page-status .consultation-followup-email-field { display:grid; gap:4px; margin-top:2px; }
+#page-status .consultation-followup-email-field label { font-size:0.88rem; color:#123b34; }
+#page-status .consultation-followup-email-field input { width:100%; padding:10px 12px; border:1px solid #cce3da; border-radius:10px; font:inherit; background:#ffffff; color:inherit; box-sizing:border-box; }
 #page-status .consultation-public-followup button { justify-self:end; min-height:42px; }
 #page-status .consultation-followup-actions { display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
 #page-status .consultation-satisfied-btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:42px; padding:10px 16px; border:1px solid #1a916b; border-radius:10px; background:#edf8f2; color:#146b4f; font-weight:800; cursor:pointer; }
@@ -9653,6 +9664,10 @@ img, video, iframe { max-width: 100%; }
 .consultation-reply-modal .stock-panel-header h3 { margin:0; }
 .consultation-reply-modal [data-consultation-reply-form] { display:flex; flex-direction:column; gap:12px; }
 .consultation-reply-modal [data-consultation-reply-form] p { margin:0; overflow-wrap:anywhere; }
+.consultation-reply-modal .consultation-reply-summary { display:grid; gap:4px; padding:10px 12px; border-radius:8px; background:#f0f7f5; border:1px solid #d1e7e0; }
+.consultation-reply-modal .consultation-reply-email-field { display:grid; gap:4px; }
+.consultation-reply-modal .consultation-reply-email-field input { width:100%; padding:10px 12px; border:1px solid #cbd5d1; border-radius:10px; font:inherit; box-sizing:border-box; }
+.consultation-reply-modal .consultation-reply-email-field small { color:#60756f; font-size:0.82rem; }
 .consultation-reply-modal .consultation-reply-label { font-weight:700; }
 .consultation-reply-modal textarea { width:100%; min-height:180px; padding:12px; border:1px solid #cbd5d1; border-radius:10px; font:inherit; resize:vertical; }
 .consultation-reply-modal #consultationReplyHelp { color:#60756f; }

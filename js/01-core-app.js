@@ -3333,12 +3333,13 @@ function parseConsultationSpreadsheetCsv(text) {
     const findColumn = name => headers.indexOf(name);
     const findColumnByAliases = aliases => {
         const exactMatch = aliases.map(findColumn).find(index => index >= 0);
-        return exactMatch ?? headers.findIndex(header => aliases.some(alias => header.startsWith(alias + ' ')));
+        return exactMatch ?? headers.findIndex(header => aliases.some(alias => header.includes(alias)));
     };
     const indices = {
         timestamp: findColumn('timestamp'),
         name: findColumn('nama'),
         whatsapp: findColumn('no whatsapp'),
+        email: findColumnByAliases(['email', 'e-mail', 'alamat email', 'email address', 'alamat surel', 'surel', 'username']),
         address: headers.findIndex(header => header === 'alamat' || header.startsWith('alamat ') || header === 'address' || header.startsWith('address ')),
         brand: findColumnByAliases(['merk mesin', 'merek mesin', 'merk', 'merek', 'brand']),
         machineSpecification: findColumnByAliases(['spesifikasi mesin', 'spesifikasi alat', 'spesifikasi', 'tipe mesin']),
@@ -4454,11 +4455,30 @@ function renderReportsPage() {
                         ? `<div class="status-list">${matches.map((item, index) => {
                             const thread = Array.isArray(item.thread) ? item.thread : (item.answer ? [{sender:'admin', message:item.answer, at:''}] : []);
                             const messages = thread.map(message => `<div class="consultation-thread-message ${message.sender === 'admin' ? 'is-admin' : 'is-customer'}"><strong>${message.sender === 'admin' ? 'Petugas' : 'Anda'}</strong><p>${escapeHtml(message.message || '').replace(/\r?\n/g,'<br>')}</p></div>`).join('');
+                            const lastThreadMessage = thread.length ? thread[thread.length - 1] : null;
+                            const hasAdminReply = lastThreadMessage && lastThreadMessage.sender === 'admin';
+                            const replyNotification = hasAdminReply
+                                ? '<div class="consultation-new-reply-notification" role="status"><span aria-hidden="true">🔔</span><strong>Anda mendapat balasan baru</strong></div>'
+                                : '';
                             const satisfied = item.satisfied === true;
+                            const emailHtml = item.email
+                                ? `<div class="consultation-followup-email-info" style="margin:6px 0 10px; font-size:0.85rem; color:#166534; background:#f0fdf4; border:1px solid #bbf7d0; padding:8px 12px; border-radius:8px;">
+                                    <span>📧 Notifikasi balasan akan otomatis dikirim ke email: <strong>${escapeHtml(item.email)}</strong></span>
+                                    <input type="hidden" name="email" value="${escapeHtml(item.email)}">
+                                   </div>`
+                                : `<div class="consultation-followup-email-field" style="margin:6px 0 10px;">
+                                    <label for="consultationFollowupEmail${index}"><strong>Email Anda (opsional, untuk menerima notifikasi saat dibalas):</strong></label>
+                                    <input type="email" id="consultationFollowupEmail${index}" name="email" placeholder="contoh: nama@gmail.com">
+                                   </div>`;
                             const followup = satisfied
                                 ? `<div class="consultation-satisfied-state" role="status"><span aria-hidden="true">✓</span><div><strong>Konsultasi ditutup</strong><p>Anda sudah menandai jawaban ini puas. Tidak ada pertanyaan lanjutan yang dapat dikirim.</p></div></div>`
-                                : `<form class="consultation-public-followup" data-consultation-followup="${escapeHtml(item.key)}"><label for="consultationFollowup${index}"><strong>Tanya lanjutan</strong></label><textarea id="consultationFollowup${index}" name="message" maxlength="5000" required placeholder="Tulis pertanyaan lanjutan untuk petugas..."></textarea><div class="consultation-followup-actions">${item.completed ? `<button type="button" class="consultation-satisfied-btn" data-consultation-satisfied="${escapeHtml(item.key)}"><span aria-hidden="true">✓</span> Puas dengan jawaban</button>` : ''}<button type="submit" class="btn-primary">Kirim Pertanyaan</button></div></form>`;
-                            return `<article class="service-status-card"><div class="service-status-header"><h3>${escapeHtml(item.topic || 'Konsultasi')}</h3><span class="consultation-status-pill ${item.completed ? 'is-completed' : ''}">${satisfied ? 'Sudah Selesai' : item.completed ? 'Sudah Dijawab' : 'Perlu Ditangani'}</span></div><div class="service-meta"><div><strong>Waktu pengajuan:</strong> ${escapeHtml(item.timestamp || '-')}</div><div><strong>Alamat:</strong> ${escapeHtml(item.address || '-')}</div><div><strong>Merk Mesin:</strong> ${escapeHtml(item.brand || '-')}</div><div><strong>Spesifikasi Mesin:</strong> ${escapeHtml(item.machineSpecification || '-')}</div><div><strong>Deskripsi Kerusakan:</strong> ${escapeHtml(item.description || '-').replace(/\r?\n/g,'<br>')}</div></div>${messages ? `<div class="consultation-thread"><strong>Riwayat Percakapan</strong>${messages}</div>` : '<p>Permohonan Anda sedang ditindaklanjuti oleh petugas.</p>'}${followup}</article>`;
+                                : `<form class="consultation-public-followup" data-consultation-followup="${escapeHtml(item.key)}">
+                                    <label for="consultationFollowup${index}"><strong>Tanya lanjutan</strong></label>
+                                    <textarea id="consultationFollowup${index}" name="message" maxlength="5000" required placeholder="Tulis pertanyaan lanjutan untuk petugas..."></textarea>
+                                    ${emailHtml}
+                                    <div class="consultation-followup-actions">${item.completed ? `<button type="button" class="consultation-satisfied-btn" data-consultation-satisfied="${escapeHtml(item.key)}"><span aria-hidden="true">✓</span> Puas dengan jawaban</button>` : ''}<button type="submit" class="btn-primary">Kirim Pertanyaan</button></div>
+                                </form>`;
+                            return `<article class="service-status-card"><div class="service-status-header"><h3>${escapeHtml(item.topic || 'Konsultasi')}</h3><span class="consultation-status-pill ${item.completed ? 'is-completed' : ''}">${satisfied ? 'Sudah Selesai' : item.completed ? 'Sudah Dijawab' : 'Perlu Ditangani'}</span></div>${replyNotification}<div class="service-meta"><div><strong>Waktu pengajuan:</strong> ${escapeHtml(item.timestamp || '-')}</div><div><strong>Alamat:</strong> ${escapeHtml(item.address || '-')}</div><div><strong>Merk Mesin:</strong> ${escapeHtml(item.brand || '-')}</div><div><strong>Spesifikasi Mesin:</strong> ${escapeHtml(item.machineSpecification || '-')}</div><div><strong>Deskripsi Kerusakan:</strong> ${escapeHtml(item.description || '-').replace(/\r?\n/g,'<br>')}</div></div>${messages ? `<div class="consultation-thread"><strong>Riwayat Percakapan</strong>${messages}</div>` : '<p>Permohonan Anda sedang ditindaklanjuti oleh petugas.</p>'}${followup}</article>`;
                         }).join('')}</div>`
                         : '<div class="status-empty"><strong>Data konsultasi belum ditemukan.</strong><p>Pastikan nomor WhatsApp sama dengan yang digunakan pada formulir konsultasi.</p></div>';
                 } catch (error) {
@@ -4473,9 +4493,15 @@ function renderReportsPage() {
                 if (!form) return;
                 event.preventDefault();
                 const phone = document.getElementById('consultationStatusPhone')?.value.trim();
-                const message = String(new FormData(form).get('message') || '').trim();
+                const formData = new FormData(form);
+                const message = String(formData.get('message') || '').trim();
+                const email = String(formData.get('email') || '').trim();
                 if (!message) {
                     showToast('Tulis pertanyaan lanjutan terlebih dahulu.', 'error');
+                    return;
+                }
+                if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    showToast('Format email tidak valid. Masukkan alamat email yang benar.', 'error');
                     return;
                 }
                 const submit = form.querySelector('button[type="submit"]');
@@ -4484,10 +4510,16 @@ function renderReportsPage() {
                     const response = await apiRequest('saveCustomerConsultationMessage', {
                         consultationKey: form.dataset.consultationFollowup,
                         phone,
-                        message
+                        message,
+                        email
                     });
                     if (!response || response.success === false) throw new Error(response?.message || 'Pertanyaan lanjutan gagal dikirim.');
-                    showToast('Pertanyaan lanjutan berhasil dikirim. Petugas akan menjawab kembali.', 'success');
+                    showToast(response?.data?.notificationSent
+                        ? 'Pertanyaan lanjutan dikirim dan admin telah diberi notifikasi email.'
+                        : (response?.data?.notificationError
+                            ? 'Pertanyaan tersimpan, tetapi email admin gagal dikirim: ' + response.data.notificationError
+                            : 'Pertanyaan tersimpan.'),
+                        response?.data?.notificationSent ? 'success' : 'warning');
                     document.getElementById('consultationStatusForm')?.requestSubmit();
                 } catch (error) {
                     showToast(error?.message || 'Pertanyaan lanjutan gagal dikirim.', 'error');
@@ -6031,16 +6063,30 @@ function renderReportsPage() {
             modal.className = 'stock-modal show consultation-reply-modal';
             const thread = Array.isArray(item.thread) ? item.thread : [];
             const threadHtml = thread.length ? `<div class="consultation-thread admin-consultation-thread">${thread.map(message => `<div class="consultation-thread-message ${message.sender === 'admin' ? 'is-admin' : 'is-customer'}"><strong>${message.sender === 'admin' ? 'Petugas' : 'Pelanggan'}</strong><p>${escapeHtml(message.message || '').replace(/\r?\n/g, '<br>')}</p></div>`).join('')}</div>` : '';
+            const customerEmailValue = item.customerEmail || item.email || '';
+            const customerNameValue = item.name || item.customer_name || 'Pelanggan';
+            const customerPhoneValue = item.phone || item.whatsapp || '-';
             modal.innerHTML = `<section class="stock-panel" role="dialog" aria-modal="true" aria-labelledby="consultationReplyTitle">
                 <header class="stock-panel-header"><h3 id="consultationReplyTitle">Jawab Konsultasi</h3><button type="button" class="stock-close" data-consultation-reply-close aria-label="Tutup">×</button></header>
                 <form class="stock-body" data-consultation-reply-form>
-                    <p><strong>${escapeHtml(item.topic || 'Konsultasi')}</strong></p>
-                    <p>${escapeHtml(item.description || '')}</p>
+                    <div class="consultation-reply-summary">
+                        <p><strong>Topik:</strong> ${escapeHtml(item.topic || 'Konsultasi')}</p>
+                        <p><strong>Pelanggan:</strong> ${escapeHtml(customerNameValue)} (${escapeHtml(customerPhoneValue)})</p>
+                        <p><strong>Deskripsi:</strong> ${escapeHtml(item.description || '-')}</p>
+                    </div>
                     ${threadHtml}
+                    <div class="consultation-reply-email-field">
+                        <label class="consultation-reply-label" for="consultationReplyEmail">Email IKM / Penerima Notifikasi</label>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <input type="email" id="consultationReplyEmail" name="customerEmail" class="form-input" value="${escapeHtml(customerEmailValue)}" placeholder="contoh: user@gmail.com" style="flex:1;">
+                            ${customerEmailValue ? '<span style="font-size:0.75rem; background:#dcfce7; color:#15803d; padding:4px 8px; border-radius:6px; font-weight:600; white-space:nowrap;">Tersedia dari Form</span>' : ''}
+                        </div>
+                        <small>Notifikasi balasan ini akan langsung dikirimkan ke email IKM tersebut.</small>
+                    </div>
                     <label class="consultation-reply-label" for="consultationReplyText">Jawaban untuk pelanggan</label>
                     <textarea id="consultationReplyText" name="answer" maxlength="5000" required placeholder="Tulis jawaban konsultasi..." aria-describedby="consultationReplyHelp"></textarea>
-                    <small id="consultationReplyHelp">Jawaban akan disimpan dan ditampilkan pada halaman Cek Status Konsultasi.</small>
-                    <div class="consultation-reply-actions"><button type="button" class="btn-secondary" data-consultation-reply-close>Batal</button><button type="submit" class="btn-primary">Kirim Jawaban</button></div>
+                    <small id="consultationReplyHelp">Jawaban akan disimpan dan otomatis dikirimkan sebagai notifikasi email ke IKM.</small>
+                    <div class="consultation-reply-actions"><button type="button" class="btn-secondary" data-consultation-reply-close>Batal</button><button type="submit" class="btn-primary">Kirim Jawaban &amp; Notifikasi</button></div>
                 </form>
             </section>`;
             document.body.appendChild(modal);
@@ -6051,9 +6097,15 @@ function renderReportsPage() {
                 event.preventDefault();
                 const form = event.currentTarget;
                 const submit = form.querySelector('button[type="submit"]');
-                const answer = String(new FormData(form).get('answer') || '').trim();
+                const formData = new FormData(form);
+                const answer = String(formData.get('answer') || '').trim();
+                const customerEmail = String(formData.get('customerEmail') || '').trim();
                 if (!answer) {
                     showToast('Isi jawaban konsultasi terlebih dahulu.', 'error');
+                    return;
+                }
+                if (customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+                    showToast('Format email IKM tidak valid. Masukkan alamat email yang benar.', 'error');
                     return;
                 }
                 submit.disabled = true;
@@ -6061,19 +6113,29 @@ function renderReportsPage() {
                     const response = await apiRequest('saveConsultationAnswer', {
                         consultationKey: item.key,
                         answer,
+                        customerEmail,
                         token: isTechnicianLoggedIn() ? getTechnicianToken() : getAdminToken()
                     });
                     if (!response || response.success === false) throw new Error(response?.message || 'Jawaban konsultasi gagal disimpan.');
                     item.answer = answer;
+                    if (customerEmail) {
+                        item.email = customerEmail;
+                        item.customerEmail = customerEmail;
+                    }
                     item.thread = Array.isArray(item.thread) ? item.thread : [];
-                    item.thread.push({ sender: 'admin', name: 'Petugas', message: answer, at: new Date().toISOString() });
+                    item.thread.push({ sender: 'admin', name: isTechnicianLoggedIn() ? 'Teknisi' : 'Admin', message: answer, at: new Date().toISOString() });
                     close();
                     if (isTechnicianLoggedIn()) {
                         window.__TECH_CONSULTATION_TAB__ = 'completed';
                         renderTechView('consultations', { fromBack: true });
                     }
                     else showAdminPage('locations', { fromBack: true, skipConsultationsRefresh: true });
-                    showToast('Jawaban konsultasi berhasil disimpan.', 'success');
+                    showToast(response?.data?.notificationSent
+                        ? 'Jawaban berhasil disimpan dan notifikasi email berhasil dikirim ke IKM (' + (response?.data?.recipientEmail || customerEmail) + ').'
+                        : response?.data?.notificationError
+                            ? 'Jawaban tersimpan. Email IKM gagal dikirim: ' + response.data.notificationError
+                            : 'Jawaban berhasil disimpan. IKM dapat melihatnya pada halaman status.',
+                        response?.data?.notificationSent ? 'success' : 'warning');
                 } catch (error) {
                     console.error('Gagal menyimpan jawaban konsultasi:', error);
                     showToast(error?.message || 'Jawaban konsultasi gagal disimpan.', 'error');
@@ -7030,9 +7092,21 @@ function renderReportsPage() {
                     const threads = completedResponse?.data?.threads && typeof completedResponse.data.threads === 'object'
                         ? completedResponse.data.threads
                         : {};
+                    const customerEmails = completedResponse?.data?.customerEmails && typeof completedResponse.data.customerEmails === 'object'
+                        ? completedResponse.data.customerEmails
+                        : {};
                     const consultations = await Promise.all(parseConsultationSpreadsheetCsv(csv).map(async item => {
                         const key = await consultationIdentityKey(item);
-                        return { ...item, key, completed: completedSet.has(key), answer: String(answers[key] || ''), thread: Array.isArray(threads[key]) ? threads[key] : [] };
+                        const effectiveEmail = customerEmails[key] || item.email || '';
+                        return {
+                            ...item,
+                            key,
+                            email: effectiveEmail,
+                            customerEmail: effectiveEmail,
+                            completed: completedSet.has(key),
+                            answer: String(answers[key] || ''),
+                            thread: Array.isArray(threads[key]) ? threads[key] : []
+                        };
                     }));
                     window.__CONSULTATIONS_CACHE__ = consultations;
                     window.__CONSULTATIONS_CACHE_UPDATED_AT__ = Date.now();
