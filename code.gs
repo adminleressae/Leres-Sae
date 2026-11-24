@@ -19,6 +19,7 @@ const CONFIG = {
     NEWS: 'NEWS',
     MEDIA: 'MEDIA',
     CONSULTATION_STATUS: 'CONSULTATION_STATUS',
+    CONSULTATION_EMAIL_QUEUE: 'CONSULTATION_EMAIL_QUEUE',
     AGENDA: 'AGENDA',
     VISITORS: 'PUBLIC_VISITORS'
   },
@@ -94,6 +95,7 @@ const HISTORY_HEADERS = [
 ];
 
 const CONSULTATION_STATUS_HEADERS = ['consultation_key', 'completed_at', 'completed_by', 'answer', 'answered_by', 'thread', 'customer_email'];
+const CONSULTATION_EMAIL_QUEUE_HEADERS = ['notification_id', 'recipient', 'subject', 'body', 'html_body', 'status', 'created_at', 'last_error'];
 const AGENDA_HEADERS = ['id', 'date', 'title', 'description', 'created_at', 'updated_at', 'updated_by', 'google_event_id'];
 
 const USER_HEADERS = [
@@ -403,6 +405,7 @@ function ensureProjectSheets_() {
   ensureSheet_(ss, CONFIG.SHEETS.NEWS, NEWS_HEADERS);
   ensureSheet_(ss, CONFIG.SHEETS.MEDIA, MEDIA_HEADERS);
   ensureSheet_(ss, CONFIG.SHEETS.CONSULTATION_STATUS, CONSULTATION_STATUS_HEADERS);
+  ensureSheet_(ss, CONFIG.SHEETS.CONSULTATION_EMAIL_QUEUE, CONSULTATION_EMAIL_QUEUE_HEADERS);
   ensureSheet_(ss, CONFIG.SHEETS.AGENDA, AGENDA_HEADERS);
   ensureSheet_(ss, CONFIG.SHEETS.VISITORS, VISITOR_HEADERS);
   ['LOCATIONS', 'SETTINGS', 'STOCK_MASTER', 'STOCK_HISTORY'].forEach(function(name) {
@@ -798,6 +801,7 @@ function installConsultationFormSubmitTrigger_() {
  * Fungsi hanya memasang trigger email admin untuk form konsultasi.
  */
 function setupConsultationEmailTrigger() {
+  setupConsultationEmailQueueTrigger();
   const installed = installConsultationFormSubmitTrigger_();
   if (!installed) {
     throw new Error('Isi CONFIG.CONSULTATION_FORM_URL dengan URL edit Google Form konsultasi terlebih dahulu.');
@@ -3162,6 +3166,182 @@ function sendConsultationEmail_(to, subject, body, htmlBody) {
   return true;
 }
 
+function enqueueConsultationEmail_(notificationId, to, subject, body, htmlBody) {
+  const id = String(notificationId || '').trim();
+  const recipient = String(to || '').trim();
+  if (!id || id.length > 128) throw new Error('Identitas notifikasi konsultasi tidak valid.');
+  if (!recipient || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) {
+    return { queued: false, sent: false, error: 'Alamat email penerima tidak valid atau belum tersedia.' };
+  }
+
+  const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  const sheet = ensureSheet_(spreadsheet, CONFIG.SHEETS.CONSULTATION_EMAIL_QUEUE, CONSULTATION_EMAIL_QUEUE_HEADERS);
+  const values = sheet.getDataRange().getValues();
+  const headers = values[0].map(String);
+  const idColumn = findHeaderIndex_(headers, ['notification_id']);
+  const recipientColumn = findHeaderIndex_(headers, ['recipient']);
+  const subjectColumn = findHeaderIndex_(headers, ['subject']);
+  const bodyColumn = findHeaderIndex_(headers, ['body']);
+  const htmlBodyColumn = findHeaderIndex_(headers, ['html_body']);
+  const statusColumn = findHeaderIndex_(headers, ['status']);
+  const createdAtColumn = findHeaderIndex_(headers, ['created_at']);
+  const errorColumn = findHeaderIndex_(headers, ['last_error']);
+  if ([idColumn, recipientColumn, subjectColumn, bodyColumn, htmlBodyColumn, statusColumn, createdAtColumn, errorColumn].some(function(column) { return column < 0; })) {
+    throw new Error('Kolom antrean email konsultasi tidak lengkap.');
+  }
+
+  for (let rowIndex = 1; rowIndex < values.length; rowIndex++) {
+    if (String(values[rowIndex][idColumn] || '') !== id) continue;
+    const status = String(values[rowIndex][statusColumn] || '').trim();
+    if (status === 'SENT') return { queued: false, sent: true, error: '' };
+    if (status === 'FAILED') {
+      return {
+        queued: false,
+        sent: false,
+        error: String(values[rowIndex][errorColumn] || 'Notifikasi sebelumnya gagal dikirim.')
+      };
+    }
+    if (status === 'PENDING') {
+      try {
+        ensureConsultationEmailQueueTrigger_();
+      } catch (error) {
+        console.error('Gagal menjadwalkan email konsultasi:', error);
+        return { queued: false, sent: false, error: error && error.message ? error.message : String(error) };
+      }
+    }
+    return { queued: true, sent: false, error: '' };
+  }
+
+  const row = [];
+  row[idColumn] = id;
+  row[recipientColumn] = recipient;
+  row[subjectColumn] = String(subject || '');
+  row[bodyColumn] = String(body || '');
+  row[htmlBodyColumn] = String(htmlBody || '');
+  row[statusColumn] = 'PENDING';
+  row[createdAtColumn] = new Date().toISOString();
+  row[errorColumn] = '';
+  const rowValues = Array(headers.length).fill('');
+  Object.keys(row).forEach(function(column) {
+    rowValues[Number(column)] = row[column];
+  });
+  sheet.getRange(sheet.getLastRow() + 1, 1, 1, rowValues.length).setValues([rowValues]);
+
+  try {
+    ensureConsultationEmailQueueTrigger_();
+  } catch (error) {
+    console.error('Gagal menjadwalkan email konsultasi:', error);
+    return { queued: false, sent: false, error: error && error.message ? error.message : String(error) };
+  }
+  return { queued: true, sent: false, error: '' };
+}
+
+function ensureConsultationEmailQueueTrigger_() {
+  const handler = 'processConsultationEmailQueue_';
+  const existing = ScriptApp.getProjectTriggers().some(function(trigger) {
+    return trigger.getHandlerFunction() === handler;
+  });
+  if (!existing) {
+    ScriptApp.newTrigger(handler).timeBased().after(1000).create();
+  }
+}
+
+/**
+ * Jalankan fungsi ini sekali dari Apps Script untuk membuat pemicu antrean
+ * email konsultasi berbasis waktu. Fungsi ini aman dijalankan berulang kali.
+ */
+function setupConsultationEmailQueueTrigger() {
+  const handler = 'processConsultationEmailQueue_';
+  ScriptApp.getProjectTriggers().forEach(function(trigger) {
+    if (trigger.getHandlerFunction() === handler) {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
+  ScriptApp.newTrigger(handler)
+    .timeBased()
+    .everyMinutes(5)
+    .create();
+  return 'Pemicu antrean email konsultasi berhasil dipasang setiap 5 menit.';
+}
+
+function processConsultationEmailQueue_() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  let queueItems = [];
+  let sheet;
+  let columns;
+  try {
+    const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    sheet = ensureSheet_(spreadsheet, CONFIG.SHEETS.CONSULTATION_EMAIL_QUEUE, CONSULTATION_EMAIL_QUEUE_HEADERS);
+    const values = sheet.getDataRange().getValues();
+    const headers = values[0].map(String);
+    columns = {
+      recipient: findHeaderIndex_(headers, ['recipient']),
+      subject: findHeaderIndex_(headers, ['subject']),
+      body: findHeaderIndex_(headers, ['body']),
+      htmlBody: findHeaderIndex_(headers, ['html_body']),
+      status: findHeaderIndex_(headers, ['status']),
+      error: findHeaderIndex_(headers, ['last_error'])
+    };
+    if (Object.keys(columns).some(function(key) { return columns[key] < 0; })) {
+      throw new Error('Kolom antrean email konsultasi tidak lengkap.');
+    }
+
+    ScriptApp.getProjectTriggers().forEach(function(trigger) {
+      if (trigger.getHandlerFunction() === 'processConsultationEmailQueue_') {
+        ScriptApp.deleteTrigger(trigger);
+      }
+    });
+
+    values.slice(1).some(function(row, rowIndex) {
+      if (queueItems.length >= 10) return true;
+      if (String(row[columns.status] || '').trim() !== 'PENDING') return false;
+      const sheetRow = rowIndex + 2;
+      sheet.getRange(sheetRow, columns.status + 1).setValue('PROCESSING');
+      queueItems.push({
+        row: sheetRow,
+        recipient: String(row[columns.recipient] || ''),
+        subject: String(row[columns.subject] || ''),
+        body: String(row[columns.body] || ''),
+        htmlBody: String(row[columns.htmlBody] || '')
+      });
+      return false;
+    });
+  } finally {
+    lock.releaseLock();
+  }
+
+  const outcomes = queueItems.map(function(item) {
+    try {
+      const sent = sendConsultationEmail_(item.recipient, item.subject, item.body, item.htmlBody);
+      return {
+        row: item.row,
+        status: sent ? 'SENT' : 'FAILED',
+        error: sent ? '' : 'Alamat email penerima tidak valid atau MailApp tidak tersedia.'
+      };
+    } catch (error) {
+      const message = error && error.message ? error.message : String(error);
+      console.error('Gagal mengirim email konsultasi ke ' + item.recipient + ':', message);
+      return { row: item.row, status: 'FAILED', error: message };
+    }
+  });
+
+  lock.waitLock(10000);
+  try {
+    outcomes.forEach(function(outcome) {
+      sheet.getRange(outcome.row, columns.status + 1).setValue(outcome.status);
+      sheet.getRange(outcome.row, columns.error + 1).setValue(outcome.error);
+    });
+    const values = sheet.getDataRange().getValues();
+    const hasPending = values.slice(1).some(function(row) {
+      return String(row[columns.status] || '').trim() === 'PENDING';
+    });
+    if (hasPending) ensureConsultationEmailQueueTrigger_();
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function testConsultationEmailNotification(body) {
   const targetEmail = (body && body.email) ? String(body.email).trim() : CONFIG.ADMIN_EMAIL;
   const sent = sendConsultationEmail_(
@@ -3231,10 +3411,12 @@ function getConsultationStatuses_() {
 function saveConsultationAnswer_(body, session) {
   const key = String(body.consultationKey || '').trim();
   const answer = String(body.answer || '').trim();
+  const messageId = String(body.messageId || Utilities.getUuid()).trim();
   const inputCustomerEmail = String(body.customerEmail || '').trim();
   if (!/^[a-f0-9]{64}$/i.test(key)) throw new Error('Identitas konsultasi tidak valid.');
   if (!answer) throw new Error('Isi jawaban konsultasi terlebih dahulu.');
   if (answer.length > 5000) throw new Error('Jawaban maksimal 5000 karakter.');
+  if (!messageId || messageId.length > 128) throw new Error('Identitas pesan konsultasi tidak valid.');
   if (inputCustomerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inputCustomerEmail)) {
     throw new Error('Format email IKM tidak valid.');
   }
@@ -3289,17 +3471,23 @@ function saveConsultationAnswer_(body, session) {
         if (Array.isArray(parsed)) thread = parsed;
       } catch (error) {}
     }
-    thread.push({
-      sender: 'admin',
-      name: senderName,
-      message: answer,
-      at: now
+    const alreadyStored = thread.some(function(item) {
+      return String(item && item.messageId || '') === messageId;
     });
-    sheet.getRange(targetRow, threadColumn + 1).setValue(JSON.stringify(thread));
+    if (!alreadyStored) {
+      thread.push({
+        sender: 'admin',
+        name: senderName,
+        message: answer,
+        at: now,
+        messageId: messageId
+      });
+      sheet.getRange(targetRow, threadColumn + 1).setValue(JSON.stringify(thread));
+    }
 
     const consultation = getConsultationRecordByKey_(key);
     const savedCustomerEmail = String(sheet.getRange(targetRow, customerEmailColumn + 1).getValue() || '').trim();
-    const recipientEmail = inputCustomerEmail || savedCustomerEmail || (consultation && consultation.email ? consultation.email : '');
+    const recipientEmail = savedCustomerEmail || (consultation && consultation.email ? consultation.email : '') || inputCustomerEmail;
 
     if (recipientEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
       if (recipientEmail !== savedCustomerEmail) {
@@ -3307,55 +3495,56 @@ function saveConsultationAnswer_(body, session) {
       }
     }
 
+    let notificationQueued = false;
     let notificationSent = false;
     let notificationError = '';
     if (recipientEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
+      const customerName = (consultation && consultation.name) ? consultation.name : 'Bapak/Ibu';
+      const topic = (consultation && consultation.topic) ? consultation.topic : 'Konsultasi';
+      const subject = '🔔 LERES SAE - Konsultasi Anda Mendapat Balasan (' + topic + ')';
+      const plainBody = [
+        'Halo ' + customerName + ',',
+        '',
+        'Petugas LERES SAE (' + senderName + ') telah membalas pesan konsultasi Anda terkait "' + topic + '":',
+        '',
+        answer,
+        '',
+        'Silakan buka halaman Cek Status Konsultasi untuk melihat percakapan lengkap atau membalas pesan:',
+        'https://adminleressae.github.io/Leres-Sae/#page-status'
+      ].join('\n');
+
+      const htmlBody = [
+        '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">',
+        '  <div style="background-color: #1e3a8a; padding: 16px; border-radius: 6px; text-align: center; color: white;">',
+        '    <h2 style="margin: 0; font-size: 20px;">LERES SAE</h2>',
+        '    <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.9;">Layanan Responsif Servis Alat dan Mesin</p>',
+        '  </div>',
+        '  <div style="padding: 20px 0;">',
+        '    <p style="font-size: 15px; color: #334155;">Halo <strong>' + escapeHtml_(customerName) + '</strong>,</p>',
+        '    <p style="font-size: 14px; color: #334155;">Petugas LERES SAE (<strong>' + escapeHtml_(senderName) + '</strong>) telah membalas permohonan konsultasi Anda terkait <strong>' + escapeHtml_(topic) + '</strong>:</p>',
+        '    <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 14px 16px; margin: 16px 0; border-radius: 0 6px 6px 0;">',
+        '      <p style="margin: 0; font-size: 14px; color: #1e293b; white-space: pre-wrap;">' + escapeHtml_(answer) + '</p>',
+        '    </div>',
+        '    <p style="font-size: 14px; color: #334155;">Silakan buka halaman Cek Status Konsultasi untuk melihat seluruh riwayat percakapan atau membalas chat:</p>',
+        '    <div style="text-align: center; margin: 24px 0;">',
+        '      <a href="https://adminleressae.github.io/Leres-Sae/#page-status" style="background-color: #2563eb; color: white; padding: 10px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; display: inline-block;">Buka Chat Konsultasi</a>',
+        '    </div>',
+        '  </div>',
+        '  <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">',
+        '  <div style="font-size: 12px; color: #64748b; text-align: center;">',
+        '    <p style="margin: 0;">Email ini dikirim secara otomatis oleh sistem konsultasi LERES SAE.</p>',
+        '  </div>',
+        '</div>'
+      ].join('\n');
+
       try {
-        const customerName = (consultation && consultation.name) ? consultation.name : 'Bapak/Ibu';
-        const topic = (consultation && consultation.topic) ? consultation.topic : 'Konsultasi';
-        const subject = '🔔 LERES SAE - Konsultasi Anda Mendapat Balasan (' + topic + ')';
-        const plainBody = [
-          'Halo ' + customerName + ',',
-          '',
-          'Petugas LERES SAE (' + senderName + ') telah membalas pesan konsultasi Anda terkait "' + topic + '":',
-          '',
-          answer,
-          '',
-          'Silakan buka halaman Cek Status Konsultasi untuk melihat percakapan lengkap atau membalas pesan:',
-          'https://adminleressae.github.io/Leres-Sae/#page-status'
-        ].join('\n');
-
-        const htmlBody = [
-          '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">',
-          '  <div style="background-color: #1e3a8a; padding: 16px; border-radius: 6px; text-align: center; color: white;">',
-          '    <h2 style="margin: 0; font-size: 20px;">LERES SAE</h2>',
-          '    <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.9;">Layanan Responsif Servis Alat dan Mesin</p>',
-          '  </div>',
-          '  <div style="padding: 20px 0;">',
-          '    <p style="font-size: 15px; color: #334155;">Halo <strong>' + escapeHtml_(customerName) + '</strong>,</p>',
-          '    <p style="font-size: 14px; color: #334155;">Petugas LERES SAE (<strong>' + escapeHtml_(senderName) + '</strong>) telah membalas permohonan konsultasi Anda terkait <strong>' + escapeHtml_(topic) + '</strong>:</p>',
-          '    <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 14px 16px; margin: 16px 0; border-radius: 0 6px 6px 0;">',
-          '      <p style="margin: 0; font-size: 14px; color: #1e293b; white-space: pre-wrap;">' + escapeHtml_(answer) + '</p>',
-          '    </div>',
-          '    <p style="font-size: 14px; color: #334155;">Silakan buka halaman Cek Status Konsultasi untuk melihat seluruh riwayat percakapan atau membalas chat:</p>',
-          '    <div style="text-align: center; margin: 24px 0;">',
-          '      <a href="https://adminleressae.github.io/Leres-Sae/#page-status" style="background-color: #2563eb; color: white; padding: 10px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; display: inline-block;">Buka Chat Konsultasi</a>',
-          '    </div>',
-          '  </div>',
-          '  <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">',
-          '  <div style="font-size: 12px; color: #64748b; text-align: center;">',
-          '    <p style="margin: 0;">Email ini dikirim secara otomatis oleh sistem konsultasi LERES SAE.</p>',
-          '  </div>',
-          '</div>'
-        ].join('\n');
-
-        notificationSent = sendConsultationEmail_(recipientEmail, subject, plainBody, htmlBody);
-        if (!notificationSent) {
-          notificationError = 'Gagal mengirim email ke alamat: ' + recipientEmail;
-        }
+        const notification = enqueueConsultationEmail_(messageId, recipientEmail, subject, plainBody, htmlBody);
+        notificationQueued = notification.queued;
+        notificationSent = notification.sent;
+        notificationError = notification.error;
       } catch (error) {
         notificationError = error && error.message ? error.message : String(error);
-        console.error('Gagal mengirim email balasan konsultasi kepada IKM:', notificationError);
+        console.error('Gagal mengantrekan email balasan konsultasi kepada IKM:', notificationError);
       }
     } else {
       notificationError = 'Alamat email IKM belum tersedia.';
@@ -3368,8 +3557,10 @@ function saveConsultationAnswer_(body, session) {
         answer: answer,
         completedAt: now,
         recipientEmail: recipientEmail,
+        notificationQueued: notificationQueued,
         notificationSent: notificationSent,
-        notificationError: notificationError
+        notificationError: notificationError,
+        messageId: messageId
       }
     };
   } finally {
@@ -3426,11 +3617,13 @@ function saveCustomerConsultationMessage_(body) {
   const key = String(body.consultationKey || '').trim();
   const phone = String(body.phone || '').trim();
   const message = String(body.message || '').trim();
+  const messageId = String(body.messageId || Utilities.getUuid()).trim();
   const email = String(body.email || '').trim();
   if (!/^[a-f0-9]{64}$/i.test(key)) throw new Error('Identitas konsultasi tidak valid.');
   if (!normalizePhone_(phone)) throw new Error('Nomor WhatsApp tidak valid.');
   if (!message) throw new Error('Tulis pesan chat terlebih dahulu.');
   if (message.length > 5000) throw new Error('Pesan maksimal 5000 karakter.');
+  if (!messageId || messageId.length > 128) throw new Error('Identitas pesan konsultasi tidak valid.');
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     throw new Error('Alamat email tidak valid.');
   }
@@ -3474,8 +3667,6 @@ function saveCustomerConsultationMessage_(body) {
     if (targetRow > sheet.getLastRow()) sheet.getRange(targetRow, keyColumn + 1).setValue(key);
 
     const now = new Date().toISOString();
-    sheet.getRange(targetRow, completedAtColumn + 1).clearContent();
-    if (completedByColumn >= 0) sheet.getRange(targetRow, completedByColumn + 1).clearContent();
 
     const consultation = getConsultationRecordByKey_(key);
     const currentCustomerEmail = String(sheet.getRange(targetRow, customerEmailColumn + 1).getValue() || '').trim();
@@ -3494,15 +3685,24 @@ function saveCustomerConsultationMessage_(body) {
         if (Array.isArray(parsed)) thread = parsed;
       } catch (error) {}
     }
-    const customerName = (consultation && consultation.name) || matchedItem.name || 'Pelanggan';
-    thread.push({
-      sender: 'customer',
-      name: customerName,
-      message: message,
-      at: now
+    const alreadyStored = thread.some(function(item) {
+      return String(item && item.messageId || '') === messageId;
     });
-    sheet.getRange(targetRow, threadColumn + 1).setValue(JSON.stringify(thread));
+    const customerName = (consultation && consultation.name) || matchedItem.name || 'Pelanggan';
+    if (!alreadyStored) {
+      sheet.getRange(targetRow, completedAtColumn + 1).clearContent();
+      if (completedByColumn >= 0) sheet.getRange(targetRow, completedByColumn + 1).clearContent();
+      thread.push({
+        sender: 'customer',
+        name: customerName,
+        message: message,
+        at: now,
+        messageId: messageId
+      });
+      sheet.getRange(targetRow, threadColumn + 1).setValue(JSON.stringify(thread));
+    }
 
+    let notificationQueued = false;
     let notificationSent = false;
     let notificationError = '';
     try {
@@ -3519,8 +3719,8 @@ function saveCustomerConsultationMessage_(body) {
         'Pesan Chat:',
         message,
         '',
-        'Silakan buka dashboard admin LERES SAE untuk membalas:',
-        'https://adminleressae.github.io/Leres-Sae/'
+        'Silakan buka halaman admin konsultasi LERES SAE untuk membalas:',
+        'https://adminleressae.github.io/Leres-Sae/#page-admin'
       ].join('\n');
 
       const htmlBody = [
@@ -3542,7 +3742,7 @@ function saveCustomerConsultationMessage_(body) {
         '      <p style="margin: 0; font-size: 14px; color: #1e293b; white-space: pre-wrap;">' + escapeHtml_(message) + '</p>',
         '    </div>',
         '    <div style="text-align: center; margin: 24px 0;">',
-        '      <a href="https://adminleressae.github.io/Leres-Sae/" style="background-color: #1e3a8a; color: white; padding: 10px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; display: inline-block;">Buka Dashboard Admin</a>',
+        '      <a href="https://adminleressae.github.io/Leres-Sae/#page-admin" style="background-color: #1e3a8a; color: white; padding: 10px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; display: inline-block;">Buka Halaman Admin Konsultasi</a>',
         '    </div>',
         '  </div>',
         '  <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">',
@@ -3552,18 +3752,19 @@ function saveCustomerConsultationMessage_(body) {
         '</div>'
       ].join('\n');
 
-      notificationSent = sendConsultationEmail_(
+      const notification = enqueueConsultationEmail_(
+        messageId,
         CONFIG.ADMIN_EMAIL,
         '💬 LERES SAE - Chat Baru dari ' + customerName + ' (' + topic + ')',
         plainBody,
         htmlBody
       );
-      if (!notificationSent) {
-        notificationError = 'Alamat email admin tidak valid atau layanan email tidak tersedia.';
-      }
+      notificationQueued = notification.queued;
+      notificationSent = notification.sent;
+      notificationError = notification.error;
     } catch (error) {
       notificationError = error && error.message ? error.message : String(error);
-      console.error('Gagal mengirim email pertanyaan lanjutan konsultasi kepada admin:', notificationError);
+      console.error('Gagal mengantrekan email pertanyaan lanjutan konsultasi kepada admin:', notificationError);
     }
 
     return {
@@ -3572,7 +3773,9 @@ function saveCustomerConsultationMessage_(body) {
         consultationKey: key,
         message: message,
         at: now,
+        messageId: messageId,
         customerEmail: effectiveEmail,
+        notificationQueued: notificationQueued,
         notificationSent: notificationSent,
         notificationError: notificationError
       }

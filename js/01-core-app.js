@@ -4507,19 +4507,26 @@ function renderReportsPage() {
                 const submit = form.querySelector('button[type="submit"]');
                 if (submit) submit.disabled = true;
                 try {
+                    const messageId = window.crypto && typeof window.crypto.randomUUID === 'function'
+                        ? window.crypto.randomUUID()
+                        : 'consultation-' + Date.now() + '-' + Math.random().toString(36).slice(2);
                     const response = await apiRequest('saveCustomerConsultationMessage', {
                         consultationKey: form.dataset.consultationFollowup,
                         phone,
                         message,
-                        email
+                        email,
+                        messageId
                     });
                     if (!response || response.success === false) throw new Error(response?.message || 'Pertanyaan lanjutan gagal dikirim.');
-                    showToast(response?.data?.notificationSent
+                    const notification = response.data || {};
+                    showToast(notification.notificationSent
                         ? 'Pertanyaan lanjutan dikirim dan admin telah diberi notifikasi email.'
-                        : (response?.data?.notificationError
-                            ? 'Pertanyaan tersimpan, tetapi email admin gagal dikirim: ' + response.data.notificationError
-                            : 'Pertanyaan tersimpan.'),
-                        response?.data?.notificationSent ? 'success' : 'warning');
+                        : notification.notificationQueued
+                            ? 'Pertanyaan lanjutan dikirim; notifikasi email admin sedang diproses.'
+                            : notification.notificationError
+                                ? 'Pertanyaan tersimpan, tetapi notifikasi email admin gagal dijadwalkan: ' + notification.notificationError
+                                : 'Pertanyaan tersimpan.',
+                        notification.notificationSent || notification.notificationQueued ? 'success' : 'warning');
                     document.getElementById('consultationStatusForm')?.requestSubmit();
                 } catch (error) {
                     showToast(error?.message || 'Pertanyaan lanjutan gagal dikirim.', 'error');
@@ -6081,11 +6088,11 @@ function renderReportsPage() {
                             <input type="email" id="consultationReplyEmail" name="customerEmail" class="form-input" value="${escapeHtml(customerEmailValue)}" placeholder="contoh: user@gmail.com" style="flex:1;">
                             ${customerEmailValue ? '<span style="font-size:0.75rem; background:#dcfce7; color:#15803d; padding:4px 8px; border-radius:6px; font-weight:600; white-space:nowrap;">Tersedia dari Form</span>' : ''}
                         </div>
-                        <small>Notifikasi balasan ini akan langsung dikirimkan ke email IKM tersebut.</small>
+                        <small>Notifikasi balasan akan dijadwalkan otomatis ke email IKM tersebut.</small>
                     </div>
                     <label class="consultation-reply-label" for="consultationReplyText">Jawaban untuk pelanggan</label>
                     <textarea id="consultationReplyText" name="answer" maxlength="5000" required placeholder="Tulis jawaban konsultasi..." aria-describedby="consultationReplyHelp"></textarea>
-                    <small id="consultationReplyHelp">Jawaban akan disimpan dan otomatis dikirimkan sebagai notifikasi email ke IKM.</small>
+                    <small id="consultationReplyHelp">Jawaban akan disimpan dan notifikasi email ke IKM diproses otomatis.</small>
                     <div class="consultation-reply-actions"><button type="button" class="btn-secondary" data-consultation-reply-close>Batal</button><button type="submit" class="btn-primary">Kirim Jawaban &amp; Notifikasi</button></div>
                 </form>
             </section>`;
@@ -6110,10 +6117,14 @@ function renderReportsPage() {
                 }
                 submit.disabled = true;
                 try {
+                    const messageId = window.crypto && typeof window.crypto.randomUUID === 'function'
+                        ? window.crypto.randomUUID()
+                        : 'consultation-' + Date.now() + '-' + Math.random().toString(36).slice(2);
                     const response = await apiRequest('saveConsultationAnswer', {
                         consultationKey: item.key,
                         answer,
                         customerEmail,
+                        messageId,
                         token: isTechnicianLoggedIn() ? getTechnicianToken() : getAdminToken()
                     });
                     if (!response || response.success === false) throw new Error(response?.message || 'Jawaban konsultasi gagal disimpan.');
@@ -6123,19 +6134,22 @@ function renderReportsPage() {
                         item.customerEmail = customerEmail;
                     }
                     item.thread = Array.isArray(item.thread) ? item.thread : [];
-                    item.thread.push({ sender: 'admin', name: isTechnicianLoggedIn() ? 'Teknisi' : 'Admin', message: answer, at: new Date().toISOString() });
+                    item.thread.push({ sender: 'admin', name: isTechnicianLoggedIn() ? 'Teknisi' : 'Admin', message: answer, at: new Date().toISOString(), messageId });
                     close();
                     if (isTechnicianLoggedIn()) {
                         window.__TECH_CONSULTATION_TAB__ = 'completed';
                         renderTechView('consultations', { fromBack: true });
                     }
                     else showAdminPage('locations', { fromBack: true, skipConsultationsRefresh: true });
-                    showToast(response?.data?.notificationSent
-                        ? 'Jawaban berhasil disimpan dan notifikasi email berhasil dikirim ke IKM (' + (response?.data?.recipientEmail || customerEmail) + ').'
-                        : response?.data?.notificationError
-                            ? 'Jawaban tersimpan. Email IKM gagal dikirim: ' + response.data.notificationError
-                            : 'Jawaban berhasil disimpan. IKM dapat melihatnya pada halaman status.',
-                        response?.data?.notificationSent ? 'success' : 'warning');
+                    const notification = response.data || {};
+                    showToast(notification.notificationSent
+                        ? 'Jawaban berhasil disimpan dan notifikasi email telah dikirim ke IKM (' + (notification.recipientEmail || customerEmail) + ').'
+                        : notification.notificationQueued
+                            ? 'Jawaban berhasil disimpan; notifikasi email sedang diproses untuk IKM (' + (notification.recipientEmail || customerEmail) + ').'
+                            : notification.notificationError
+                                ? 'Jawaban tersimpan. Notifikasi email IKM gagal dijadwalkan: ' + notification.notificationError
+                                : 'Jawaban berhasil disimpan. IKM dapat melihatnya pada halaman status.',
+                        notification.notificationSent || notification.notificationQueued ? 'success' : 'warning');
                 } catch (error) {
                     console.error('Gagal menyimpan jawaban konsultasi:', error);
                     showToast(error?.message || 'Jawaban konsultasi gagal disimpan.', 'error');
